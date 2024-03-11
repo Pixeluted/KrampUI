@@ -310,7 +310,10 @@ async function inject() {
   try {
     exploitInject.classList.add("disabled");
     exploitIndicator.style.backgroundColor = "var(--yellow)";
+
     const command = new Command("kr-inject", [], { cwd: await path.appConfigDir() });
+
+    let isDone;
     let child;
 
     async function killCheck() {
@@ -318,6 +321,8 @@ async function inject() {
     }
 
     async function done() {
+      if (isDone) return;
+      isDone = true;
       await killCheck();
       exploitInject.classList.remove("disabled")
       exploitIndicator.style.backgroundColor = `var(--${prevConnected ? "green" : "red"})`;
