@@ -1937,7 +1937,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "kramp-ui"
+name = "krampui"
 version = "0.0.2"
 dependencies = [
  "serde",
