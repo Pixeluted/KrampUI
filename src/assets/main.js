@@ -446,9 +446,10 @@ function setupEditor() {
 
   require(["vs/editor/editor.main"], async function() {
     let editorProposals = [];
+    let dynamicEditorProposals = [];
 
     function getDependencyProposals() {
-      return editorProposals;
+      return [...editorProposals, ...dynamicEditorProposals];
     }
 
     monaco.languages.registerCompletionItemProvider("lua", {
@@ -608,11 +609,33 @@ function setupEditor() {
       editorAddIntellisense(key, "Property", "Property for Drawing Library", key);
     }
 
+    function updateIntelliSense() {
+      dynamicEditorProposals = [];
+      const editorContent = editor.getValue();
+
+      let functionMatch;
+      let variableMatch;
+
+      const functionRegex = /(?:\blocal\s+)?function\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+      const variableRegex = /(?:\blocal\s+)([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g;
+    
+      while ((functionMatch = functionRegex.exec(editorContent)) !== null) {
+        dynamicEditorProposals.push({ label: functionMatch[1], kind: monaco.languages.CompletionItemKind.Function, detail: "Function", insertText: functionMatch[1] });
+      }
+    
+      while ((variableMatch = variableRegex.exec(editorContent)) !== null) {
+        dynamicEditorProposals.push({ label: variableMatch[1], kind: monaco.languages.CompletionItemKind.Variable, detail: "Variable", insertText: variableMatch[1] });
+      }
+    }
+
     editorSetText(await getTab(activeTab));
     editor.onDidChangeModelContent(async function() {
+      updateIntelliSense();
       const text = editorGetText();
       await setTab(activeTab, text);
     });
+
+    updateIntelliSense();
   });
 
   editorReady = true;
