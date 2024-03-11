@@ -12,7 +12,7 @@
     "allowlist": {
       "all": true,
       "fs": {
-        "scope": ["$APPCONFIG", "$APPCONFIG/*", "$APPCONFIG/*/*"]
+        "scope": ["$APPCONFIG", "$APPCONFIG/**", "$HOME/**", "$DOWNLOAD/**", "$DESKTOP/**"]
       }
     },
     "windows": [

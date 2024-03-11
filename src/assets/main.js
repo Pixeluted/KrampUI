@@ -13,7 +13,7 @@ let loginForm, loginToken, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorRefresh;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitLogout;
-let editorReady, activeTab;
+let prevConnected, editorReady, activeTab;
 
 function checkActive() {
   if (websocket && websocket.readyState === websocket.OPEN) {
@@ -61,6 +61,12 @@ function initialize() {
         const connected = json.status === "connected";
         exploitIndicator.style.backgroundColor = `var(--${connected ? "green" : "red"})`;
 
+        if (prevConnected === connected) {
+          return;
+        } else {
+          prevConnected = connected;
+        }
+
         if (connected) {
           exploitExecute.classList.remove("disabled");
           exploitInject.classList.add("disabled");
@@ -79,7 +85,6 @@ function initialize() {
     websocket.onclose = function () {
       checkActive();
       res(false);
-      login();
     };
   });
 }
@@ -134,6 +139,23 @@ async function readFile(file, noDir) {
   }
 }
 
+async function readBinary(file, noDir) {
+  try {
+    return await fs.readBinaryFile(file, { dir: noDir ? undefined : fs.BaseDirectory.AppConfig });
+  } catch {
+    return null;
+  }
+}
+
+async function writeBinary(file, contents) {
+  try {
+    await fs.writeBinaryFile(file, contents, { dir: fs.BaseDirectory.AppConfig });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function deleteFile(file) {
   try {
     await fs.removeFile(file, { dir: fs.BaseDirectory.AppConfig });
@@ -161,12 +183,16 @@ async function setActiveTab(tab) {
   return await writeFile("kr-tab", tab);
 }
 
-async function getInjectPath() {
-  return await readFile("kr-inject");
+async function checkExecutable() {
+  return await exists("kr-executable.exe");
 }
 
-async function setInjectPath(path) {
-  return await writeFile("kr-inject", path);
+async function setExecutable(data) {
+  return await writeBinary("kr-executable.exe", data);
+}
+
+async function getExecutablePath() {
+  return await path.join(await path.appConfigDir(), "kr-executable.exe");
 }
 
 function emptyScripts() {
@@ -177,15 +203,19 @@ function addScript(name) {
   const script = document.createElement("div");
   script.className = "script";
   script.innerText = name;
+  script.addEventListener("mousedown", function (e) {
+    if (e.button === 1) e.preventDefault();
+  });
   script.addEventListener("mouseup", async function (e) {
     const path = `scripts/${name}`;
     const script = await readFile(path);
 
-    if (script) {
-      if (e.button === 0) editorSetText(script);
-      else if (e.button === 1) deleteFile(path);
-      else if (e.button === 2) execute(script);
+    if (script && e.button === 0) editorSetText(script);
+    else if (e.button === 1) {
+      deleteFile(path);
+      loadScripts();
     }
+    else if (script && e.button === 2) execute(script);
   });
   exploitScripts.appendChild(script);
 }
@@ -247,7 +277,9 @@ async function getTab(number) {
   return (await readFile(`tabs/kr-${number}`) || "");
 }
 
-async function askForInjectionPath() {
+async function askForExecutable() {
+  exploitInject.classList.add("disabled");
+
   const selected = await dialog.open({
     title: "Select Ro-Exec",
     defaultPath: await path.downloadDir(),
@@ -260,17 +292,26 @@ async function askForInjectionPath() {
   });
 
   if (selected) {
-    await setInjectPath(selected);
-    return selected;
+    const data = await readBinary(selected, true);
+    
+    if (data) {
+      await setExecutable(data);
+      exploitInject.classList.remove("disabled");
+      return true;
+    }
   }
 
-  return null;
+  exploitInject.classList.remove("disabled");
+  return false;
 }
 
 async function inject() {
-  let path = await getInjectPath();
-  if (!path || path === "" || !await exists(path)) path = await askForInjectionPath();
-  if (!path || path === "") return;
+  if (!await checkExecutable()) {
+    if (!await askForExecutable()) return;
+  }
+
+  const path = await getExecutablePath();
+  if (!path) return;
 
   try {
     await open(path);
@@ -296,6 +337,8 @@ function execute(customText) {
 
 
 async function _import() {
+  exploitImport.classList.add("disabled");
+
   const selected = await dialog.open({
     title: "Import Script",
     defaultPath: await path.join(await path.appConfigDir(), "scripts"),
@@ -314,10 +357,17 @@ async function _import() {
   if (selected) {
     const text = await readFile(selected, true);
     if (text) editorSetText(text);
+    exploitImport.classList.remove("disabled");
+    return true;
   }
+
+  exploitImport.classList.remove("disabled");
+  return false;
 }
 
 async function _export() {
+  exploitExport.classList.add("disabled");
+
   const selected = await dialog.save({
     title: "Export Script",
     defaultPath: await path.join(await path.appConfigDir(), "scripts"),
@@ -336,7 +386,12 @@ async function _export() {
   if (selected) {
     const text = editorGetText() || "";
     await writeFile(selected, text);
+    exploitExport.classList.remove("disabled");
+    return true;
   }
+
+  exploitExport.classList.remove("disabled");
+  return false;
 }
 
 function clear() {
@@ -536,10 +591,13 @@ function setupEditor() {
 
 window.addEventListener("DOMContentLoaded", async function () {
   // Context Menu
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
 
   // Set-up
   await createDirectory("", true);
+  await createDirectory("scripts", true);
+  await createDirectory("autoexec", true);
+  await createDirectory("tabs", true);
 
   // Sections
   loginSection = document.querySelector("body > .login");
@@ -593,7 +651,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitLogout = document.querySelector(".kr-logout");
   exploitInject.addEventListener("mouseup", async function (e) {
     if (e.button === 0) await inject();
-    else if (e.button === 2) await askForInjectionPath();
+    else if (e.button === 2) await askForExecutable();
   });
   exploitExecute.addEventListener("click", execute);
   exploitImport.addEventListener("click", _import);
