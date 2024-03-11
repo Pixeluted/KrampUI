@@ -196,6 +196,24 @@ function emptyScripts() {
   exploitScripts.innerHTML = "";
 }
 
+function onClick(element, cb) {
+  let down = false;
+
+  element.addEventListener("mousedown", function() {
+    down = true;
+  });
+
+  element.addEventListener("mouseup", function(e) {
+    if (down && !element.classList.contains("disabled")) {
+      if (e.button === 0) cb("left");
+      else if (e.button === 1) cb("middle");
+      else if (e.button === 2) cb("right");
+    }
+
+    down = false;
+  });
+}
+
 function addScript(name) {
   const script = document.createElement("div");
   script.className = "script";
@@ -203,16 +221,16 @@ function addScript(name) {
   script.addEventListener("mousedown", function (e) {
     if (e.button === 1) e.preventDefault();
   });
-  script.addEventListener("mouseup", async function (e) {
+  onClick(script, async function (button) {
     const path = `scripts/${name}`;
     const script = await readFile(path);
 
-    if (script && e.button === 0) editorSetText(script);
-    else if (e.button === 1) {
+    if (script && button === "left") editorSetText(script);
+    else if (button === "middle") {
       deleteFile(path);
       loadScripts();
     }
-    else if (script && e.button === 2) execute(script);
+    else if (script && button === "right") execute(script);
   });
   exploitScripts.appendChild(script);
 }
@@ -701,9 +719,9 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitExport = document.querySelector(".kr-export");
   exploitClear = document.querySelector(".kr-clear");
   exploitLogout = document.querySelector(".kr-logout");
-  exploitInject.addEventListener("mouseup", async function (e) {
-    if (e.button === 0) await inject();
-    else if (e.button === 2) await askForExecutable();
+  onClick(exploitInject, async function (button) {
+    if (button === "left") await inject();
+    else if (button === "right") await askForExecutable();
   });
   exploitExecute.addEventListener("click", execute);
   exploitImport.addEventListener("click", _import);
