@@ -10,6 +10,10 @@ Simple and lightweight frontend for Ro-Exec/Krampus. Allowing you to easily mana
 - `Middle Click` - Deletes the script from your computer.
 - `Right Click` - Executes the script in Ro-Exec.
 
+## 📋 - Download
+- [Standalone](https://git.snipcola.com/snipcola/KrampUI/releases/download/katest/krampui.exe)
+- [Installer](https://git.snipcola.com/snipcola/KrampUI/releases/download/latest/krampui-installer.msi)
+
 ## 💻 - Compilation
 1. Ensure you have `cargo` (`rustup`), `node`, and `npm` installed.
 2. Run `npm install`.
