@@ -154,12 +154,13 @@ function emptyScripts() {
   exploitScripts.innerHTML = "";
 }
 
-function addScript({ name, path }) {
+function addScript(name) {
   const script = document.createElement("div");
   script.className = "script";
   script.innerText = name;
   script.addEventListener("mouseup", async function (e) {
-    const script = await readFile(path, true);
+    const path = `scripts/${name}`;
+    const script = await readFile(path);
 
     if (script) {
       if (e.button === 0) editorSetText(script);
@@ -179,8 +180,9 @@ async function loadScripts() {
   if (!await exists("scripts")) await createDirectory("scripts", true);
   const scripts = await readDirectory("scripts");
   populateScripts(scripts
-    .filter((s) => [".lua", ".txt"].some((e) => s.name.endsWith(e)))
-    .filter((s) => s.name?.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase())));
+    .filter((s) => s.name).map((s) => s.name)
+    .filter((s) => [".lua", ".txt"].some((e) => s.endsWith(e)))
+    .filter((s) => s.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase())));
 }
 
 function emptyTabs() {
@@ -210,7 +212,7 @@ async function loadTabs() {
   const tabs = [];
 
   for (var i = 0; i < tabAmount; i++) {
-    const path = `tabs/${i + 1}.lua`;
+    const path = `tabs/kr-${i + 1}`;
     if (!await exists(path)) await writeFile(path, "");
     tabs.push((i + 1).toString());
   }
@@ -219,11 +221,11 @@ async function loadTabs() {
 }
 
 async function setTab(number, content) {
-  await writeFile(`tabs/${number}.lua`, content);
+  await writeFile(`tabs/kr-${number}`, content);
 }
 
 async function getTab(number) {
-  return (await readFile(`tabs/${number}.lua`) || "");
+  return (await readFile(`tabs/kr-${number}`) || "");
 }
 
 function execute(customText) {
