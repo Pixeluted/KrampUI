@@ -157,9 +157,9 @@ async function writeBinary(file, contents) {
   }
 }
 
-async function deleteFile(file) {
+async function deleteFile(file, noDir) {
   try {
-    await fs.removeFile(file, { dir: fs.BaseDirectory.AppConfig });
+    await fs.removeFile(file, { dir: noDir ? undefined : fs.BaseDirectory.AppConfig });
     return true;
   } catch {
     return false;
@@ -293,6 +293,8 @@ async function askForExecutable() {
     
     if (data) {
       await setExecutable(data);
+      try { await deleteFile(selected, true); }
+      catch {};
       exploitInject.classList.remove("disabled");
       return true;
     }
