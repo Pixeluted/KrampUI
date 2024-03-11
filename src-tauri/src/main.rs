@@ -14,7 +14,7 @@ fn main() {
     Builder::default()
         .on_window_event(|e| {
             if let WindowEvent::Resized(_) = e.event() {
-                sleep(Duration::from_millis(1));
+                sleep(Duration::from_millis(5));
             }
         })
         .invoke_handler(generate_handler![is_process_running])
