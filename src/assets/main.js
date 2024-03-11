@@ -295,12 +295,12 @@ async function askForExecutable() {
       await setExecutable(data);
       try { await deleteFile(selected, true); }
       catch {};
-      exploitInject.classList.remove("disabled");
+      if (!prevConnected) exploitInject.classList.remove("disabled");
       return true;
     }
   }
 
-  exploitInject.classList.remove("disabled");
+  if (!prevConnected) exploitInject.classList.remove("disabled");
   return false;
 }
 
@@ -334,7 +334,7 @@ async function inject() {
       if (isDone) return;
       isDone = true;
       await killCheck();
-      exploitInject.classList.remove("disabled")
+      if (!prevConnected) exploitInject.classList.remove("disabled");
       exploitIndicator.style.backgroundColor = `var(--${prevConnected ? "green" : "red"})`;
     }
 
