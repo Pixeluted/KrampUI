@@ -12,7 +12,10 @@
     "allowlist": {
       "all": true,
       "fs": {
-        "scope": ["$APPCONFIG", "$APPCONFIG/**", "$HOME/**", "$DOWNLOAD/**", "$DESKTOP/**"]
+        "scope": ["**"]
+      },
+      "shell": {
+        "scope": [{ "name": "kr-inject", "cmd": "$APPCONFIG/kr-executable.exe" }]
       }
     },
     "windows": [

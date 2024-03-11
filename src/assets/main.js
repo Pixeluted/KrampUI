@@ -1,5 +1,5 @@
 const { invoke } = window.__TAURI__.tauri;
-const { open } = window.__TAURI__.shell;
+const { open, Command } = window.__TAURI__.shell;
 const { appWindow } = window.__TAURI__.window;
 const dialog = window.__TAURI__.dialog;
 const path = window.__TAURI__.path;
@@ -59,13 +59,14 @@ function initialize() {
       
       if (json.status) {
         const connected = json.status === "connected";
-        exploitIndicator.style.backgroundColor = `var(--${connected ? "green" : "red"})`;
 
         if (prevConnected === connected) {
           return;
         } else {
           prevConnected = connected;
         }
+
+        exploitIndicator.style.backgroundColor = `var(--${connected ? "green" : "red"})`;
 
         if (connected) {
           exploitExecute.classList.remove("disabled");
@@ -191,10 +192,6 @@ async function setExecutable(data) {
   return await writeBinary("kr-executable.exe", data);
 }
 
-async function getExecutablePath() {
-  return await path.join(await path.appConfigDir(), "kr-executable.exe");
-}
-
 function emptyScripts() {
   exploitScripts.innerHTML = "";
 }
@@ -310,11 +307,13 @@ async function inject() {
     if (!await askForExecutable()) return;
   }
 
-  const path = await getExecutablePath();
-  if (!path) return;
-
   try {
-    await open(path);
+    const command = new Command("kr-inject", [], { cwd: await path.appConfigDir() });
+    exploitInject.classList.add("disabled");
+    exploitIndicator.style.backgroundColor = "var(--yellow)";
+    command.on("close", () => exploitInject.classList.remove("disabled"));
+    command.on("error", () => exploitInject.classList.remove("disabled"));
+    await command.spawn();
     return true;
   } catch {
     return false;
