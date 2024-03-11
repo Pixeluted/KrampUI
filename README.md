@@ -15,7 +15,7 @@ Simple and lightweight frontend for Ro-Exec/Krampus. Allowing you to easily mana
 - `Right Click` - Allows you to set injection path again.
 
 ## 📋 - Download
-- [Standalone](https://git.snipcola.com/snipcola/KrampUI/releases/download/katest/krampui.exe)
+- [Standalone](https://git.snipcola.com/snipcola/KrampUI/releases/download/latest/krampui.exe)
 - [Installer](https://git.snipcola.com/snipcola/KrampUI/releases/download/latest/krampui-installer.msi)
 
 ## 💻 - Compilation
