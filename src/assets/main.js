@@ -89,9 +89,9 @@ async function createDirectory(directory, recursive) {
   }
 }
 
-async function readDirectory(directory, recursive) {
+async function readDirectory(directory) {
   try {
-    const entries = await fs.readDir(directory, { dir: fs.BaseDirectory.AppConfig, recursive});
+    const entries = await fs.readDir(directory, { dir: fs.BaseDirectory.AppConfig });
     return entries;
   } catch {
     return [];
@@ -177,7 +177,7 @@ function populateScripts(scripts) {
 
 async function loadScripts() {
   if (!await exists("scripts")) await createDirectory("scripts", true);
-  const scripts = await readDirectory("scripts", true);
+  const scripts = await readDirectory("scripts");
   populateScripts(scripts
     .filter((s) => [".lua", ".txt"].some((e) => s.name.endsWith(e)))
     .filter((s) => s.name?.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase())));
