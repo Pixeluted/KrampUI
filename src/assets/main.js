@@ -1,4 +1,5 @@
 const { invoke } = window.__TAURI__.tauri;
+const { open } = window.__TAURI__.shell;
 const { appWindow } = window.__TAURI__.window;
 const dialog = window.__TAURI__.dialog;
 const path = window.__TAURI__.path;
@@ -11,6 +12,7 @@ let loginSection, exploitSection;
 let loginForm, loginToken, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch;
 let editor, editorGetText, editorSetText, editorRefresh;
+let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitLogout;
 let editorReady, activeTab;
 
 function checkActive() {
@@ -18,7 +20,6 @@ function checkActive() {
     loginSection.classList.remove("active");
     exploitSection.classList.add("active");
     setupEditor();
-    editorReady = true;
   } else {
     exploitSection.classList.remove("active");
     loginSection.classList.add("active");
@@ -57,7 +58,16 @@ function initialize() {
       catch { return; };
       
       if (json.status) {
-        exploitIndicator.style.backgroundColor = `var(--${json.status === "connected" ? "green" : "red"})`;
+        const connected = json.status === "connected";
+        exploitIndicator.style.backgroundColor = `var(--${connected ? "green" : "red"})`;
+
+        if (connected) {
+          exploitExecute.classList.remove("disabled");
+          exploitInject.classList.add("disabled");
+        } else {
+          exploitInject.classList.remove("disabled");
+          exploitExecute.classList.add("disabled");
+        }
       }
     };
 
@@ -69,6 +79,7 @@ function initialize() {
     websocket.onclose = function () {
       checkActive();
       res(false);
+      login();
     };
   });
 }
@@ -150,6 +161,14 @@ async function setActiveTab(tab) {
   return await writeFile("kr-tab", tab);
 }
 
+async function getInjectPath() {
+  return await readFile("kr-inject");
+}
+
+async function setInjectPath(path) {
+  return await writeFile("kr-inject", path);
+}
+
 function emptyScripts() {
   exploitScripts.innerHTML = "";
 }
@@ -228,11 +247,43 @@ async function getTab(number) {
   return (await readFile(`tabs/kr-${number}`) || "");
 }
 
+async function askForInjectionPath() {
+  const selected = await dialog.open({
+    title: "Select Ro-Exec",
+    defaultPath: await path.downloadDir(),
+    filters: [
+      {
+        name: "Ro-Exec Executable",
+        extensions: ["exe"]
+      }
+    ]
+  });
+
+  if (selected) {
+    await setInjectPath(selected);
+    return selected;
+  }
+
+  return null;
+}
+
+async function inject() {
+  const path = await getInjectPath() || await askForInjectionPath();
+  if (!path || path === "") return;
+
+  try {
+    await open(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function execute(customText) {
   try {
     const text = typeof customText === "string" ? customText : editorGetText();
 
-    if (text && websocket) {
+    if (text && websocket && websocket.readyState === websocket.OPEN) {
       websocket.send(`<SCRIPT>${text}`);
     }
 
@@ -523,9 +574,21 @@ window.addEventListener("DOMContentLoaded", async function () {
   loadTabs();
 
   // Buttons
-  document.querySelector(".kr-execute").addEventListener("click", execute);
-  document.querySelector(".kr-import").addEventListener("click", _import);
-  document.querySelector(".kr-export").addEventListener("click", _export);
-  document.querySelector(".kr-clear").addEventListener("click", clear);
-  document.querySelector(".kr-logout").addEventListener("click", logout);
+  exploitInject = document.querySelector(".kr-inject");
+  exploitExecute = document.querySelector(".kr-execute");
+  exploitImport = document.querySelector(".kr-import");
+  exploitExport = document.querySelector(".kr-export");
+  exploitClear = document.querySelector(".kr-clear");
+  exploitLogout = document.querySelector(".kr-logout");
+
+  exploitInject.addEventListener("mouseup", async function (e) {
+    if (e.button === 0) await inject();
+    else if (e.button === 2) await askForInjectionPath();
+  });
+
+  exploitExecute.addEventListener("click", execute);
+  exploitImport.addEventListener("click", _import);
+  exploitExport.addEventListener("click", _export);
+  exploitClear.addEventListener("click", clear);
+  exploitLogout.addEventListener("click", logout);
 });
