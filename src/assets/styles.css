@@ -146,7 +146,7 @@ body > *:not(.active) {
 
 .exploit .bar .title {
     display: flex;
-    border: 1px solid var(--lighter);
+    border: 0.5px solid var(--lighter);
     padding: 0.25rem 0.5rem;
     box-sizing: border-box;
     width: fit-content;
@@ -155,14 +155,6 @@ body > *:not(.active) {
     align-items: center;
     user-select: none;
     -webkit-user-drag: none;
-}
-
-.exploit .bar .title .text {
-    font-size: 0.8rem;
-}
-
-.exploit .bar .title .image {
-    width: 1.5rem;
 }
 
 .exploit .bar .title .indicator {
@@ -174,14 +166,13 @@ body > *:not(.active) {
 
 .exploit .bar .buttons {
     display: flex;
-    border: 1px solid var(--lighter);
-    border-radius: 5px;
-    overflow: hidden;
-    box-sizing: border-box;
     width: 100%;
 }
 
 .exploit .bar .buttons .kr-button {
+    margin-left: -1px;
+    border: 0.25px solid var(--lighter);
+    box-sizing: border-box;
     background-color: var(--dark);
     font-size: 0.8rem;
     display: flex;
@@ -191,7 +182,7 @@ body > *:not(.active) {
     gap: 0.5rem;
 }
 
-@media only screen and (max-width: 799px) {
+@media only screen and (max-width: 699px) {
     .exploit .bar .buttons .kr-button .text {
         display: none;
     }
@@ -205,10 +196,6 @@ body > *:not(.active) {
     border-radius: 0;
 }
 
-.exploit .bar .buttons .kr-button:not(:last-child) {
-    border-right: 1px solid var(--lighter);
-}
-
 .exploit .bar .buttons .kr-button:first-child {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
@@ -217,6 +204,20 @@ body > *:not(.active) {
 .exploit .bar .buttons .kr-button:last-child {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
+}
+
+.exploit .bar .buttons .seperator {
+    padding: 0.25rem;
+}
+
+.exploit .bar .buttons .after-seperator {
+    border-top-left-radius: 5px !important;
+    border-bottom-left-radius: 5px !important;
+}
+
+.exploit .bar .buttons .before-seperator {
+    border-top-right-radius: 5px !important;
+    border-bottom-right-radius: 5px !important;
 }
 
 .exploit > .main {
