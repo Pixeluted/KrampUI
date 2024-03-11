@@ -182,7 +182,7 @@ body > *:not(.active) {
     gap: 0.5rem;
 }
 
-@media only screen and (max-width: 699px) {
+@media only screen and (max-width: 705px) {
     .exploit .bar .buttons .kr-button .text {
         display: none;
     }
