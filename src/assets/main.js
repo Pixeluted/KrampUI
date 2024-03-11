@@ -308,12 +308,27 @@ async function inject() {
   }
 
   try {
-    const command = new Command("kr-inject", [], { cwd: await path.appConfigDir() });
     exploitInject.classList.add("disabled");
     exploitIndicator.style.backgroundColor = "var(--yellow)";
-    command.on("close", () => exploitInject.classList.remove("disabled"));
-    command.on("error", () => exploitInject.classList.remove("disabled"));
-    await command.spawn();
+    const command = new Command("kr-inject", [], { cwd: await path.appConfigDir() });
+    let child;
+
+    async function killCheck() {
+      if (child) await child.kill();
+    }
+
+    async function done() {
+      await killCheck();
+      exploitInject.classList.remove("disabled")
+      exploitIndicator.style.backgroundColor = `var(--${prevConnected ? "green" : "red"})`;
+    }
+
+    command.on("close", done);
+    command.once("error", done);
+
+    child = await command.spawn();
+    setTimeout(done, 60000);
+    
     return true;
   } catch {
     return false;
