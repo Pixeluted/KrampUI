@@ -10,7 +10,7 @@ require.config({ paths: { "vs": "./assets/monaco" }});
 let websocket, websocketInterval;
 let loginSection, exploitSection;
 let loginForm, loginToken, loginSubmit;
-let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch;
+let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorRefresh;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitLogout;
 let editorReady, activeTab;
@@ -268,8 +268,8 @@ async function askForInjectionPath() {
 }
 
 async function inject() {
-  const path = await getInjectPath() || await askForInjectionPath();
-  if (!path || path === "") return;
+  let path = await getInjectPath() || await askForInjectionPath();
+  if (!path || path === "" || !await exists(path)) path = await askForInjectionPath();
 
   try {
     await open(path);
@@ -345,6 +345,15 @@ function clear() {
 async function logout() {
   if (websocket) websocket.close();
   checkActive();
+}
+
+async function openFolder() {
+  try {
+    await open(await path.join(await path.appConfigDir(), "scripts"));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function setupEditor() {
@@ -554,6 +563,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitEditor = document.querySelector(".exploit .main .container .editor");
   exploitScripts = document.querySelector(".exploit .main .container-2 .scripts");
   exploitScriptsSearch = document.querySelector(".exploit .main .container-2 .kr-input.search");
+  exploitScriptsFolder = document.querySelector(".kr-folder");
 
   // Scripts
   loadScripts();
@@ -580,15 +590,14 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitExport = document.querySelector(".kr-export");
   exploitClear = document.querySelector(".kr-clear");
   exploitLogout = document.querySelector(".kr-logout");
-
   exploitInject.addEventListener("mouseup", async function (e) {
     if (e.button === 0) await inject();
     else if (e.button === 2) await askForInjectionPath();
   });
-
   exploitExecute.addEventListener("click", execute);
   exploitImport.addEventListener("click", _import);
   exploitExport.addEventListener("click", _export);
   exploitClear.addEventListener("click", clear);
   exploitLogout.addEventListener("click", logout);
+  exploitScriptsFolder.addEventListener("click", openFolder);
 });

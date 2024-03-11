@@ -284,9 +284,30 @@ body > *:not(.active) {
     width: 20%;
 }
 
-.exploit > .main > .container-2 > .search {
+.exploit > .main > .container-2 > .script-header {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    gap: 0.25rem;
+}
+
+.exploit > .main > .container-2 > .script-header > .search {
     font-size: 0.85rem;
     padding: 0.25rem 0.5rem;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.exploit > .main > .container-2 > .script-header > .kr-button {
+    font-size: 0.75rem;
+    padding: 0.3rem;
+    box-sizing: border-box;
+    background-color: var(--light);
+    border: 1px solid var(--lighter);
+}
+
+.exploit > .main > .container-2 > .script-header > .kr-button:hover {
+    background-color: var(--lighter);
 }
 
 .exploit > .main > .container-2 > .scripts {
