@@ -12,7 +12,7 @@ let loginSection, exploitSection;
 let loginForm, loginToken, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorRefresh;
-let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitLogout;
+let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
 let prevConnected, editorReady, activeTab;
 
 function checkActive() {
@@ -326,6 +326,10 @@ async function isRobloxRunning() {
   return await invoke("is_process_running", { name: "RobloxPlayerBeta" });
 }
 
+async function killRoblox() {
+  return await invoke("kill_process", { name: "RobloxPlayerBeta" });
+}
+
 async function inject() {
   if (!await isRobloxRunning()) {
     return;
@@ -443,6 +447,10 @@ async function _export() {
 
 function clear() {
   editorSetText("");
+}
+
+async function kill() {
+  if (await isRobloxRunning()) await killRoblox();
 }
 
 async function logout() {
@@ -718,6 +726,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitImport = document.querySelector(".kr-import");
   exploitExport = document.querySelector(".kr-export");
   exploitClear = document.querySelector(".kr-clear");
+  exploitKill = document.querySelector(".kr-kill");
   exploitLogout = document.querySelector(".kr-logout");
   onClick(exploitInject, async function (button) {
     if (button === "left") await inject();
@@ -727,6 +736,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitImport.addEventListener("click", _import);
   exploitExport.addEventListener("click", _export);
   exploitClear.addEventListener("click", clear);
+  exploitKill.addEventListener("click", kill);
   exploitLogout.addEventListener("click", logout);
   exploitScriptsFolder.addEventListener("click", openFolder);
 });
