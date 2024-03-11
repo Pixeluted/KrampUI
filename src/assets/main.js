@@ -268,8 +268,9 @@ async function askForInjectionPath() {
 }
 
 async function inject() {
-  let path = await getInjectPath() || await askForInjectionPath();
+  let path = await getInjectPath();
   if (!path || path === "" || !await exists(path)) path = await askForInjectionPath();
+  if (!path || path === "") return;
 
   try {
     await open(path);
