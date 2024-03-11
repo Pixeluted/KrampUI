@@ -2,7 +2,7 @@
 Simple and lightweight frontend for Ro-Exec/Krampus. Allowing you to easily manage all your scripts and giving you multiple tabs to maximize your workflow.
 
 <div align="center">
-    <img src="./assets/showcase.png" width="600"/>
+    <img src="./assets/showcase.png" width="500"/>
 </div>
 
 ## ⌨️ - Script Shortcuts
