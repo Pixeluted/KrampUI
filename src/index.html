@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+    <link rel="stylesheet" href="./assets/fontawesome/css/fontawesome.min.css" />
+    <link rel="stylesheet" href="./assets/fontawesome/css/solid.min.css"/>
+    <link rel="stylesheet" href="./assets/fontawesome/css/brands.min.css" />
+    <script src="./assets/monaco/loader.js"></script>
+    <script type="module" src="./assets/main.js" defer></script>
+  </head>
+  <body>
+    <div class="login active">
+      <div class="title">
+        <img class="image" src="./assets/icon.png">
+        <h3 class="text">KrampUI</h3>
+      </div>
+      <div class="form">
+        <input class="kr-input token" placeholder="Login Token" type="password" />
+        <button class="kr-button submit">Submit</button>
+      </div>
+    </div>
+    <div class="exploit">
+      <div class="bar">
+        <div class="title">
+          <img class="image" src="./assets/icon.png">
+          <p class="text">KrampUI</p>
+          <div class="indicator"></div>
+        </div>
+        <div class="buttons">
+          <button class="kr-button kr-execute"><i class="fa-solid fa-play"></i> <span class="text">Execute</span></button>
+          <button class="kr-button kr-import"><i class="fa-solid fa-file-import"></i> <span class="text">Import</span></button>
+          <button class="kr-button kr-export"><i class="fa-solid fa-file-export"></i> <span class="text">Export</span></button>
+          <button class="kr-button kr-clear"><i class="fa-solid fa-delete-left"></i> <span class="text">Clear</span></button>
+          <button class="kr-button kr-logout"><i class="fa-solid fa-right-from-bracket"></i> <span class="text">Logout</span></button>
+        </div>
+      </div>
+      <div class="main">
+        <div class="container">
+          <div class="tabs"></div>
+          <div class="editor"></div>
+        </div>
+        <div class="container container-2">
+          <input class="kr-input search" placeholder="...">
+          <div class="scripts"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

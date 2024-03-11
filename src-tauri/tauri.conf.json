@@ -1,0 +1,41 @@
+{
+  "build": {
+    "devPath": "../src",
+    "distDir": "../src",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "kramp-ui",
+    "version": "0.0.1"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": true,
+      "fs": {
+        "scope": ["$APPCONFIG", "$APPCONFIG/*", "$APPCONFIG/*/*"]
+      }
+    },
+    "windows": [
+      {
+        "title": "KrampUI",
+        "minWidth": 500,
+        "minHeight": 200,
+        "width": 700,
+        "height": 400,
+        "resizable": true,
+        "maximizable": true,
+        "alwaysOnTop": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "krampui",
+      "icon": ["./icons/icon.ico"]
+    }
+  }
+}

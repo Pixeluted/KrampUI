@@ -1,0 +1,314 @@
+/* External */
+@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css);
+@import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap");
+
+/* Variables */
+:root {
+    --dark: #131417;
+    --light: #191a1e;
+    --lighter: #35373b;
+    --lightest: #2a2c32;
+    --primary: rgb(33, 78, 226);
+    --text: #aaabad;
+    --green: #93e685;
+    --red: #e64040;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--light);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--lighter);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--lightest);
+}
+
+/* Global */
+body {
+    height: 100vh;
+    background-color: var(--dark);
+    margin: 0;
+    overflow: hidden;
+}
+
+body > *:not(.active) {
+    position: absolute !important;
+    z-index: -999999 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    opacity: 0% !important;
+}
+
+* {
+    color: var(--text);
+    font-family: "Raleway", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    margin: 0;
+}
+
+*.disabled {
+    opacity: 25% !important;
+    pointer-events: none !important;
+}
+
+/* Input */
+.kr-input {
+    all: unset;
+    background-color: var(--light);
+    border: 1px solid var(--lighter);
+    padding: 0.5rem 1rem;
+    box-sizing: border-box;
+    border-radius: 5px;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.kr-input:focus {
+    background-color: var(--lightest);
+}
+
+/* Button */
+.kr-button {
+    all: unset;
+    background-color: var(--primary);
+    padding: 0.5rem 1rem;
+    box-sizing: border-box;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+/* Login */
+.login {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 1rem;
+}
+
+.login .title {
+    display: flex;
+    align-items: center;
+    user-select: none;
+    -webkit-user-drag: none;
+    gap: 1rem;
+}
+
+.login .title .text {
+    margin: 0;
+}
+
+.login .title .image {
+    border: 1px solid var(--lighter);
+    border-radius: 5px;
+    padding: 0.25rem;
+    box-sizing: border-box;
+    width: 2.5rem;
+}
+
+.login .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 30rem;
+    width: 100%;
+}
+
+.login .form .kr-input {
+    width: 100%;
+}
+
+/* Exploit */
+.exploit {
+    padding: 0.5rem;
+}
+
+.exploit .bar {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.exploit .bar .title {
+    display: flex;
+    border: 1px solid var(--lighter);
+    padding: 0.25rem 0.5rem;
+    box-sizing: border-box;
+    width: fit-content;
+    border-radius: 5px;
+    gap: 0.5rem;
+    align-items: center;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.exploit .bar .title .text {
+    font-size: 0.8rem;
+}
+
+.exploit .bar .title .image {
+    width: 1.5rem;
+}
+
+.exploit .bar .title .indicator {
+    width: 0.75rem;
+    height: 0.75rem;
+    background-color: var(--lightest);
+    border-radius: 100%;
+}
+
+.exploit .bar .buttons {
+    display: flex;
+    border: 1px solid var(--lighter);
+    border-radius: 5px;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.exploit .bar .buttons .kr-button {
+    background-color: var(--dark);
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 0.5rem;
+}
+
+@media only screen and (max-width: 625px) {
+    .exploit .bar .buttons .kr-button .text {
+        display: none;
+    }
+}
+
+.exploit .bar .buttons .kr-button:hover {
+    background-color: var(--light);
+}
+
+.exploit .bar .buttons .kr-button:not(:first-child):not(:last-child) {
+    border-radius: 0;
+}
+
+.exploit .bar .buttons .kr-button:not(:last-child) {
+    border-right: 1px solid var(--lighter);
+}
+
+.exploit .bar .buttons .kr-button:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.exploit .bar .buttons .kr-button:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.exploit > .main {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.exploit > .main > * {
+    height: calc(100vh - 3.75rem);
+    border: 1px solid var(--lighter);
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.exploit > .main > .container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 80%;
+    overflow: hidden;
+    border: none;
+    border-radius: 0;
+}
+
+.exploit > .main > .container > .tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.exploit > .main > .container > .tabs > .tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--light);
+    border: 1px solid var(--lighter);
+    padding: 0.25rem;
+    font-size: 0.85rem;
+    border-radius: 5px;
+    box-sizing: border-box;
+    user-select: none;
+    width: 100%;
+}
+
+.exploit > .main > .container > .tabs > .tab.active {
+    pointer-events: none;
+    background-color: var(--lighter);
+    opacity: 75%;
+}
+
+.exploit > .main > .container > .tabs > .tab:hover {
+    cursor: pointer;
+    background-color: var(--lighter);
+}
+
+.exploit > .main > .container > .editor {
+    height: 100%;
+    border: 1px solid var(--lighter);
+    border-radius: 5px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.exploit > .main > .container-2 {
+    width: 20%;
+}
+
+.exploit > .main > .container-2 > .search {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.exploit > .main > .container-2 > .scripts {
+    border-radius: 5px;
+    background-color: var(--light);
+    border: 1px solid var(--lighter);
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-drag: none;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.exploit > .main > .container-2 > .scripts > .script {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.exploit > .main > .container-2 > .scripts > .script:hover {
+    cursor: pointer;
+    background-color: var(--lighter);
+}
