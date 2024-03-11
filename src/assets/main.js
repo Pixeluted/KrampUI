@@ -302,7 +302,15 @@ async function askForExecutable() {
   return false;
 }
 
+async function isRobloxRunning() {
+  return await invoke("is_process_running", { name: "RobloxPlayerBeta" });
+}
+
 async function inject() {
+  if (!await isRobloxRunning()) {
+    return;
+  }
+
   if (!await checkExecutable()) {
     if (!await askForExecutable()) return;
   }
@@ -332,7 +340,7 @@ async function inject() {
     command.once("error", done);
 
     child = await command.spawn();
-    setTimeout(done, 60000);
+    setTimeout(done, 120 * 1000);
     
     return true;
   } catch {
