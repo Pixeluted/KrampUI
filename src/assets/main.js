@@ -455,6 +455,7 @@ async function kill() {
 
 async function logout() {
   if (websocket) websocket.close();
+  prevConnected = null;
   checkActive();
 }
 
