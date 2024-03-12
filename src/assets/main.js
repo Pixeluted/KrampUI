@@ -675,7 +675,7 @@ async function checkRobloxActive() {
     prevActive = newActive;
     
     if (newActive) {
-      if (!prevConnected && websocket.readyState === websocket.OPEN) exploitInject.classList.remove("disabled");
+      if ((!prevConnected && prevConnected !== undefined) && websocket && websocket.readyState === websocket.OPEN) exploitInject.classList.remove("disabled");
       exploitKill.classList.remove("disabled");
     } else {
       exploitInject.classList.add("disabled");
