@@ -11,8 +11,9 @@ Simple and lightweight frontend for Ro-Exec/Krampus. Allowing you to easily mana
 - `Right Click` - Executes the script in Ro-Exec.
 
 ## ⌨️ - Inject Shortcuts
-- `Left Click` - Either asks for injection path or injects.
-- `Right Click` - Allows you to set injection path again.
+- `Left Click` - Either asks for executable or injects.
+- `Middle Click` - Deletes the executable if already stored.
+- `Right Click` - Allows you to set executable again.
 
 ## 📋 - Download
 - [Standalone](https://git.snipcola.com/snipcola/KrampUI/releases/download/latest/krampui.exe)

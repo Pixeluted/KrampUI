@@ -6,19 +6,15 @@ use sysinfo::System;
 
 #[command]
 fn kill_process(name: &str) -> bool {
-    let system = System::new_all();
-
-    if let Some(process) = system.processes_by_name(&name).next() {
-        return process.kill();
-    }
-
-    return false;
+    return match System::new_all().processes_by_name(&name).next() {
+        Some(process) => process.kill(),
+        _ => false
+    };
 }
 
 #[command]
 fn is_process_running(name: &str) -> bool {
-    let system = System::new_all();
-    return system.processes_by_name(&name).next().is_some();
+    return System::new_all().processes_by_name(&name).next().is_some();
 }
 
 fn main() {

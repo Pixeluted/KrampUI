@@ -13,7 +13,7 @@ let loginForm, loginToken, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorRefresh;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
-let prevConnected, editorReady, activeTab;
+let prevConnected, prevActive, editorReady, activeTab;
 
 function checkActive() {
   if (websocket && websocket.readyState === websocket.OPEN) {
@@ -72,7 +72,7 @@ function initialize() {
           exploitExecute.classList.remove("disabled");
           exploitInject.classList.add("disabled");
         } else {
-          exploitInject.classList.remove("disabled");
+          if (prevActive) exploitInject.classList.remove("disabled");
           exploitExecute.classList.add("disabled");
         }
       }
@@ -313,12 +313,12 @@ async function askForExecutable() {
       await setExecutable(data);
       try { await deleteFile(selected, true); }
       catch {};
-      if (!prevConnected) exploitInject.classList.remove("disabled");
+      if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
       return true;
     }
   }
 
-  if (!prevConnected) exploitInject.classList.remove("disabled");
+  if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
   return false;
 }
 
@@ -356,7 +356,7 @@ async function inject() {
       if (isDone) return;
       isDone = true;
       await killCheck();
-      if (!prevConnected) exploitInject.classList.remove("disabled");
+      if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
       exploitIndicator.style.backgroundColor = `var(--${prevConnected ? "green" : "red"})`;
     }
 
@@ -667,6 +667,22 @@ function setupEditor() {
   editorReady = true;
 }
 
+async function checkRobloxActive() {
+  const newActive = await isRobloxRunning();
+  
+  if (prevActive !== newActive) {
+    prevActive = newActive;
+    
+    if (newActive) {
+      if (!prevConnected && websocket.readyState === websocket.OPEN) exploitInject.classList.remove("disabled");
+      exploitKill.classList.remove("disabled");
+    } else {
+      exploitInject.classList.add("disabled");
+      exploitKill.classList.add("disabled");
+    }
+  }
+}
+
 window.addEventListener("DOMContentLoaded", async function () {
   // Context Menu
   document.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -730,6 +746,10 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitLogout = document.querySelector(".kr-logout");
   onClick(exploitInject, async function (button) {
     if (button === "left") await inject();
+    else if (button === "middle") {
+      try { await deleteFile("kr-executable.exe"); }
+      catch { };
+    }
     else if (button === "right") await askForExecutable();
   });
   exploitExecute.addEventListener("click", execute);
@@ -739,4 +759,8 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitKill.addEventListener("click", kill);
   exploitLogout.addEventListener("click", logout);
   exploitScriptsFolder.addEventListener("click", openFolder);
+
+  // Active
+  await checkRobloxActive();
+  setInterval(checkRobloxActive, 1000);
 });
