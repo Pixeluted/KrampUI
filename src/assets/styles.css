@@ -227,7 +227,7 @@ body > *:not(.active) {
 }
 
 .exploit > .main > * {
-    height: calc(100vh - 3.75rem);
+    height: calc(100vh - 3.5rem);
     border: 1px solid var(--lighter);
     border-radius: 5px;
     box-sizing: border-box;
