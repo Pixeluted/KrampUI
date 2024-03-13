@@ -52,27 +52,11 @@ body {
     border-radius: 5px;
 }
 
-.kr-drag-left {
-    width: 0.25rem;
-    height: 0.25rem;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-.kr-drag-right {
-    width: 0.25rem;
-    height: 0.25rem;
-    position: absolute;
-    top: 0;
-    right: 0;
-}
-
 body.kr-maximized .kr-bg {
     border-radius: 0;
 }
 
-body > *:not(.active):not(.kr-bg):not(.kr-titlebar):not(.kr-drag-left):not(.kr-drag-right) {
+body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
     position: absolute !important;
     z-index: -999999 !important;
     pointer-events: none !important;
@@ -183,11 +167,20 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar):not(.kr-drag-left):not(.kr-d
     user-select: none;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
+    position: relative;
 }
 
 body.kr-maximized .kr-titlebar {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+}
+
+.kr-titlebar .tb-drag {
+    position: absolute;
+    top: 0;
+    left: 5px;
+    width: calc(100% - 5px * 2);
+    height: 100%;
 }
 
 .kr-titlebar .brand {
@@ -214,6 +207,7 @@ body.kr-maximized .kr-titlebar {
 .kr-titlebar .buttons {
     display: flex;
     align-items: center;
+    z-index: 1;
 }
 
 .kr-titlebar .tb-button {
