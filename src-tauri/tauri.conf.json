@@ -6,7 +6,7 @@
   },
   "package": {
     "productName": "KrampUI",
-    "version": "0.0.3"
+    "version": "0.0.4"
   },
   "tauri": {
     "allowlist": {
@@ -20,15 +20,17 @@
     },
     "windows": [
       {
-        "title": "KrampUI (0.0.3)",
+        "title": "KrampUI",
         "minWidth": 500,
         "minHeight": 200,
         "width": 725,
-        "height": 400,
+        "height": 425,
         "resizable": true,
         "maximizable": true,
         "alwaysOnTop": true,
-        "center": true
+        "center": true,
+        "decorations": false,
+        "transparent": true
       }
     ],
     "security": {
@@ -37,7 +39,8 @@
     "bundle": {
       "active": true,
       "targets": "all",
-      "identifier": "krampui",
+      "identifier": "KrampUI",
+      "publisher": "Snipcola",
       "icon": ["./icons/icon.ico"]
     }
   }

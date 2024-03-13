@@ -1,6 +1,7 @@
 const { invoke } = window.__TAURI__.tauri;
 const { open, Command } = window.__TAURI__.shell;
 const { appWindow } = window.__TAURI__.window;
+const process = window.__TAURI__.process;
 const dialog = window.__TAURI__.dialog;
 const path = window.__TAURI__.path;
 const fs = window.__TAURI__.fs;
@@ -14,6 +15,22 @@ let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScripts
 let editor, editorGetText, editorSetText, editorRefresh;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
 let prevConnected, prevActive, editorReady, activeTab, injecting, autoInject;
+
+async function minimize() {
+  await appWindow.minimize();
+}
+
+async function maximize() {
+  await appWindow.toggleMaximize();
+}
+
+async function isMaximized() {
+  return await appWindow.isMaximized();
+}
+
+async function exit() {
+  await process.exit();
+}
 
 function checkActive() {
   if (websocket && websocket.readyState === websocket.OPEN) {
@@ -783,6 +800,20 @@ window.addEventListener("DOMContentLoaded", async function () {
   await createDirectory("scripts", true);
   await createDirectory("autoexec", true);
   await createDirectory("tabs", true);
+
+  // Titlebar
+  document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
+  document.querySelector(".tb-button.maximize").addEventListener("click", maximize);
+  document.querySelector(".tb-button.exit").addEventListener("click", exit);
+
+  // Maximized
+  async function checkMaximized() {
+    const maximized = await isMaximized();
+    document.body.classList.toggle("kr-maximized", maximized);
+  }
+
+  checkMaximized();
+  window.addEventListener("resize", checkMaximized);
 
   // Sections
   loginSection = document.querySelector("body > .login");

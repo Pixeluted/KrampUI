@@ -4,6 +4,7 @@
 
 /* Variables */
 :root {
+    --darker: #0e0f11;
     --dark: #131417;
     --light: #191a1e;
     --lighter: #35373b;
@@ -35,12 +36,43 @@
 /* Global */
 body {
     height: 100vh;
-    background-color: var(--dark);
+    background-color: transparent;
     margin: 0;
     overflow: hidden;
 }
 
-body > *:not(.active) {
+.kr-bg {
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--dark);
+    border-radius: 5px;
+}
+
+.kr-drag-left {
+    width: 0.25rem;
+    height: 0.25rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.kr-drag-right {
+    width: 0.25rem;
+    height: 0.25rem;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+body.kr-maximized .kr-bg {
+    border-radius: 0;
+}
+
+body > *:not(.active):not(.kr-bg):not(.kr-titlebar):not(.kr-drag-left):not(.kr-drag-right) {
     position: absolute !important;
     z-index: -999999 !important;
     pointer-events: none !important;
@@ -138,13 +170,74 @@ body > *:not(.active) {
     background-color: var(--lighter);
 }
 
+/* Titlebar */
+.kr-titlebar {
+    display: flex;
+    justify-content: space-between;
+    background-color: var(--darker);
+    width: 100%;
+    height: 1.5rem;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+    overflow: hidden;
+    user-select: none;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+body.kr-maximized .kr-titlebar {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.kr-titlebar .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    pointer-events: none;
+}
+
+.kr-titlebar .image {
+    width: 1rem;
+    height: 1rem;
+}
+
+.kr-titlebar .text {
+    font-size: 0.8rem;
+}
+
+.kr-titlebar .version {
+    font-size: 0.7rem;
+    opacity: 75%;
+}
+
+.kr-titlebar .buttons {
+    display: flex;
+    align-items: center;
+}
+
+.kr-titlebar .tb-button {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 0.5rem;
+    box-sizing: border-box;
+}
+
+.kr-titlebar .tb-button:hover {
+    background-color: var(--light);
+    cursor: pointer;
+}
+
 /* Login */
 .login {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    height: calc(100vh - 24px);
     gap: 1rem;
 }
 
@@ -284,7 +377,7 @@ body > *:not(.active) {
 }
 
 .exploit > .main > * {
-    height: calc(100vh - 3.5rem);
+    height: calc(100vh - 24px - 8px - 26px - 8px - 8px - 8px);
     border: 1px solid var(--lighter);
     border-radius: 5px;
     box-sizing: border-box;
