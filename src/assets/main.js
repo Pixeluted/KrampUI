@@ -13,7 +13,7 @@ let loginForm, loginToken, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorRefresh;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
-let prevConnected, prevActive, editorReady, activeTab;
+let prevConnected, prevActive, editorReady, activeTab, injecting, autoInject;
 
 function checkActive() {
   if (websocket && websocket.readyState === websocket.OPEN) {
@@ -192,6 +192,15 @@ async function setActiveTab(tab) {
   return await writeFile("kr-tab", tab);
 }
 
+async function getAutoInject() {
+  const text = await readFile("kr-auto-inject");
+  return text ? text === "true" : true;
+}
+
+async function setAutoInject(bool) {
+  return await writeFile("kr-auto-inject", bool.toString());
+}
+
 async function checkExecutable() {
   return await exists("kr-executable.exe");
 }
@@ -227,8 +236,6 @@ async function addScript(name) {
   const script = document.createElement("div");
 
   const dropdown = document.createElement("div");
-  const dropdownImport = document.createElement("div");
-  const dropdownImportIcon = document.createElement("i");
   const dropdownExport = document.createElement("div");
   const dropdownExportIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
@@ -387,12 +394,12 @@ async function askForExecutable() {
       await setExecutable(data);
       try { await deleteFile(selected, true); }
       catch {};
-      if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
+      if (!prevConnected && !injecting && prevActive) exploitInject.classList.remove("disabled");
       return true;
     }
   }
 
-  if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
+  if (!prevConnected && !injecting && prevActive) exploitInject.classList.remove("disabled");
   return false;
 }
 
@@ -401,19 +408,22 @@ async function isRobloxRunning() {
 }
 
 async function killRoblox() {
+  if (injecting) return;
   return await invoke("kill_process", { name: "RobloxPlayerBeta" });
 }
 
-async function inject() {
+async function inject(ignoreIfNoExecutable) {
   if (!await isRobloxRunning()) {
     return;
   }
 
   if (!await checkExecutable()) {
-    if (!await askForExecutable()) return;
+    if (ignoreIfNoExecutable || !await askForExecutable()) return;
   }
 
   try {
+    injecting = true;
+    exploitKill.classList.add("disabled");
     exploitInject.classList.add("disabled");
     exploitIndicator.style.backgroundColor = "var(--yellow)";
 
@@ -429,9 +439,11 @@ async function inject() {
     async function done() {
       if (isDone) return;
       isDone = true;
-      await killCheck();
+      injecting = false;
+      if (prevActive) exploitKill.classList.remove("disabled");
       if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
       exploitIndicator.style.backgroundColor = `var(--${prevConnected ? "green" : "red"})`;
+      await killCheck();
     }
 
     command.on("close", done);
@@ -746,12 +758,15 @@ function setupEditor() {
 async function checkRobloxActive() {
   const newActive = await isRobloxRunning();
   
-  if (prevActive !== newActive) {
+  if (prevActive !== newActive && websocket && websocket.readyState === websocket.OPEN && prevConnected !== undefined) {
     prevActive = newActive;
     
     if (newActive) {
-      if ((!prevConnected && prevConnected !== undefined) && websocket && websocket.readyState === websocket.OPEN) exploitInject.classList.remove("disabled");
-      exploitKill.classList.remove("disabled");
+      if (!prevConnected && injecting !== true) {
+        if (autoInject) inject(true);
+        else exploitInject.classList.remove("disabled");
+      }
+      if (!injecting) exploitKill.classList.remove("disabled");
     } else {
       exploitInject.classList.add("disabled");
       exploitKill.classList.add("disabled");
@@ -831,7 +846,23 @@ window.addEventListener("DOMContentLoaded", async function () {
   // Inject Button
   exploitInject.addEventListener("click", inject);
   document.querySelector(".kr-dropdown-select").addEventListener("click", askForExecutable);
-  document.querySelector(".kr-dropdown-delete").addEventListener("click", () => deleteFile("kr-executable.exe"));
+  document.querySelector(".kr-dropdown-delete").addEventListener("click", function () {
+    if (!injecting) deleteFile("kr-executable.exe");
+  });
+
+  // Auto Inject
+  async function checkAutoInject() {
+    document.querySelector(".kr-dropdown-automatic .fa-solid").className = `fa-solid fa-${autoInject ? "check" : "times"}`;
+  }
+
+  autoInject = await getAutoInject();
+  await checkAutoInject();
+
+  document.querySelector(".kr-dropdown-automatic").addEventListener("click", async function () {
+    autoInject = !autoInject;
+    await setAutoInject(autoInject);
+    await checkAutoInject();
+  });
 
   // Active
   checkRobloxActive();
