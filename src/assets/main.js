@@ -425,7 +425,6 @@ async function isRobloxRunning() {
 }
 
 async function killRoblox() {
-  if (injecting) return;
   return await invoke("kill_process", { name: "RobloxPlayerBeta" });
 }
 
@@ -440,7 +439,6 @@ async function inject(ignoreIfNoExecutable) {
 
   try {
     injecting = true;
-    exploitKill.classList.add("disabled");
     exploitInject.classList.add("disabled");
     exploitIndicator.style.backgroundColor = "var(--yellow)";
 
@@ -459,7 +457,6 @@ async function inject(ignoreIfNoExecutable) {
       if (isDone) return;
       isDone = true;
       injecting = false;
-      if (prevActive) exploitKill.classList.remove("disabled");
       if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
       exploitIndicator.style.backgroundColor = `var(--${prevConnected ? "green" : "red"})`;
       await killCheck();
@@ -789,7 +786,7 @@ async function checkRobloxActive() {
         if (autoInject) inject(true);
         else exploitInject.classList.remove("disabled");
       }
-      if (!injecting) exploitKill.classList.remove("disabled");
+      exploitKill.classList.remove("disabled");
     } else {
       exploitInject.classList.add("disabled");
       exploitKill.classList.add("disabled");
