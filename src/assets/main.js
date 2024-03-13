@@ -140,6 +140,14 @@ async function readFile(file, noDir) {
   }
 }
 
+async function renameFile(file, newFile) {
+  try {
+    return await fs.renameFile(file, newFile, { dir: fs.BaseDirectory.AppConfig });
+  } catch {
+    return null;
+  }
+}
+
 async function readBinary(file, noDir) {
   try {
     return await fs.readBinaryFile(file, { dir: noDir ? undefined : fs.BaseDirectory.AppConfig });
@@ -204,49 +212,115 @@ function onClick(element, cb) {
   });
 
   element.addEventListener("mouseup", function(e) {
-    if (down && !element.classList.contains("disabled")) {
-      if (e.button === 0) cb("left");
-      else if (e.button === 1) cb("middle");
-      else if (e.button === 2) cb("right");
+    if (down && !element?.classList?.contains("disabled")) {
+      if (e.button === 0) cb("left", e);
+      else if (e.button === 1) cb("middle", e);
+      else if (e.button === 2) cb("right", e);
     }
 
     down = false;
   });
 }
 
-function addScript(name) {
+async function addScript(name) {
+  const container = document.createElement("div");
   const script = document.createElement("div");
+
+  const dropdown = document.createElement("div");
+  const dropdownImport = document.createElement("div");
+  const dropdownImportIcon = document.createElement("i");
+  const dropdownExport = document.createElement("div");
+  const dropdownExportIcon = document.createElement("i");
+  const dropdownRename = document.createElement("div");
+  const dropdownRenameIcon = document.createElement("i");
+  const dropdownExecute = document.createElement("div");
+  const dropdownExecuteIcon = document.createElement("i");
+  const dropdownDelete = document.createElement("div");
+  const dropdownDeleteIcon = document.createElement("i");
+
+  container.className = "script-container kr-dropdown";
   script.className = "script";
   script.innerText = name;
-  script.addEventListener("mousedown", function (e) {
-    if (e.button === 1) e.preventDefault();
-  });
-  onClick(script, async function (button) {
-    const path = `scripts/${name}`;
-    const script = await readFile(path);
 
-    if (script && button === "left") editorSetText(script);
-    else if (button === "middle") {
-      deleteFile(path);
+  dropdown.className = "kr-dropdown-content";
+  dropdownExport.innerText = "Save";
+  dropdownExportIcon.className = "fa-solid fa-floppy-disk";
+  dropdownExecute.innerText = "Execute";
+  dropdownExecuteIcon.className = "fa-solid fa-scroll";
+  dropdownRename.innerText = "Rename";
+  dropdownRenameIcon.className = "fa-solid fa-font";
+  dropdownDelete.innerText = "Delete";
+  dropdownDeleteIcon.className = "fa-solid fa-delete-left";
+
+  dropdownExport.append(dropdownExportIcon);
+  dropdownExecute.append(dropdownExecuteIcon);
+  dropdownRename.append(dropdownRenameIcon);
+  dropdownDelete.append(dropdownDeleteIcon);
+  dropdown.append(dropdownExport);
+  dropdown.append(dropdownExecute);
+  dropdown.append(dropdownRename);
+  dropdown.append(dropdownDelete);
+
+  const path = `scripts/${name}`;
+  const extension = name.split(".").pop();
+  const text = await readFile(path);
+
+  script.addEventListener("click", function () {
+    editorSetText(text);
+  });
+
+  dropdownExport.addEventListener("click", async function () {
+    const text = editorGetText() || "";
+    await writeFile(path, text);
+    loadScripts(true);
+  });
+
+  dropdownExecute.addEventListener("click", function () {
+    execute(text);
+  });
+
+  dropdownRename.addEventListener("click", async function () {
+    let defaultName = name.split(".");
+    defaultName.pop();
+
+    const newName = prompt("Rename Script", defaultName);
+
+    if (newName && newName !== "") {
+      await renameFile(path, `scripts/${newName}.${extension}`);
       loadScripts();
     }
-    else if (script && button === "right") execute(script);
   });
-  exploitScripts.appendChild(script);
+
+  dropdownDelete.addEventListener("click", async function () {
+    await deleteFile(path);
+    loadScripts();
+  });
+
+  container.append(script);
+  container.append(dropdown);
+  exploitScripts.appendChild(container);
 }
 
-function populateScripts(scripts) {
+let prevScripts;
+
+async function populateScripts(scripts, force) {
+  if (!force && scripts.join(",") === prevScripts) return;
+  prevScripts = scripts.join(",");
+
   emptyScripts();
-  scripts.forEach(addScript);
+  
+  for (const script of scripts) {
+    await addScript(script);
+  }
 }
 
-async function loadScripts() {
+async function loadScripts(force) {
   if (!await exists("scripts")) await createDirectory("scripts", true);
   const scripts = await readDirectory("scripts");
   populateScripts(scripts
     .filter((s) => s.name).map((s) => s.name)
     .filter((s) => [".lua", ".txt"].some((e) => s.endsWith(e)))
-    .filter((s) => s.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase())));
+    .filter((s) => s.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase())), force);
 }
 
 function emptyTabs() {
@@ -438,6 +512,7 @@ async function _export() {
     const text = editorGetText() || "";
     await writeFile(selected, text);
     exploitExport.classList.remove("disabled");
+    loadScripts();
     return true;
   }
 
@@ -745,14 +820,6 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitClear = document.querySelector(".kr-clear");
   exploitKill = document.querySelector(".kr-kill");
   exploitLogout = document.querySelector(".kr-logout");
-  onClick(exploitInject, async function (button) {
-    if (button === "left") await inject();
-    else if (button === "middle") {
-      try { await deleteFile("kr-executable.exe"); }
-      catch { };
-    }
-    else if (button === "right") await askForExecutable();
-  });
   exploitExecute.addEventListener("click", execute);
   exploitImport.addEventListener("click", _import);
   exploitExport.addEventListener("click", _export);
@@ -761,7 +828,46 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitLogout.addEventListener("click", logout);
   exploitScriptsFolder.addEventListener("click", openFolder);
 
+  // Inject Button
+  exploitInject.addEventListener("click", inject);
+  document.querySelector(".kr-dropdown-select").addEventListener("click", askForExecutable);
+  document.querySelector(".kr-dropdown-delete").addEventListener("click", () => deleteFile("kr-executable.exe"));
+
   // Active
-  await checkRobloxActive();
+  checkRobloxActive();
   setInterval(checkRobloxActive, 1000);
+
+  // Dropdowns
+  function findDropdown(e) {
+    if (e.classList.contains("kr-dropdown")) return e;
+    return e.parentElement && findDropdown(e.parentElement);
+  }
+
+  onClick(window, function(button, e) {
+    const foundDropdown = findDropdown(e.target);
+    const foundDropdownContent = foundDropdown?.querySelector(".kr-dropdown-content");
+    const dropdowns = document.querySelectorAll(".kr-dropdown");
+
+    for (const dropdown of dropdowns) {
+      if (dropdown !== foundDropdown) dropdown.querySelector(".kr-dropdown-content.active")?.classList.remove("active");
+    }
+
+    if (e.target.parentElement === foundDropdownContent) {
+      foundDropdownContent.classList.remove("active");
+    } else if (foundDropdownContent && !foundDropdown.querySelector(".disabled")) {
+      if (button === "right") foundDropdownContent.classList.toggle("active");
+      else if (button === "left") foundDropdownContent.classList.remove("active");
+
+      if (foundDropdownContent.classList.contains("active")) {
+        const dropdownWidth = foundDropdownContent.clientWidth;
+        const dropdownHeight = foundDropdownContent.clientHeight;
+        const offset = 10;
+        const offsetX = (e.clientX + dropdownWidth / 2 > window.innerWidth) ? window.innerWidth - (dropdownWidth + offset) : e.clientX - dropdownWidth / 2;
+        const offsetY = (e.clientY + dropdownHeight + offset > window.innerHeight) ? window.innerHeight - (dropdownHeight + offset) : e.clientY + offset;
+
+        foundDropdownContent.style.top = `${offsetY}px`;
+        foundDropdownContent.style.left = `${offsetX}px`;
+      }
+    }
+  });
 });

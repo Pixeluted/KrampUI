@@ -1,19 +1,9 @@
 ## 💻 - KrampUI
-Simple and lightweight frontend for Ro-Exec/Krampus. Allowing you to easily manage all your scripts and giving you multiple tabs to maximize your workflow.
+Simple and lightweight frontend for Krampus/Ro-Exec. Allowing you to easily manage all your scripts and giving you multiple tabs to maximize your workflow.
 
 <div align="center">
     <img src="./assets/showcase.png" width="500"/>
 </div>
-
-## ⌨️ - Script Shortcuts
-- `Left Click` - Loads the script into the editor.
-- `Middle Click` - Deletes the script from your computer.
-- `Right Click` - Executes the script in Ro-Exec.
-
-## ⌨️ - Inject Shortcuts
-- `Left Click` - Either asks for executable or injects.
-- `Middle Click` - Deletes the executable if already stored.
-- `Right Click` - Allows you to set executable again.
 
 ## 📋 - Download
 - [Standalone](https://git.snipcola.com/snipcola/KrampUI/releases/download/latest/krampui.exe)
@@ -26,4 +16,4 @@ Simple and lightweight frontend for Ro-Exec/Krampus. Allowing you to easily mana
 4. Access the executable at `src-tauri/target/release` or `src-tauri/target/debug`.
 
 ## ⚠️ - Disclaimer
-This repository does not contain Ro-Exec, nor does this project allow you to get it for free. You will need to purchase Ro-Exec first, so you can use the login token with this application.
+This repository does not contain Krampus, nor does this project allow you to get it for free. You will need to purchase Krampus first, so you can use the login token with this application.

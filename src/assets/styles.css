@@ -95,6 +95,49 @@ body > *:not(.active) {
     -webkit-user-drag: none;
 }
 
+/* Dropdown */
+.kr-dropdown-content {
+    display: none;
+    position: absolute;
+    z-index: 1;
+    background-color: var(--dark);
+    border: 1px solid var(--lighter);
+    border-radius: 5px;
+    box-sizing: border-box;
+    overflow: hidden;
+    user-select: none;
+}
+
+.kr-dropdown-content.active {
+    display: block;
+}
+
+.kr-dropdown-content > div {
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    flex-direction: row-reverse;
+}
+
+.kr-dropdown-content > div > i {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 1rem !important;
+}
+
+.kr-dropdown-content > div:not(:first-child) {
+    border-top: 1px solid var(--lighter);
+}
+
+.kr-dropdown-content > div:hover {
+    cursor: pointer;
+    background-color: var(--lighter);
+}
+
 /* Login */
 .login {
     display: flex;
@@ -172,6 +215,18 @@ body > *:not(.active) {
     width: 100%;
 }
 
+.exploit .bar .buttons > *:not(.seperator) {
+    flex-grow: 1;
+}
+
+.exploit .bar .buttons .kr-dropdown {
+    margin-right: -1px;
+}
+
+.exploit .bar .buttons .kr-dropdown .kr-button {
+    width: 100%;
+}
+
 .exploit .bar .buttons .kr-button {
     margin-left: -1px;
     border: 0.25px solid var(--lighter);
@@ -181,7 +236,6 @@ body > *:not(.active) {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
     gap: 0.5rem;
 }
 
@@ -326,7 +380,11 @@ body > *:not(.active) {
     height: 100%;
 }
 
-.exploit > .main > .container-2 > .scripts > .script {
+.exploit > .main > .container-2 > .scripts > .script-container {
+    width: 100%;
+}
+
+.exploit > .main > .container-2 > .scripts > .script-container > .script {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -334,7 +392,7 @@ body > *:not(.active) {
     font-size: 0.8rem;
 }
 
-.exploit > .main > .container-2 > .scripts > .script:hover {
+.exploit > .main > .container-2 > .scripts > .script-container > .script:hover {
     cursor: pointer;
     background-color: var(--lighter);
 }
