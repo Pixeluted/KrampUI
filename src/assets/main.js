@@ -448,12 +448,14 @@ async function inject(ignoreIfNoExecutable) {
 
     let isDone;
     let child;
+    let injInterval;
 
     async function killCheck() {
       if (child) await child.kill();
     }
 
     async function done() {
+      if (injInterval) clearInterval(injInterval);
       if (isDone) return;
       isDone = true;
       injecting = false;
@@ -462,6 +464,10 @@ async function inject(ignoreIfNoExecutable) {
       exploitIndicator.style.backgroundColor = `var(--${prevConnected ? "green" : "red"})`;
       await killCheck();
     }
+
+    injInterval = setInterval(function () {
+      if (!prevActive && !isDone) done();
+    }, 100);
 
     command.on("close", done);
     command.once("error", done);
