@@ -123,9 +123,9 @@ async function createDirectory(directory, recursive) {
   }
 }
 
-async function readDirectory(directory) {
+async function readDirectory(directory, recursive) {
   try {
-    const entries = await fs.readDir(directory, { dir: fs.BaseDirectory.AppConfig });
+    const entries = await fs.readDir(directory, { dir: fs.BaseDirectory.AppConfig, recursive });
     return entries;
   } catch {
     return [];
@@ -191,6 +191,15 @@ async function deleteFile(file, noDir) {
   }
 }
 
+async function deleteDirectory(directory, recursive) {
+  try {
+    await fs.removeDir(directory, { dir: fs.BaseDirectory.AppConfig, recursive });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function getToken() {
   return await readFile("kr-token");
 }
@@ -226,8 +235,14 @@ async function setExecutable(data) {
   return await writeBinary("kr-executable.exe", data);
 }
 
-function emptyScripts() {
-  exploitScripts.innerHTML = "";
+async function emptyScripts() {
+  const scripts = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container:has(> .script:not(.folder))"));
+  await Promise.all(scripts.map((s) => s.remove()));
+}
+
+async function emptyFolders() {
+  const folders = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container:has(> .script.folder)"));
+  await Promise.all(folders.map((f) => f.remove()));
 }
 
 function onClick(element, cb) {
@@ -248,9 +263,159 @@ function onClick(element, cb) {
   });
 }
 
-async function addScript(name) {
+function focusAtEnd(elem) {
+  const selection = window.getSelection();
+  selection.selectAllChildren(elem);
+  selection.collapseToEnd();
+}
+
+function getSelection(elem) {
+  const selection = window.getSelection();
+  const range = selection.getRangeAt(0);
+
+  if (range.commonAncestorContainer.parentNode == elem) {
+    return {
+      startOffset: range.startOffset,
+      endOffset: range.endOffset
+    };
+  } else {
+    return null;
+  }
+}
+
+function setSelection(elem, startOffset, endOffset) {
+  const selection = window.getSelection();
+  const range = document.createRange();
+  
+  startOffset = Math.min(startOffset, elem.textContent.length);
+  endOffset = Math.min(endOffset, elem.textContent.length);
+  endOffset = Math.max(endOffset, startOffset);
+
+  range.setStart(elem.firstChild, startOffset);
+  range.setEnd(elem.firstChild, endOffset);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function changeContentEditableText(elem, text) {
+  const selection = getSelection(elem);
+  elem.innerText = text;
+  if (selection !== null) setSelection(elem, selection.startOffset, selection.endOffset);
+}
+
+let expandedFolders = new Map();
+
+function isSearching() {
+  return (exploitScriptsSearch.value && exploitScriptsSearch.value !== "");
+}
+
+function getExpanded(name) {
+  return isSearching() || expandedFolders.get(name);
+}
+
+function setExpanded(name, val) {
+  expandedFolders.set(name, val);
+}
+
+function removeExpanded(name) {
+  expandedFolders.delete(name);
+}
+
+async function addFolder({ name, path, scripts }) {
+  const container = document.createElement("div");
+  const folder = document.createElement("div");
+  const folderScripts = document.createElement("div");
+  const icon = document.createElement("i");
+
+  const dropdown = document.createElement("div");
+  const dropdownRename = document.createElement("div");
+  const dropdownRenameIcon = document.createElement("i");
+  const dropdownDelete = document.createElement("div");
+  const dropdownDeleteIcon = document.createElement("i");
+
+  container.className = "script-container kr-dropdown";
+  folder.className = "script folder";
+  folder.spellcheck = false;
+  folder.innerText = name;
+  icon.className = "fa-solid fa-folder";
+  folder.append(icon);
+  folderScripts.className = "folder-scripts";
+  if (getExpanded(name)) folderScripts.classList.add("expanded");
+
+  dropdown.className = "kr-dropdown-content";
+  dropdownRename.innerText = "Rename";
+  dropdownRenameIcon.className = "fa-solid fa-font";
+  dropdownDelete.innerText = "Delete";
+  dropdownDeleteIcon.className = "fa-solid fa-delete-left";
+
+  dropdownRename.append(dropdownRenameIcon);
+  dropdownDelete.append(dropdownDeleteIcon);
+  dropdown.append(dropdownRename);
+  dropdown.append(dropdownDelete);
+
+  scripts.forEach(async (s) => await addScript(s, { name, element: folderScripts }));
+
+  folder.addEventListener("click", function () {
+    if (folder.contentEditable !== "true" && !isSearching()) {
+      const expanded = !getExpanded(name);
+      setExpanded(name, expanded);
+      folderScripts.classList.toggle("expanded", expanded);
+    }
+  });
+
+  folder.addEventListener("input", function () {
+    if (folder.contentEditable === "true") changeContentEditableText(folder, folder.innerText.replace(/[<>:"/\\|?*]/g, ""));
+  });
+
+  async function enter(e) {
+    if (folder.contentEditable === "true") {
+      if (e) e.preventDefault();
+      dropdown.classList.remove("disabled");
+      folder.contentEditable = false;
+      folder.innerText = folder.innerText.trim();
+
+      if (folder.innerText.trim() === "") folder.innerText = name;
+
+      folder.append(icon);
+      await renameFile(path, `scripts/${folder.innerText}`);
+      setExpanded(folder.innerText, getExpanded(name));
+      removeExpanded(name);
+      loadScripts();
+    }
+  }
+
+  folder.addEventListener("blur", enter);
+  folder.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") enter();
+  });
+
+  dropdownRename.addEventListener("click", async function () {
+    dropdown.classList.add("disabled");
+    icon.remove();
+    folder.contentEditable = true;
+    folder.focus();
+    focusAtEnd(folder);
+  });
+
+  dropdownDelete.addEventListener("click", async function () {
+    await deleteDirectory(path, true);
+    removeExpanded(name);
+    loadScripts();
+  });
+
+  container.append(folder);
+  container.append(folderScripts);
+  container.append(dropdown);
+
+  const script = exploitScripts.querySelector(".script-container:has(.script:not(.folder)");
+  if (script) exploitScripts.insertBefore(container, script);
+  else exploitScripts.append(container);
+}
+
+async function addScript({ name, path }, folder) {
   const container = document.createElement("div");
   const script = document.createElement("div");
+  const icon = document.createElement("i");
 
   const dropdown = document.createElement("div");
   const dropdownExecute = document.createElement("div");
@@ -264,7 +429,10 @@ async function addScript(name) {
 
   container.className = "script-container kr-dropdown";
   script.className = "script";
+  script.spellcheck = false;
   script.innerText = name;
+  icon.className = "fa-solid fa-file";
+  script.append(icon);
 
   dropdown.className = "kr-dropdown-content";
   dropdownExecute.innerText = "Execute";
@@ -285,12 +453,11 @@ async function addScript(name) {
   dropdown.append(dropdownRename);
   dropdown.append(dropdownDelete);
 
-  const path = `scripts/${name}`;
   const extension = name.split(".").pop();
-  const text = await readFile(path);
 
-  script.addEventListener("click", function () {
-    editorSetText(text);
+  script.addEventListener("click", async function () {
+    const text = await readFile(path);
+    if (script.contentEditable !== "true") editorSetText(text);
   });
 
   dropdownExport.addEventListener("click", async function () {
@@ -299,20 +466,53 @@ async function addScript(name) {
     loadScripts(true);
   });
 
-  dropdownExecute.addEventListener("click", function () {
+  dropdownExecute.addEventListener("click", async function () {
+    const text = await readFile(path);
     execute(text);
   });
 
-  dropdownRename.addEventListener("click", async function () {
-    let defaultName = name.split(".");
-    defaultName.pop();
+  script.addEventListener("input", function () {
+    if (script.contentEditable === "true") changeContentEditableText(script, script.innerText.replace(/[^\w\s.-]/g, ""));
+  });
 
-    const newName = prompt("Rename Script", defaultName);
+  async function enter(e) {
+    if (script.contentEditable === "true") {
+      if (e) e.preventDefault();
+      dropdown.classList.remove("disabled");
+      script.contentEditable = false;
+      script.innerText = script.innerText.trim();
 
-    if (newName && newName !== "") {
-      await renameFile(path, `scripts/${newName}.${extension}`);
+      if (!script.innerText.toLowerCase().endsWith(".lua") && !script.innerText.toLowerCase().endsWith(".txt")) {
+        script.innerText = `${script.innerText}.${extension}`;
+      }
+
+      let defaultName = script.innerText.split(".");
+      defaultName.pop();
+      defaultName = defaultName.join("");
+
+      if (defaultName.trim() === "") script.innerText = name;
+
+      script.append(icon);
+      await renameFile(path, folder ? `scripts/${folder.name}/${script.innerText}` : `scripts/${script.innerText}`);
       loadScripts();
     }
+  }
+
+  script.addEventListener("blur", enter);
+  script.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") enter();
+  });
+
+  dropdownRename.addEventListener("click", async function () {
+    dropdown.classList.add("disabled");
+    icon.remove();
+    let defaultName = script.innerText.split(".");
+    defaultName.pop();
+    defaultName = defaultName.join("");
+    script.contentEditable = true;
+    script.innerText = defaultName;
+    script.focus();
+    focusAtEnd(script);
   });
 
   dropdownDelete.addEventListener("click", async function () {
@@ -322,29 +522,59 @@ async function addScript(name) {
 
   container.append(script);
   container.append(dropdown);
-  exploitScripts.appendChild(container);
+  (folder ? folder.element : exploitScripts).append(container);
 }
 
 let prevScripts;
+let prevFolders;
+
+function parseScripts(files) {
+  return files
+    .filter((s) => s.path && s.name)
+    .filter((s) => [".lua", ".txt"].some((e) => s.name.endsWith(e)))
+    .filter((s) => s.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function parseFolders(files) {
+  return files
+    .filter((f) => f.path && f.name && f.children)
+    .filter((f) => {
+      const scripts = parseScripts(f.children);
+      return f.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()) || scripts.some((s) => s.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()));
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
 
 async function populateScripts(scripts, force) {
-  if (!force && scripts.join(",") === prevScripts) return;
-  prevScripts = scripts.join(",");
-
+  const scriptNames = scripts.map((s) => s.name);
+  if (!force && scriptNames.join(",") === prevScripts) return;
+  prevScripts = scriptNames.join(",");
   emptyScripts();
   
-  for (const script of scripts) {
-    await addScript(script);
-  }
+  scripts.forEach(async (s) => await addScript(s));
+}
+
+async function populateFolders(folders, force) {
+  const folderNames = folders.map((f) => f.name);
+  const folderScripts = folders.map((f) => parseScripts(f.children)).flat();
+  const folderScriptNames = folderScripts.map((s) => s.name);
+  const finalNames = `${folderNames},${folderScriptNames}`;
+  if (!force && finalNames === prevFolders) return;
+  prevFolders = finalNames;
+  emptyFolders();
+
+  folders.forEach(async ({ name, path, children }) => await addFolder({ name, path, scripts: parseScripts(children) }));
 }
 
 async function loadScripts(force) {
   if (!await exists("scripts")) await createDirectory("scripts", true);
-  const scripts = await readDirectory("scripts");
-  populateScripts(scripts
-    .filter((s) => s.name).map((s) => s.name)
-    .filter((s) => [".lua", ".txt"].some((e) => s.endsWith(e)))
-    .filter((s) => s.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase())), force);
+  const files = await readDirectory("scripts", true);
+  const scripts = parseScripts(files);
+  const folders = parseFolders(files);
+
+  await populateFolders(folders, force);
+  await populateScripts(scripts, force);
 }
 
 function emptyTabs() {
@@ -359,7 +589,7 @@ function addTab(title) {
     await setActiveTab(title);
     await loadTabs();
   });
-  exploitTabs.appendChild(tab);
+  exploitTabs.append(tab);
 }
 
 function populateTabs(tabs) {
@@ -908,14 +1138,14 @@ window.addEventListener("DOMContentLoaded", async function () {
     return e.parentElement && findDropdown(e.parentElement);
   }
 
-  onClick(window, function(button, e) {
+  onClick(window, async function(button, e) {
     const foundDropdown = findDropdown(e.target);
-    const foundDropdownContent = foundDropdown?.querySelector(".kr-dropdown-content");
-    const dropdowns = document.querySelectorAll(".kr-dropdown");
+    const foundDropdownContent = foundDropdown && Array.from(foundDropdown?.querySelectorAll(".kr-dropdown-content")).find((d) => d.parentElement === foundDropdown);
+    const dropdowns = Array.from(document.querySelectorAll(".kr-dropdown"));
 
-    for (const dropdown of dropdowns) {
-      if (dropdown !== foundDropdown) dropdown.querySelector(".kr-dropdown-content.active")?.classList.remove("active");
-    }
+    await Promise.all(dropdowns.map((d) => {
+      if (d !== foundDropdown) d.querySelector(".kr-dropdown-content.active")?.classList.remove("active");
+    }));
 
     if (e.target.parentElement === foundDropdownContent) {
       foundDropdownContent.classList.remove("active");

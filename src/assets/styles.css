@@ -19,6 +19,7 @@
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -31,6 +32,10 @@
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--lightest);
+}
+
+::-webkit-scrollbar-corner {
+    background-color: transparent;
 }
 
 /* Global */
@@ -115,7 +120,7 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
 .kr-dropdown-content {
     display: none;
     position: absolute;
-    z-index: 1;
+    z-index: 5;
     background-color: var(--dark);
     border: 1px solid var(--lighter);
     border-radius: 5px;
@@ -124,7 +129,7 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
     user-select: none;
 }
 
-.kr-dropdown-content.active {
+.kr-dropdown-content.active:not(.disabled) {
     display: block;
 }
 
@@ -463,23 +468,56 @@ body.kr-maximized .kr-titlebar {
     box-sizing: border-box;
     user-select: none;
     -webkit-user-drag: none;
-    overflow-y: auto;
+    overflow: auto;
     height: 100%;
 }
 
 .exploit > .main > .container-2 > .scripts > .script-container {
-    width: 100%;
+    height: fit-content;
+    width: fit-content;
+    margin: 0.1rem;
 }
 
-.exploit > .main > .container-2 > .scripts > .script-container > .script {
+.exploit > .main > .container-2 > .scripts > .script-container .folder-scripts:not(.expanded) {
+    display: none;
+}
+
+.exploit > .main > .container-2 > .scripts > .script-container .folder-scripts .script {
+    margin-left: 1rem;
+}
+
+.exploit > .main > .container-2 > .scripts > .script-container .script {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    flex-direction: row-reverse;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     padding: 0.25rem;
     font-size: 0.8rem;
+    width: fit-content;
+    border-radius: 5px;
+    gap: 0.5rem;
 }
 
-.exploit > .main > .container-2 > .scripts > .script-container > .script:hover {
+.exploit > .main > .container-2 > .scripts > .script-container .script > i {
+    display: flex;
+    width: 0.75rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.exploit > .main > .container-2 > .scripts .script-container .script[contentEditable="true"] {
+    border: none;
+    outline: none;
+    background-color: var(--lighter);
+    text-overflow: initial;
+}
+
+.exploit > .main > .container-2 > .scripts .script-container:has(> .kr-dropdown-content.active) > .script {
+    background-color: var(--lighter);
+}
+
+.exploit > .main > .container-2 > .scripts .script-container .script:hover {
     cursor: pointer;
     background-color: var(--lighter);
 }
