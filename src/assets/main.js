@@ -253,12 +253,12 @@ async function addScript(name) {
   const script = document.createElement("div");
 
   const dropdown = document.createElement("div");
+  const dropdownExecute = document.createElement("div");
+  const dropdownExecuteIcon = document.createElement("i");
   const dropdownExport = document.createElement("div");
   const dropdownExportIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
   const dropdownRenameIcon = document.createElement("i");
-  const dropdownExecute = document.createElement("div");
-  const dropdownExecuteIcon = document.createElement("i");
   const dropdownDelete = document.createElement("div");
   const dropdownDeleteIcon = document.createElement("i");
 
@@ -267,21 +267,21 @@ async function addScript(name) {
   script.innerText = name;
 
   dropdown.className = "kr-dropdown-content";
-  dropdownExport.innerText = "Save";
-  dropdownExportIcon.className = "fa-solid fa-floppy-disk";
   dropdownExecute.innerText = "Execute";
   dropdownExecuteIcon.className = "fa-solid fa-scroll";
+  dropdownExport.innerText = "Export";
+  dropdownExportIcon.className = "fa-solid fa-floppy-disk";
   dropdownRename.innerText = "Rename";
   dropdownRenameIcon.className = "fa-solid fa-font";
   dropdownDelete.innerText = "Delete";
   dropdownDeleteIcon.className = "fa-solid fa-delete-left";
 
-  dropdownExport.append(dropdownExportIcon);
   dropdownExecute.append(dropdownExecuteIcon);
+  dropdownExport.append(dropdownExportIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
-  dropdown.append(dropdownExport);
   dropdown.append(dropdownExecute);
+  dropdown.append(dropdownExport);
   dropdown.append(dropdownRename);
   dropdown.append(dropdownDelete);
 
