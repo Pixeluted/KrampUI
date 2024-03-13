@@ -854,7 +854,7 @@ window.addEventListener("DOMContentLoaded", async function () {
 
     if (e.target.parentElement === foundDropdownContent) {
       foundDropdownContent.classList.remove("active");
-    } else if (foundDropdownContent && !foundDropdown.querySelector(".disabled")) {
+    } else if (foundDropdownContent) {
       if (button === "right") foundDropdownContent.classList.toggle("active");
       else if (button === "left") foundDropdownContent.classList.remove("active");
 
