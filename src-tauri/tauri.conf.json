@@ -21,10 +21,10 @@
     "windows": [
       {
         "title": "KrampUI",
-        "minWidth": 500,
+        "minWidth": 400,
         "minHeight": 200,
-        "width": 725,
-        "height": 425,
+        "width": 650,
+        "height": 375,
         "resizable": true,
         "maximizable": true,
         "alwaysOnTop": true,

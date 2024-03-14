@@ -83,7 +83,7 @@ function initialize() {
           prevConnected = connected;
         }
 
-        exploitIndicator.style.backgroundColor = `var(--${connected ? "green" : "red"})`;
+        exploitIndicator.style.color = `var(--${connected ? "green" : "text"})`;
 
         if (connected) {
           exploitExecute.classList.remove("disabled");
@@ -771,7 +771,7 @@ async function inject(ignoreIfNoExecutable) {
   try {
     injecting = true;
     exploitInject.classList.add("disabled");
-    exploitIndicator.style.backgroundColor = "var(--yellow)";
+    exploitIndicator.style.color = "var(--yellow)";
 
     const command = new Command("kr-inject", [], { cwd: await path.appConfigDir() });
 
@@ -789,7 +789,7 @@ async function inject(ignoreIfNoExecutable) {
       isDone = true;
       injecting = false;
       if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
-      exploitIndicator.style.backgroundColor = `var(--${prevConnected ? "green" : "red"})`;
+      exploitIndicator.style.color = `var(--${prevConnected ? "green" : "text"})`;
       await killCheck();
     }
 
@@ -942,7 +942,7 @@ function setupEditor() {
     editor = monaco.editor.create(exploitEditor, {
       language: "lua",
       theme: "dark",
-      fontFamily: "Raleway",
+      fontFamily: "Source Sans 3",
       fontSize: 13,
       acceptSuggestionOnEnter: "smart",
       suggestOnTriggerCharacters: true,
@@ -1176,7 +1176,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Exploit
-  exploitIndicator = document.querySelector(".exploit .title .indicator");
+  exploitIndicator = document.querySelector(".kr-titlebar .brand .text");
   exploitTabs = document.querySelector(".exploit .main .container .tabs");
   exploitEditor = document.querySelector(".exploit .main .container .editor");
   exploitScripts = document.querySelector(".exploit .main .container-2 .scripts");

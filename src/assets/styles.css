@@ -1,6 +1,6 @@
 /* External */
 @import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css);
-@import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap');
 
 /* Variables */
 :root {
@@ -75,9 +75,9 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
 
 * {
     color: var(--text);
-    font-family: "Raleway", sans-serif;
+    font-family: "Source Sans 3", sans-serif;
     font-optical-sizing: auto;
-    font-weight: 400;
+    font-weight: 350;
     font-style: normal;
     margin: 0;
 }
@@ -282,26 +282,6 @@ body.kr-maximized .kr-titlebar {
     gap: 0.5rem;
 }
 
-.exploit .bar .title {
-    display: flex;
-    border: 0.5px solid var(--lighter);
-    padding: 0.25rem 0.5rem;
-    box-sizing: border-box;
-    width: fit-content;
-    border-radius: 5px;
-    gap: 0.5rem;
-    align-items: center;
-    user-select: none;
-    -webkit-user-drag: none;
-}
-
-.exploit .bar .title .indicator {
-    width: 0.75rem;
-    height: 0.75rem;
-    background-color: var(--lightest);
-    border-radius: 100%;
-}
-
 .exploit .bar .buttons {
     display: flex;
     width: 100%;
@@ -324,14 +304,15 @@ body.kr-maximized .kr-titlebar {
     border: 0.25px solid var(--lighter);
     box-sizing: border-box;
     background-color: var(--dark);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0.35rem 0.5rem;
     gap: 0.5rem;
 }
 
-@media only screen and (max-width: 705px) {
+@media only screen and (max-width: 600px) {
     .exploit .bar .buttons .kr-button .text {
         display: none;
     }
@@ -376,7 +357,7 @@ body.kr-maximized .kr-titlebar {
 }
 
 .exploit > .main > * {
-    height: calc(100vh - 24px - 8px - 26px - 8px - 8px - 8px);
+    height: calc(100vh - 24px - 28px - 24px - 4px);
     border: 1px solid var(--lighter);
     border-radius: 5px;
     box-sizing: border-box;
@@ -405,7 +386,7 @@ body.kr-maximized .kr-titlebar {
     background-color: var(--light);
     border: 1px solid var(--lighter);
     padding: 0.25rem;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     border-radius: 5px;
     box-sizing: border-box;
     user-select: none;
@@ -437,21 +418,25 @@ body.kr-maximized .kr-titlebar {
 
 .exploit > .main > .container-2 > .script-header {
     display: flex;
-    align-items: center;
     box-sizing: border-box;
     gap: 0.25rem;
 }
 
 .exploit > .main > .container-2 > .script-header > .search {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
     box-sizing: border-box;
     width: 100%;
+    height: fit-content;
 }
 
 .exploit > .main > .container-2 > .script-header > .kr-button {
-    font-size: 0.75rem;
-    padding: 0.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    padding: 0.25rem;
+    width: 1.75rem;
     box-sizing: border-box;
     background-color: var(--light);
     border: 1px solid var(--lighter);
@@ -460,7 +445,6 @@ body.kr-maximized .kr-titlebar {
 .exploit > .main > .container-2 > .script-header > .kr-button:hover {
     background-color: var(--lighter);
 }
-
 .exploit > .main > .container-2 > .scripts {
     border-radius: 5px;
     background-color: var(--light);
@@ -475,7 +459,7 @@ body.kr-maximized .kr-titlebar {
 .exploit > .main > .container-2 > .scripts > .script-container {
     height: fit-content;
     width: fit-content;
-    margin: 0.1rem;
+    margin: 0.15rem;
 }
 
 .exploit > .main > .container-2 > .scripts > .script-container .folder-scripts:not(.expanded) {
@@ -483,7 +467,7 @@ body.kr-maximized .kr-titlebar {
 }
 
 .exploit > .main > .container-2 > .scripts > .script-container .folder-scripts .script {
-    margin-left: 0.5rem;
+    margin-left: 0.25rem;
 }
 
 .exploit > .main > .container-2 > .scripts > .script-container .script {
@@ -492,11 +476,11 @@ body.kr-maximized .kr-titlebar {
     justify-content: start;
     flex-direction: row-reverse;
     white-space: nowrap;
-    padding: 0.25rem;
-    font-size: 0.8rem;
+    padding: 0.2rem;
+    font-size: 0.75rem;
     width: fit-content;
     border-radius: 5px;
-    gap: 0.5rem;
+    gap: 0.3rem;
 }
 
 .exploit > .main > .container-2 > .scripts > .script-container:last-child {
