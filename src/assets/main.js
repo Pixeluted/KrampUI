@@ -947,7 +947,8 @@ function setupEditor() {
       acceptSuggestionOnEnter: "smart",
       suggestOnTriggerCharacters: true,
       suggestSelection: "recentlyUsed",
-      folding: false,
+      folding: true,
+      autoIndent: true,
       wordBasedSuggestions : true,
       scrollbar: {
         verticalHasArrows: true,
