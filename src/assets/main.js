@@ -328,6 +328,8 @@ async function addFolder({ name, path, scripts }) {
   const icon = document.createElement("i");
 
   const dropdown = document.createElement("div");
+  const dropdownNewFile = document.createElement("div");
+  const dropdownNewFileIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
   const dropdownRenameIcon = document.createElement("i");
   const dropdownDelete = document.createElement("div");
@@ -343,13 +345,17 @@ async function addFolder({ name, path, scripts }) {
   if (getExpanded(name)) folderScripts.classList.add("expanded");
 
   dropdown.className = "kr-dropdown-content";
+  dropdownNewFile.innerText = "New File";
+  dropdownNewFileIcon.className = "fa-solid fa-file";
   dropdownRename.innerText = "Rename";
   dropdownRenameIcon.className = "fa-solid fa-font";
   dropdownDelete.innerText = "Delete";
   dropdownDeleteIcon.className = "fa-solid fa-delete-left";
 
+  dropdownNewFile.append(dropdownNewFileIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
+  dropdown.append(dropdownNewFile);
   dropdown.append(dropdownRename);
   dropdown.append(dropdownDelete);
 
@@ -389,6 +395,12 @@ async function addFolder({ name, path, scripts }) {
     if (e.key === "Enter") enter();
   });
 
+  dropdownNewFile.addEventListener("click", async function () {
+    await newFile(name);
+    setExpanded(name, true);
+    folderScripts.classList.add("expanded");
+  });
+
   dropdownRename.addEventListener("click", async function () {
     dropdown.classList.add("disabled");
     icon.remove();
@@ -410,6 +422,40 @@ async function addFolder({ name, path, scripts }) {
   const script = exploitScripts.querySelector(".script-container:has(.script:not(.folder)");
   if (script) exploitScripts.insertBefore(container, script);
   else exploitScripts.append(container);
+}
+
+async function getFilePath(folder) {
+  let number = 0;
+
+  async function get() {
+    number = number + 1;
+    const path = folder ? `scripts/${folder}/Script ${number}.lua` : `scripts/Script ${number}.lua`;
+    return (await exists(path)) ? await get() : path;
+  }
+
+  return await get();
+}
+
+async function getFolderPath() {
+  let number = 0;
+
+  async function get() {
+    number = number + 1;
+    const path = `scripts/Folder ${number}`;
+    return (await exists(path)) ? await get() : path;
+  }
+
+  return await get();
+}
+
+async function newFile(folder) {
+  await writeFile(await getFilePath(folder), "");
+  loadScripts();
+}
+
+async function newFolder() {
+  await createDirectory(await getFolderPath(), true);
+  loadScripts();
 }
 
 async function addScript({ name, path }, folder) {
@@ -1083,13 +1129,10 @@ window.addEventListener("DOMContentLoaded", async function () {
   // Prevent Events
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", function(e) {
-    console.log(e.key);
-    // Refresh
     if (e.key === "F5" || (e.ctrlKey && e.key === "r") || (e.metaKey && e.key === "r")) {
       e.preventDefault();
     }
 
-    // Find
     if (e.key === "F3" || (e.ctrlKey && e.key === "f") || (e.metaKey && e.key === "f")) {
       e.preventDefault();
     }
@@ -1141,9 +1184,12 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitScriptsFolder = document.querySelector(".kr-folder");
 
   // Scripts
-  loadScripts();
+  await loadScripts();
   exploitScriptsSearch.addEventListener("input", loadScripts);
   setInterval(loadScripts, 1000);
+
+  document.querySelector(".kr-scripts-new-file").addEventListener("click", () => newFile());
+  document.querySelector(".kr-scripts-new-folder").addEventListener("click", () => newFolder());
 
   // Tab
   const tab = await getActiveTab();
@@ -1224,7 +1270,7 @@ window.addEventListener("DOMContentLoaded", async function () {
         const dropdownWidth = foundDropdownContent.clientWidth;
         const dropdownHeight = foundDropdownContent.clientHeight;
         const offset = 10;
-        const offsetX = (e.clientX + dropdownWidth / 2 > window.innerWidth) ? window.innerWidth - (dropdownWidth + offset) : e.clientX - dropdownWidth / 2;
+        const offsetX = (e.clientX + dropdownWidth + offset > window.innerWidth) ? window.innerWidth - (dropdownWidth + offset) : e.clientX;
         const offsetY = (e.clientY + dropdownHeight + offset > window.innerHeight) ? window.innerHeight - (dropdownHeight + offset) : e.clientY + offset;
 
         foundDropdownContent.style.top = `${offsetY}px`;
