@@ -436,7 +436,7 @@ body.kr-maximized .kr-titlebar {
     justify-content: center;
     font-size: 0.65rem;
     padding: 0.25rem;
-    width: 1.75rem;
+    width: 2rem;
     box-sizing: border-box;
     background-color: var(--light);
     border: 1px solid var(--lighter);
@@ -459,7 +459,7 @@ body.kr-maximized .kr-titlebar {
 .exploit > .main > .container-2 > .scripts > .script-container {
     height: fit-content;
     width: fit-content;
-    margin: 0.15rem;
+    margin: 0.1rem;
 }
 
 .exploit > .main > .container-2 > .scripts > .script-container .folder-scripts:not(.expanded) {
@@ -476,7 +476,7 @@ body.kr-maximized .kr-titlebar {
     justify-content: start;
     flex-direction: row-reverse;
     white-space: nowrap;
-    padding: 0.2rem;
+    padding: 0.1rem 0.2rem;
     font-size: 0.75rem;
     width: fit-content;
     border-radius: 5px;
@@ -493,7 +493,8 @@ body.kr-maximized .kr-titlebar {
 
 .exploit > .main > .container-2 > .scripts > .script-container .script > i {
     display: flex;
-    width: 0.75rem;
+    width: 0.6rem;
+    font-size: 0.6rem;
     align-items: center;
     justify-content: center;
 }
