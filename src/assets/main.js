@@ -1080,8 +1080,20 @@ async function checkRobloxActive() {
 }
 
 window.addEventListener("DOMContentLoaded", async function () {
-  // Context Menu
+  // Prevent Events
   document.addEventListener("contextmenu", (e) => e.preventDefault());
+  document.addEventListener("keydown", function(e) {
+    console.log(e.key);
+    // Refresh
+    if (e.key === "F5" || (e.ctrlKey && e.key === "r") || (e.metaKey && e.key === "r")) {
+      e.preventDefault();
+    }
+
+    // Find
+    if (e.key === "F3" || (e.ctrlKey && e.key === "f") || (e.metaKey && e.key === "f")) {
+      e.preventDefault();
+    }
+  });
 
   // Set-up
   await createDirectory("", true);
