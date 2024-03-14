@@ -455,9 +455,64 @@ async function addScript({ name, path }, folder) {
 
   const extension = name.split(".").pop();
 
+  let selected = false;
+  let selectedFolder = null;
+
+  function select() {
+    selected = true;
+    script.classList.add("selected");
+  }
+
+  function unselect() {
+    selected = false;
+    script.style.pointerEvents = "auto";
+    script.style.position = "static";
+    script.classList.remove("selected");
+    if (selectedFolder) selectedFolder.classList.remove("selected");
+    selectedFolder = null;
+  }
+
   script.addEventListener("click", async function () {
+    if (script.contentEditable === "true") return;
     const text = await readFile(path);
-    if (script.contentEditable !== "true") editorSetText(text);
+    editorSetText(text);
+  });
+
+  script.addEventListener("mousedown", function (e) {
+    if (e.button === 0 && script.contentEditable !== "true") select();
+  });
+
+  window.addEventListener("mouseup", async function () {
+    if (selectedFolder) {
+      await renameFile(path, selectedFolder.classList.contains("scripts") ? `scripts/${name}` : `scripts/${selectedFolder.innerText}/${name}`);
+      loadScripts();
+    }
+
+    if (selected) unselect();
+  });
+
+  window.addEventListener("mousemove", function (e) {
+    if (script.contentEditable !== "true" && selected) {
+      script.style.pointerEvents = "none";
+      script.style.position = "absolute";
+      script.style.top = "1px";
+
+      const scriptWidth = script.clientWidth;
+      const scriptHeight = script.clientHeight;
+      const offset = 10;
+      const offsetX = (e.clientX + scriptWidth / 2 > window.innerWidth) ? window.innerWidth - (scriptWidth + offset) : e.clientX - scriptWidth / 2;
+      const offsetY = (e.clientY + scriptHeight / 2 > window.innerHeight) ? window.innerHeight - (scriptHeight + offset) : e.clientY - scriptHeight / 2;
+
+      script.style.top = `${offsetY}px`;
+      script.style.left = `${offsetX}px`;
+
+      if (selectedFolder) selectedFolder.classList.remove("selected");
+      if ((e.target?.classList.contains("script") && e.target?.classList.contains("folder")) || e.target?.classList.contains("scripts")) {
+        selectedFolder = e.target;
+        selectedFolder.classList.add("selected");
+      } else selectedFolder = null;
+    }
+    else if (selected) unselect();
   });
 
   dropdownExport.addEventListener("click", async function () {
@@ -1147,7 +1202,7 @@ window.addEventListener("DOMContentLoaded", async function () {
       if (d !== foundDropdown) d.querySelector(".kr-dropdown-content.active")?.classList.remove("active");
     }));
 
-    if (e.target.parentElement === foundDropdownContent) {
+    if (foundDropdownContent && e.target.parentElement === foundDropdownContent) {
       foundDropdownContent.classList.remove("active");
     } else if (foundDropdownContent) {
       if (button === "right") foundDropdownContent.classList.toggle("active");

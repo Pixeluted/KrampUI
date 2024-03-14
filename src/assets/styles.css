@@ -499,6 +499,14 @@ body.kr-maximized .kr-titlebar {
     gap: 0.5rem;
 }
 
+.exploit > .main > .container-2 > .scripts > .script-container:last-child {
+    margin-bottom: 1rem;
+}
+
+.exploit > .main > .container-2 > .scripts > .script-container .script.selected {
+    background-color: var(--lighter);
+}
+
 .exploit > .main > .container-2 > .scripts > .script-container .script > i {
     display: flex;
     width: 0.75rem;
