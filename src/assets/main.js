@@ -979,7 +979,7 @@ function addTabElem(info) {
   tab.className = "kr-tab";
   tab.innerText = info.name;
   if (info.active) tab.classList.add("active");
-  icon.className = script ? "fa-solid fa-scroll" : "fa-solid fa-file";
+  icon.className = script ? "fa-solid fa-file" : "fa-solid fa-scroll";
   tab.append(icon);
   tab.addEventListener("click", function () {
     if (tab.contentEditable !== "true") setTabActive(info.name);
