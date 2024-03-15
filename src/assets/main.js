@@ -1000,11 +1000,11 @@ async function askForExecutable() {
   exploitInject.classList.add("disabled");
 
   const selected = await dialog.open({
-    title: "Select Krampus",
+    title: "Select Ro-Exec",
     defaultPath: await path.downloadDir(),
     filters: [
       {
-        name: "Krampus Executable",
+        name: "Ro-Exec Executable",
         extensions: ["exe"]
       }
     ]
