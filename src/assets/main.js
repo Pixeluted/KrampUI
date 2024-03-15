@@ -14,7 +14,7 @@ let loginForm, loginToken, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorRefresh;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
-let prevConnected, prevActive, editorReady, activeTab, injecting, autoInject;
+let prevConnected, prevActive, editorReady, tabs, injecting, autoInject;
 
 async function minimize() {
   await appWindow.minimize();
@@ -159,9 +159,10 @@ async function readFile(file, noDir) {
 
 async function renameFile(file, newFile) {
   try {
+    if (await exists(newFile)) return false;
     return await fs.renameFile(file, newFile, { dir: fs.BaseDirectory.AppConfig });
   } catch {
-    return null;
+    return false;
   }
 }
 
@@ -206,16 +207,6 @@ async function getToken() {
 
 async function setToken(token) {
   return await writeFile("kr-token", token);
-}
-
-async function getActiveTab() {
-  return await readFile("kr-tab");
-}
-
-async function setActiveTab(tab) {
-  activeTab = tab;
-  if (editorSetText) editorSetText(await getTab(activeTab));
-  return await writeFile("kr-tab", tab);
 }
 
 async function getAutoInject() {
@@ -383,10 +374,10 @@ async function addFolder({ name, path, scripts }) {
       if (folder.innerText.trim() === "") folder.innerText = name;
 
       folder.append(icon);
-      await renameFile(path, `scripts/${folder.innerText}`);
+      const result = await renameFile(path, `scripts/${folder.innerText}`);
       setExpanded(folder.innerText, getExpanded(name));
       removeExpanded(name);
-      loadScripts();
+      loadScripts(result === false);
     }
   }
 
@@ -513,15 +504,16 @@ async function addScript({ name, path }, folder) {
     selected = false;
     script.style.pointerEvents = "auto";
     script.style.position = "static";
+    script.style.zIndex = "0";
     script.classList.remove("selected");
-    if (selectedFolder) selectedFolder.classList.remove("selected");
+    if (selectedFolder) selectedFolder.classList.remove("highlight");
     selectedFolder = null;
   }
 
   script.addEventListener("click", async function () {
     if (script.contentEditable === "true") return;
     const text = await readFile(path);
-    editorSetText(text);
+    if (editorSetText) editorSetText(text);
   });
 
   script.addEventListener("mousedown", function (e) {
@@ -530,8 +522,10 @@ async function addScript({ name, path }, folder) {
 
   window.addEventListener("mouseup", async function () {
     if (selectedFolder) {
-      await renameFile(path, selectedFolder.classList.contains("scripts") ? `scripts/${name}` : `scripts/${selectedFolder.innerText}/${name}`);
-      loadScripts();
+      const isScripts = selectedFolder.classList.contains("scripts");
+      const result = await renameFile(path, isScripts ? `scripts/${name}` : `scripts/${selectedFolder.innerText}/${name}`);
+      if (!isScripts) setExpanded(selectedFolder.innerText, true);
+      loadScripts(result === false);
     }
 
     if (selected) unselect();
@@ -541,6 +535,7 @@ async function addScript({ name, path }, folder) {
     if (script.contentEditable !== "true" && selected) {
       script.style.pointerEvents = "none";
       script.style.position = "absolute";
+      script.style.zIndex = "10";
       script.style.top = "1px";
 
       const scriptWidth = script.clientWidth;
@@ -552,10 +547,10 @@ async function addScript({ name, path }, folder) {
       script.style.top = `${offsetY}px`;
       script.style.left = `${offsetX}px`;
 
-      if (selectedFolder) selectedFolder.classList.remove("selected");
+      if (selectedFolder) selectedFolder.classList.remove("highlight");
       if ((e.target?.classList.contains("script") && e.target?.classList.contains("folder")) || e.target?.classList.contains("scripts")) {
         selectedFolder = e.target;
-        selectedFolder.classList.add("selected");
+        selectedFolder.classList.add("highlight");
       } else selectedFolder = null;
     }
     else if (selected) unselect();
@@ -594,8 +589,8 @@ async function addScript({ name, path }, folder) {
       if (defaultName.trim() === "") script.innerText = name;
 
       script.append(icon);
-      await renameFile(path, folder ? `scripts/${folder.name}/${script.innerText}` : `scripts/${script.innerText}`);
-      loadScripts();
+      const result = await renameFile(path, folder ? `scripts/${folder.name}/${script.innerText}` : `scripts/${script.innerText}`);
+      loadScripts(result === false);
     }
   }
 
@@ -678,47 +673,327 @@ async function loadScripts(force) {
   await populateScripts(scripts, force);
 }
 
-function emptyTabs() {
+async function getTabContent(tab) {
+  const script = tab.path;
+  let content = "";
+
+  if (script) {
+    // TODO: script get content logic
+  } else {
+    content = tab.data || "";
+  }
+
+  return content;
+}
+
+async function setTabContent(tab, content) {
+  const script = tab.path;
+
+  if (script) {
+    // TODO: script set content logic
+  } else {
+    tabs = tabs.map((t) => {
+      if (t.name === tab.name) tab.data = content;
+      return t;
+    });
+    await setTabs();
+    populateTabs();
+  }
+}
+
+async function getActiveTabContent() {
+  const tab = tabs.find((t) => t.active === true);
+  return tab ? await getTabContent(tab) : "";
+}
+
+async function setActiveTabContent(content) {
+  const tab = tabs.find((t) => t.active === true);
+  if (tab) await setTabContent(tab, content);
+}
+
+async function getTabs() {
+  const text = await readFile("kr-tabs");
+  let json;
+  try { json = JSON.parse(text); }
+  catch { return false; };
+  return json || false;
+}
+
+async function setTabs() {
+  await writeFile("kr-tabs", JSON.stringify(tabs));
+}
+
+async function addTab(data, dontLoad) {
+  if (data.active) {
+    tabs = tabs.map(function (t) {
+      t.active = false;
+      return t;
+    });
+  }
+
+  tabs.push(data);
+  await setTabs();
+  if (editorSetText) editorSetText(await getActiveTabContent());
+  if (dontLoad !== true) populateTabs();
+}
+
+async function deleteTab(name) {
+  if (tabs.length === 1) return;
+  let order = 0;
+  
+  const tab = tabs.find((t) => t.name === name);
+  if (!tab) return;
+  
+  const tabIndex = tabs.indexOf(tab);
+  const newTab = tabs[tabIndex - 1] || tabs[tabIndex + 1];
+  const script = tab.path;
+
+  if (script) {
+    // TODO: script delete logic
+  } else {
+    tabs = tabs
+      .filter(function (t) {
+        return t.name !== name;
+      })
+      .map(function (t) {
+        order = order + 1;
+        if (tab?.active) {
+          if (t.name === newTab?.name) t.active = true;
+          else t.active = false;
+        }
+        t.order = order;
+        return t;
+      });
+  }
+
+  await setTabs();
+  if (editorSetText) editorSetText(await getActiveTabContent());
+  populateTabs();
+}
+
+async function renameTab(name, newName) {
+  if (tabs.find((t) => t.name === newName)) return;
+
+  const tab = tabs.find((t) => t.name === name);
+  if (!tab) return;
+
+  const script = tab.path;
+
+  if (script) {
+    // TODO: script rename logic
+  } else {
+    tabs = tabs.map(function (t) {
+      if (t.name === name) t.name = newName;
+      return t;
+    });
+  }
+
+  await setTabs();
+  populateTabs();
+}
+
+async function changeTabOrder(name, newOrder) {
+  const tabToChange = tabs.find(tab => tab.name === name);
+  const oldOrder = tabToChange.order;
+  
+  tabs.forEach((t) => {
+    if (t.name !== name) {
+      if (t.order >= newOrder && t.order < oldOrder) {
+        t.order++;
+      } else if (t.order <= newOrder && t.order > oldOrder) {
+        t.order--;
+      }
+    } else {
+      t.order = newOrder;
+    }
+  });
+
+  await setTabs();
+  populateTabs();
+}
+
+async function setTabActive(name) {
+  if (tabs.find((t) => t.name === name)?.active) return;
+
+  tabs = tabs.map(function (t) {
+    t.active = t.name === name;
+    return t;
+  });
+  
+  await setTabs();
+  if (editorSetText) editorSetText(await getActiveTabContent());
+  populateTabs();
+}
+
+function getNextScriptTab() {
+  let number = 0;
+
+  function get() {
+    number = number + 1;
+    if (tabs.find((t) => t.name === `Script ${number}`)) return get();
+    return number;
+  }
+
+  return get();
+}
+
+function getNextOrder() {
+  let number = 0;
+
+  function get() {
+    number = number + 1;
+    if (tabs.find((t) => t.order === number)) return get();
+    return number;
+  }
+
+  return get();
+}
+
+async function addNewTab(dontLoad) {
+  await addTab({ name: `Script ${getNextScriptTab()}`, data: "", order: getNextOrder(), active: true }, dontLoad);
+}
+
+async function setupTabs() {
+  tabs = await getTabs() || [];
+  if (tabs.length === 0) await addNewTab(true);
+}
+
+function emptyTabElems() {
   exploitTabs.innerHTML = "";
 }
 
-function addTab(title) {
+function addTabElem(info) {
+  const script = info.path;
+  const tabDropdown = document.createElement("div");
   const tab = document.createElement("div");
-  tab.className = activeTab === title ? "tab active" : "tab";
-  tab.innerText = title;
-  tab.addEventListener("click", async function () {
-    await setActiveTab(title);
-    await loadTabs();
-  });
-  exploitTabs.append(tab);
-}
+  const icon = document.createElement("i");
 
-function populateTabs(tabs) {
-  emptyTabs();
-  tabs.forEach(addTab);
-}
+  const dropdown = document.createElement("div");
+  const dropdownRename = document.createElement("div");
+  const dropdownRenameIcon = document.createElement("i");
+  const dropdownDelete = document.createElement("div");
+  const dropdownDeleteIcon = document.createElement("i");
 
-async function loadTabs() {
-  const tabAmount = 10;
-  if (!await exists("tabs")) await createDirectory("tabs", true);
+  tabDropdown.className = "kr-dropdown";
+  dropdown.className = "kr-dropdown-content";
+  dropdownRename.innerText = "Rename";
+  dropdownRenameIcon.className = "fa-solid fa-font";
+  dropdownDelete.innerText = "Delete";
+  dropdownDeleteIcon.className = "fa-solid fa-delete-left";
 
-  const tabs = [];
+  dropdownRename.append(dropdownRenameIcon);
+  dropdownDelete.append(dropdownDeleteIcon);
+  dropdown.append(dropdownRename);
+  dropdown.append(dropdownDelete);
 
-  for (var i = 0; i < tabAmount; i++) {
-    const path = `tabs/kr-${i + 1}`;
-    if (!await exists(path)) await writeFile(path, "");
-    tabs.push((i + 1).toString());
+  let selected = false;
+  let selectedTab = null;
+
+  function select() {
+    selected = true;
+    tab.classList.add("selected");
+    exploitTabs.classList.add("selecting");
   }
 
-  populateTabs(tabs);
+  function unselect() {
+    selected = false;
+    tab.style.pointerEvents = "auto";
+    tab.style.position = "static";
+    tab.style.zIndex = "0";
+    tab.classList.remove("selected");
+    if (selectedTab) selectedTab.classList.remove("highlight");
+    selectedTab = null;
+  }
+
+  tab.addEventListener("mousedown", function (e) {
+    if (e.button === 0 && tab.contentEditable !== "true" && tabs.length > 1) select();
+  });
+
+  window.addEventListener("mouseup", async function () {
+    if (selectedTab) {
+      const tab = tabs.find((t) => t.name === selectedTab?.innerText);
+      if (tab) await changeTabOrder(info.name, tab.order);
+    }
+
+    if (selected) unselect();
+  });
+
+  window.addEventListener("mousemove", function (e) {
+    if (tab.contentEditable !== "true" && selected) {
+      tab.style.pointerEvents = "none";
+      tab.style.zIndex = "10";
+      tab.style.position = "absolute";
+      tab.style.top = "1px";
+
+      const tabWidth = tab.clientWidth;
+      const tabHeight = tab.clientHeight;
+      const offset = 10;
+      const offsetX = (e.clientX + tabWidth / 2 > window.innerWidth) ? window.innerWidth - (tabWidth + offset) : e.clientX - tabWidth / 2;
+      const offsetY = (e.clientY + tabHeight / 2 > window.innerHeight) ? window.innerHeight - (tabHeight + offset) : e.clientY - tabHeight / 2;
+
+      tab.style.top = `${offsetY}px`;
+      tab.style.left = `${offsetX}px`;
+
+      if (selectedTab) selectedTab.classList.remove("highlight");
+      if (e.target?.classList.contains("kr-tab")) {
+        selectedTab = e.target
+        selectedTab.classList.add("highlight");
+      } else selectedTab = null;
+    }
+    else if (selected) unselect();
+  });
+
+  dropdownDelete.addEventListener("click", () => deleteTab(info.name));
+
+  tab.addEventListener("input", function () {
+    if (tab.contentEditable === "true") changeContentEditableText(tab, tab.innerText.replace(/[<>:"/\\|?*]/g, ""));
+  });
+
+  async function enter(e) {
+    if (tab.contentEditable === "true") {
+      if (e) e.preventDefault();
+      dropdown.classList.remove("disabled");
+      tab.contentEditable = false;
+      tab.innerText = tab.innerText.trim();
+
+      if (tab.innerText.trim() === "") tab.innerText = info.name;
+
+      tab.append(icon);
+      await renameTab(info.name, tab.innerText);
+    }
+  }
+
+  tab.addEventListener("blur", enter);
+  tab.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") enter();
+  });
+
+  dropdownRename.addEventListener("click", async function () {
+    dropdown.classList.add("disabled");
+    icon.remove();
+    tab.contentEditable = true;
+    tab.focus();
+    focusAtEnd(tab);
+  });
+
+  tab.className = "kr-tab";
+  tab.innerText = info.name;
+  if (info.active) tab.classList.add("active");
+  icon.className = script ? "fa-solid fa-scroll" : "fa-solid fa-file";
+  tab.append(icon);
+  tab.addEventListener("click", function () {
+    if (tab.contentEditable !== "true") setTabActive(info.name);
+  });
+
+  tabDropdown.append(tab);
+  tabDropdown.append(dropdown);
+  exploitTabs.append(tabDropdown);
+  if (info.active) tab.scrollIntoView();
 }
 
-async function setTab(number, content) {
-  await writeFile(`tabs/kr-${number}`, content);
-}
-
-async function getTab(number) {
-  return (await readFile(`tabs/kr-${number}`) || "");
+function populateTabs() {
+  emptyTabElems();
+  tabs.sort((a, b) => a.order - b.order).forEach(async (t) => await addTabElem(t));
 }
 
 async function askForExecutable() {
@@ -844,7 +1119,7 @@ async function _import() {
 
   if (selected) {
     const text = await readFile(selected, true);
-    if (text) editorSetText(text);
+    if (text && editorSetText) editorSetText(text);
     exploitImport.classList.remove("disabled");
     return true;
   }
@@ -884,7 +1159,7 @@ async function _export() {
 }
 
 function clear() {
-  editorSetText("");
+  if (editorSetText) editorSetText("");
 }
 
 async function kill() {
@@ -908,6 +1183,7 @@ async function openFolder() {
 
 function setupEditor() {
   if (editorReady) return;
+  editorReady = true;
 
   require(["vs/editor/editor.main"], async function() {
     let editorProposals = [];
@@ -1094,17 +1370,14 @@ function setupEditor() {
       }
     }
 
-    editorSetText(await getTab(activeTab));
+    if (editorSetText) editorSetText(await getActiveTabContent());
     editor.onDidChangeModelContent(async function() {
       updateIntelliSense();
-      const text = editorGetText();
-      await setTab(activeTab, text);
+      await setActiveTabContent(editorGetText());
     });
 
     updateIntelliSense();
   });
-
-  editorReady = true;
 }
 
 async function checkRobloxActive() {
@@ -1143,7 +1416,6 @@ window.addEventListener("DOMContentLoaded", async function () {
   await createDirectory("", true);
   await createDirectory("scripts", true);
   await createDirectory("autoexec", true);
-  await createDirectory("tabs", true);
 
   // Titlebar
   document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
@@ -1169,16 +1441,9 @@ window.addEventListener("DOMContentLoaded", async function () {
   loginSubmit = document.querySelector(".login .kr-button.submit");
   loginSubmit.addEventListener("click", login);
 
-  const token = await getToken();
-
-  if (token && token !== "") {
-    loginToken.value = token;
-    login();
-  }
-
   // Exploit
   exploitIndicator = document.querySelector(".kr-titlebar .brand .text");
-  exploitTabs = document.querySelector(".exploit .main .container .tabs");
+  exploitTabs = document.querySelector(".exploit .main .container .tabs .list");
   exploitEditor = document.querySelector(".exploit .main .container .editor");
   exploitScripts = document.querySelector(".exploit .main .container-2 .scripts");
   exploitScriptsSearch = document.querySelector(".exploit .main .container-2 .kr-input.search");
@@ -1192,18 +1457,18 @@ window.addEventListener("DOMContentLoaded", async function () {
   document.querySelector(".kr-scripts-new-file").addEventListener("click", () => newFile());
   document.querySelector(".kr-scripts-new-folder").addEventListener("click", () => newFolder());
 
-  // Tab
-  const tab = await getActiveTab();
-
-  if (!tab) {
-    await setActiveTab("1");
-    activeTab = "1";
-  } else {
-    activeTab = tab;
-  }
-
   // Tabs
-  loadTabs();
+  await setupTabs();
+  populateTabs();
+  document.querySelector(".kr-add-tab").addEventListener("click", addNewTab);
+
+  // Auto Login
+  const token = await getToken();
+
+  if (token && token !== "") {
+    loginToken.value = token;
+    login();
+  }
 
   // Buttons
   exploitInject = document.querySelector(".kr-inject");
