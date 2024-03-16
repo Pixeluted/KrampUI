@@ -43,15 +43,6 @@ function checkActive() {
   }
 }
 
-async function getWindowPosition() {
-  const position = await appWindow.innerPosition();
-  return { x: position.x, y: position.y };
-}
-
-async function setWindowPosition(x, y) {
-  await window.__TAURI__.window.appWindow.setPosition({ type: "Physical", x, y });
-}
-
 function initialize() {
   return new Promise(function (res) {
     websocket = new WebSocket(`wss://loader.live/?login_token="${loginToken.value}"`);
