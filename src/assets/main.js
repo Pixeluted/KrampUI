@@ -211,7 +211,7 @@ async function setToken(token) {
 
 async function getAutoInject() {
   const text = await readFile("kr-auto-inject");
-  return text ? text === "true" : true;
+  return text ? text === "true" : false;
 }
 
 async function setAutoInject(bool) {
