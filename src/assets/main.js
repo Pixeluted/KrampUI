@@ -12,7 +12,7 @@ let websocket, websocketInterval;
 let loginSection, exploitSection;
 let loginForm, loginToken, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
-let editor, editorGetText, editorSetText, editorRefresh;
+let editor, editorGetText, editorSetText;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
 let prevConnected, prevActive, editorReady, tabs, injecting, autoInject;
 
@@ -504,7 +504,7 @@ async function addScript({ name, path }, folder) {
   script.addEventListener("click", async function () {
     if (script.contentEditable === "true") return;
     const text = await readFile(path);
-    if (editorSetText) editorSetText(text);
+    if (editorSetText) editorSetText(text, true);
   });
 
   script.addEventListener("mousedown", function (e) {
@@ -1110,7 +1110,7 @@ async function _import() {
 
   if (selected) {
     const text = await readFile(selected, true);
-    if (text && editorSetText) editorSetText(text);
+    if (text && editorSetText) editorSetText(text, true);
     exploitImport.classList.remove("disabled");
     return true;
   }
@@ -1150,7 +1150,7 @@ async function _export() {
 }
 
 function clear() {
-  if (editorSetText) editorSetText("");
+  if (editorSetText) editorSetText("", true);
 }
 
 async function kill() {
@@ -1209,6 +1209,7 @@ function setupEditor() {
     editor = monaco.editor.create(exploitEditor, {
       language: "lua",
       theme: "dark",
+      value: await getActiveTabContent(),
       fontFamily: "Source Sans 3",
       fontSize: 13,
       acceptSuggestionOnEnter: "smart",
@@ -1238,14 +1239,16 @@ function setupEditor() {
       return editor.getValue();
     }
     
-    editorSetText = function(x) {
-      editor.setValue(x);
-    }
+    editorSetText = function(x, preserveUndo) {
+      const model = editor.getModel();
+      const range = model.getFullModelRange();
 
-    editorRefresh = function() {
-      const text = getText();
-      setText("");
-      editor.trigger("keyboard", "type", { text: text });
+      if (preserveUndo) {
+        editor.pushUndoStop();
+        editor.executeEdits("", [{ range: range, text: x }]);
+      } else editor.setValue(x);
+
+      editor.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 });
     }
 
     function editorAddIntellisense(l, k, d, i) {
@@ -1362,7 +1365,6 @@ function setupEditor() {
       }
     }
 
-    if (editorSetText) editorSetText(await getActiveTabContent());
     editor.onDidChangeModelContent(async function() {
       updateIntelliSense();
       await setActiveTabContent(editorGetText());
