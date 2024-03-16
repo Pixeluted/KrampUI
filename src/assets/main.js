@@ -1225,6 +1225,7 @@ function setupEditor() {
       suggestSelection: "recentlyUsed",
       folding: true,
       autoIndent: true,
+      scrollBeyondLastLine: false,
       wordBasedSuggestions : true,
       scrollbar: {
         verticalHasArrows: true,
