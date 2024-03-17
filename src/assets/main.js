@@ -1467,7 +1467,8 @@ function setupEditor() {
       folding: true,
       autoIndent: true,
       scrollBeyondLastLine: false,
-      wordBasedSuggestions : true,    scrollbar: {
+      wordBasedSuggestions : true,
+      scrollbar: {
         verticalHasArrows: true,
       },
       minimap: {
