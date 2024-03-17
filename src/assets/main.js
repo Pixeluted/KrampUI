@@ -10,12 +10,12 @@ const fs = window.__TAURI__.fs;
 require.config({ paths: { "vs": "./assets/monaco" }});
 
 let websocket, websocketInterval;
-let loginSection, exploitSection;
-let loginForm, loginToken, loginSubmit;
+let settings, loginSection, loginToken, exploitSection;
+let loginForm, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
-let prevConnected, prevActive, editorReady, tabs, injecting, autoInject, topMost, keyToggle;
+let prevConnected, prevActive, editorReady, tabs, injecting, dataDirectory;
 
 async function minimize() {
   await appWindow.minimize();
@@ -211,39 +211,70 @@ async function deleteDirectory(directory, recursive) {
   }
 }
 
-async function getToken() {
-  return await readFile("kr-data/token");
+function getDataName() {
+  return `kr-${randomString(20)}`;
+}
+
+function isData(f) {
+  return f.name?.startsWith("kr-") && f.children;
+}
+async function findData() {
+  const files = await readDirectory("");
+  return files.filter(isData).shift();
+}
+
+async function getData() {
+  const data = await findData();
+  return data?.name || getDataName();
+}
+
+async function getSettings() {
+  const text = await readFile(`${dataDirectory}/settings`);
+  let json;
+  try { json = JSON.parse(text); }
+  catch { return false; };
+
+  if (json) return {
+    token: json.token || null,
+    autoInject: json.autoInject,
+    topMost: json.topMost,
+    keyToggle: json.keyToggle
+  };
+  else {
+    const settings = {
+      token: null,
+      autoInject: true,
+      topMost: true,
+      keyToggle: true
+    };
+
+    await setSettings(settings);
+    return settings;
+  }
+}
+
+async function setSettings(data) {
+  await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
 }
 
 async function setToken(token) {
-  return await writeFile("kr-data/token", token);
-}
-
-async function getAutoInject() {
-  const text = await readFile("kr-data/auto-inject");
-  return text ? text === "true" : true;
+  settings.token = token;
+  await setSettings();
 }
 
 async function setAutoInject(bool) {
-  return await writeFile("kr-data/auto-inject", bool.toString());
-}
-
-async function getTopMost() {
-  const text = await readFile("kr-data/top-most");
-  return text ? text === "true" : true;
+  settings.autoInject = bool;
+  await setSettings();
 }
 
 async function setTopMost(bool) {
-  return await writeFile("kr-data/top-most", bool.toString());
-}
-
-async function getKeyToggle() {
-  const text = await readFile("kr-data/key-toggle");
-  return text ? text === "true" : true;
+  settings.topMost = bool;
+  await setSettings();
 }
 
 async function setKeyToggle(bool) {
-  return await writeFile("kr-data/key-toggle", bool.toString());
+  settings.keyToggle = bool;
+  await setSettings();
 }
 
 function randomString(length, extra) {
@@ -811,7 +842,7 @@ async function getTabContent(tab) {
     const text = await readFile(tab.path);
     if (text) content = text;
   } else {
-    content = await readFile(`kr-data/tabs-data/${tab.id}.lua`) || "";
+    content = await readFile(`${dataDirectory}/tabs-data/${tab.id}.lua`) || "";
   }
 
   return content;
@@ -823,7 +854,7 @@ async function setTabContent(tab, content) {
   if (script) {
     writeFile(tab.path, content);
   } else {
-    writeFile(`kr-data/tabs-data/${tab.id}.lua`, content);
+    writeFile(`${dataDirectory}/tabs-data/${tab.id}.lua`, content);
   }
 }
 
@@ -838,7 +869,7 @@ async function setActiveTabContent(content) {
 }
 
 async function getTabs() {
-  const text = await readFile("kr-data/tabs");
+  const text = await readFile(`${dataDirectory}/tabs`);
   let json;
   try { json = JSON.parse(text); }
   catch { return false; };
@@ -846,7 +877,7 @@ async function getTabs() {
 }
 
 async function setTabs() {
-  await writeFile("kr-data/tabs", JSON.stringify(tabs));
+  await writeFile(`${dataDirectory}/tabs`, JSON.stringify(tabs));
 }
 
 async function addTab(data, dontLoad) {
@@ -878,7 +909,7 @@ async function deleteTab(id, force) {
   }
 
   if (!tab.path) {
-    await deleteFile(`kr-data/tabs-data/${tab.id}.lua`);
+    await deleteFile(`${dataDirectory}/tabs-data/${tab.id}.lua`);
   }
 
   tabs = tabs
@@ -995,7 +1026,7 @@ async function addScriptTab(path) {
 }
 
 async function setupTabs() {
-  await createDirectory("kr-data/tabs-data", true);
+  await createDirectory(`${dataDirectory}/tabs-data`, true);
   tabs = await getTabs() || [];
   if (tabs.length === 0) await addNewTab(true);
 }
@@ -1436,8 +1467,7 @@ function setupEditor() {
       folding: true,
       autoIndent: true,
       scrollBeyondLastLine: false,
-      wordBasedSuggestions : true,
-      scrollbar: {
+      wordBasedSuggestions : true,    scrollbar: {
         verticalHasArrows: true,
       },
       minimap: {
@@ -1604,7 +1634,7 @@ async function checkRobloxActive() {
     
     if (newActive) {
       if (!prevConnected && injecting !== true) {
-        if (autoInject && await findExecutable()) inject();
+        if (settings.autoInject && await findExecutable()) inject();
         else exploitInject.classList.remove("disabled");
       }
       exploitKill.classList.remove("disabled");
@@ -1629,10 +1659,11 @@ window.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Set-up
+  dataDirectory = await getData();
   await createDirectory("", true);
+  await createDirectory(dataDirectory, true);
   await createDirectory("scripts", true);
   await createDirectory("autoexec", true);
-  await createDirectory("kr-data", true);
 
   // Titlebar
   document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
@@ -1647,6 +1678,9 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   checkMaximized();
   window.addEventListener("resize", checkMaximized);
+
+  // Settings
+  settings = await getSettings();
 
   // Sections
   loginSection = document.querySelector("body > .login");
@@ -1680,10 +1714,8 @@ window.addEventListener("DOMContentLoaded", async function () {
   document.querySelector(".kr-add-tab").addEventListener("click", addNewTab);
 
   // Auto Login
-  const token = await getToken();
-
-  if (token && token !== "") {
-    loginToken.value = token;
+  if (settings.token && settings.token !== "") {
+    loginToken.value = settings.token;
     login();
   }
 
@@ -1712,57 +1744,48 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   // Auto Inject
   function checkAutoInject() {
-    document.querySelector(".kr-dropdown-automatic .fa-solid").className = `fa-solid fa-${autoInject ? "check" : "times"}`;
+    document.querySelector(".kr-dropdown-automatic .fa-solid").className = `fa-solid fa-${settings.autoInject ? "check" : "times"}`;
   }
 
-  autoInject = await getAutoInject();
   checkAutoInject();
-
   document.querySelector(".kr-dropdown-automatic").addEventListener("click", async function () {
-    autoInject = !autoInject;
-    await setAutoInject(autoInject);
+    await setAutoInject(!settings.autoInject);
     checkAutoInject();
   });
 
   // Top Most
   async function checkTopMost() {
-    document.querySelector(".kr-dropdown-top-most .fa-solid").className = `fa-solid fa-${topMost ? "check" : "times"}`;
-    await appWindow.setAlwaysOnTop(topMost);
+    document.querySelector(".kr-dropdown-top-most .fa-solid").className = `fa-solid fa-${settings.topMost ? "check" : "times"}`;
+    await appWindow.setAlwaysOnTop(settings.topMost);
   }
 
-  topMost = await getTopMost();
   await checkTopMost();
-
   document.querySelector(".kr-dropdown-top-most").addEventListener("click", async function () {
-    topMost = !topMost;
-    await setTopMost(topMost);
+    await setTopMost(!settings.topMost);
     await checkTopMost();
   });
 
   // Key Toggle
-  await invoke("init_key_events", { window: appWindow });
-
   function checkKeyToggle() {
-    document.querySelector(".kr-dropdown-key-toggle .fa-solid").className = `fa-solid fa-${keyToggle ? "check" : "times"}`;
+    document.querySelector(".kr-dropdown-key-toggle .fa-solid").className = `fa-solid fa-${settings.keyToggle ? "check" : "times"}`;
   }
 
-  keyToggle = await getKeyToggle();
+  await invoke("init_key_events", { window: appWindow });
   await checkKeyToggle();
-
+  
   document.querySelector(".kr-dropdown-key-toggle").addEventListener("click", async function () {
-    keyToggle = !keyToggle;
-    await setKeyToggle(keyToggle);
+    await setKeyToggle(!settings.keyToggle);
     await checkKeyToggle();
   });
   
   event.listen("key-press", function (e) {
     const key = (e?.payload?.message || "")?.toLowerCase();
-    if (key === "delete" && keyToggle) toggle();
+    if (key === "delete" && settings.keyToggle) toggle();
   });
 
   window.addEventListener("keyup", function (e) {
     const key = (e?.key || "")?.toLowerCase();
-    if (key === "delete" && keyToggle) toggle();
+    if (key === "delete" && settings.keyToggle) toggle();
   });
 
   // Active
