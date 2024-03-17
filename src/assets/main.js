@@ -774,7 +774,7 @@ async function getTabContent(tab) {
     const text = await readFile(tab.path);
     if (text) content = text;
   } else {
-    content = tab.data || "";
+    content = await readFile(`kr-data/tabs-data/${tab.id}.lua`) || "";
   }
 
   return content;
@@ -786,14 +786,8 @@ async function setTabContent(tab, content) {
   if (script) {
     writeFile(tab.path, content);
   } else {
-    tabs = tabs.map((t) => {
-      if (t.id === tab.id) tab.data = content;
-      return t;
-    });
+    writeFile(`kr-data/tabs-data/${tab.id}.lua`, content);
   }
-
-  await setTabs();
-  populateTabs();
 }
 
 async function getActiveTabContent() {
@@ -826,7 +820,7 @@ async function addTab(data, dontLoad) {
     });
   }
 
-  tabs.push({ ...data, id: randomString(40, "!?'£$%^&*()_+=#/\\.;[]=-") });
+  tabs.push({ ...data, id: randomString(40, "!'£$%^&()_+=#.;[]=-") });
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
   if (dontLoad !== true) populateTabs();
@@ -844,6 +838,10 @@ async function deleteTab(id, force) {
 
   if (force && tab.path) {
     await deleteFile(tab.path);
+  }
+
+  if (!tab.path) {
+    await deleteFile(`kr-data/tabs-data/${tab.id}.lua`);
   }
 
   tabs = tabs
@@ -949,17 +947,18 @@ function getNextOrder() {
 }
 
 async function addNewTab(dontLoad) {
-  await addTab({ name: "Script", data: "", order: getNextOrder(), active: true }, dontLoad);
+  await addTab({ name: "Script", order: getNextOrder(), active: true }, dontLoad);
 }
 
 async function addScriptTab(path) {
   const tab = tabs.find((t) => t.path === path);
 
   if (tab) setTabActive(tab.id);
-  else await addTab({ path, data: "", order: getNextOrder(), active: true });
+  else await addTab({ path, order: getNextOrder(), active: true });
 }
 
 async function setupTabs() {
+  await createDirectory("kr-data/tabs-data", true);
   tabs = await getTabs() || [];
   if (tabs.length === 0) await addNewTab(true);
 }
@@ -1549,7 +1548,7 @@ function setupEditor() {
 
     const setContent = debounce(function (text) {
       setActiveTabContent(text);
-    }, 500);
+    }, 250);
 
     editor.onDidChangeModelContent(function() {
       updateIntelliSense();
