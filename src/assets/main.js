@@ -963,7 +963,7 @@ function addTabElem(info) {
     dropdown.append(dropdownExplorerFolder);
   }
   dropdown.append(dropdownRename);
-  dropdown.append(dropdownDelete);
+  if (tabs.length > 1) dropdown.append(dropdownDelete);
 
   let selected = false;
   let selectedTab = null;
