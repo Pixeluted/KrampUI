@@ -3,6 +3,7 @@
     <p>Simple and lightweight frontend for Ro-Exec.</p>
     <img src="./assets/showcase.png" alt="An image which showcases KrampUI application." width="475"/>
 </div>
+<br />
 
 ## Getting KrampUI
 ### Download the binary,
