@@ -1548,7 +1548,7 @@ function setupEditor() {
 
     const setContent = debounce(function (text) {
       setActiveTabContent(text);
-    }, 250);
+    }, 150);
 
     editor.onDidChangeModelContent(function() {
       updateIntelliSense();
