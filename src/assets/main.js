@@ -234,13 +234,7 @@ async function getExecutable() {
 }
 
 async function setExecutable(path) {
-  const currentExecutable = (await findExecutable())?.path?.toLowerCase();
-
-  if (currentExecutable) {
-    if (path.toLowerCase() === currentExecutable) return;
-    await deleteFile(currentExecutable);
-  }
-
+  await clearExecutables();
   await renameFile(path, await getExecutable());
 }
 
@@ -1512,11 +1506,8 @@ window.addEventListener("DOMContentLoaded", async function () {
   // Inject Button
   exploitInject.addEventListener("click", inject);
   document.querySelector(".kr-dropdown-select").addEventListener("click", askForExecutable);
-  document.querySelector(".kr-dropdown-delete").addEventListener("click", async function () {
-    if (!injecting) {
-      const executable = await findExecutable();
-      if (executable) deleteFile(executable.path);
-    }
+  document.querySelector(".kr-dropdown-delete").addEventListener("click", function () {
+    if (!injecting) clearExecutables();
   });
 
   // Auto Inject
