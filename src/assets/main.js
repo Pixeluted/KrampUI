@@ -13,7 +13,7 @@ let websocket, websocketInterval;
 let settings, loginSection, loginToken, exploitSection;
 let loginForm, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
-let editor, editorGetText, editorSetText;
+let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
 let prevConnected, prevActive, editorReady, tabs, injecting, dataDirectory;
 
@@ -277,14 +277,12 @@ async function setKeyToggle(bool) {
   await setSettings();
 }
 
-function randomString(length, extra) {
+function randomString(length) {
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let values = new Uint32Array(length);
-
-  if (extra) characters = `${characters}${extra}`;
   window.crypto.getRandomValues(values);
-
   let text = "";
+
   for (let i = 0; i < length; i++) {
     text += characters.charAt(values[i] % characters.length);
   }
@@ -847,7 +845,7 @@ async function getTabContent(tab) {
     const text = await readFile(tab.path);
     if (text) content = text;
   } else {
-    content = await readFile(`${dataDirectory}/tabs-data/${tab.id}.lua`) || "";
+    content = await readFile(`${dataDirectory}/tabs-data/${tab.id}`) || "";
   }
 
   return content;
@@ -859,8 +857,17 @@ async function setTabContent(tab, content) {
   if (script) {
     writeFile(tab.path, content);
   } else {
-    writeFile(`${dataDirectory}/tabs-data/${tab.id}.lua`, content);
+    writeFile(`${dataDirectory}/tabs-data/${tab.id}`, content);
   }
+}
+
+async function setTabScroll(tab, scroll) {
+  tabs = tabs.map(function (t) {
+    if (t.id === tab.id) t.scroll = scroll;
+    return t;
+  });
+
+  await setTabs();
 }
 
 async function getActiveTabContent() {
@@ -871,6 +878,11 @@ async function getActiveTabContent() {
 async function setActiveTabContent(content) {
   const tab = tabs.find((t) => t.active === true);
   if (tab) await setTabContent(tab, content);
+}
+
+async function setActiveTabScroll(scroll) {
+  const tab = tabs.find((t) => t.active === true);
+  if (tab) await setTabScroll(tab, scroll);
 }
 
 async function getTabs() {
@@ -893,7 +905,7 @@ async function addTab(data, dontLoad) {
     });
   }
 
-  tabs.push({ ...data, id: randomString(40, "!'£$%^&()_+=#.;[]=-") });
+  tabs.push({ ...data, id: randomString(20) });
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
   if (dontLoad !== true) populateTabs();
@@ -931,8 +943,11 @@ async function deleteTab(id, force) {
       return t;
     });
 
+  const activeTab = tabs.find((t) => t.active === true);
+  const scroll = activeTab?.scroll;
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
+  if (editorSetScroll) editorSetScroll(scroll || 0);
   populateTabs();
 }
 
@@ -984,15 +999,18 @@ async function changeTabOrder(id, newOrder) {
 }
 
 async function setTabActive(id) {
-  if (tabs.find((t) => t.id === id)?.active) return;
+  const tab = tabs.find((t) => t.id === id);
+  if (tab?.active) return;
 
   tabs = tabs.map(function (t) {
     t.active = t.id === id;
     return t;
   });
-  
+
+  const scroll = tab?.scroll;
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
+  if (editorSetScroll) editorSetScroll(scroll || 0);
   populateTabs(true);
 }
 
@@ -1020,14 +1038,14 @@ function getNextOrder() {
 }
 
 async function addNewTab(dontLoad) {
-  await addTab({ name: "Script", order: getNextOrder(), active: true }, dontLoad);
+  await addTab({ name: "Script", order: getNextOrder(), active: true, scroll: 0 }, dontLoad);
 }
 
 async function addScriptTab(path) {
   const tab = tabs.find((t) => t.path === path);
 
   if (tab) setTabActive(tab.id);
-  else await addTab({ path, order: getNextOrder(), active: true });
+  else await addTab({ path, order: getNextOrder(), active: true, scroll: 0 });
 }
 
 async function setupTabs() {
@@ -1505,6 +1523,11 @@ function setupEditor() {
       editor.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 });
     }
 
+    editorSetScroll = function(top) {
+      try { editor.setScrollTop(top); }
+      catch { };
+    }
+
     function editorAddIntellisense(l, k, d, i) {
       let t;
         
@@ -1626,6 +1649,10 @@ function setupEditor() {
     editor.onDidChangeModelContent(function() {
       updateIntelliSense();
       setContent(editorGetText());
+    });
+
+    editor.onDidScrollChange(function(e) {
+      setActiveTabScroll(e.scrollTop);
     });
 
     updateIntelliSense();
