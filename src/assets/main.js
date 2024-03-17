@@ -687,6 +687,7 @@ async function addScript({ name, path }, folder, autoExec) {
 let prevScripts;
 let prevFolders;
 let prevAutoExec;
+let prevTabs;
 
 function parseScripts(files) {
   return files
@@ -904,7 +905,7 @@ async function changeTabOrder(id, newOrder) {
   });
 
   await setTabs();
-  populateTabs();
+  populateTabs(true);
 }
 
 async function setTabActive(id) {
@@ -917,7 +918,7 @@ async function setTabActive(id) {
   
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
-  populateTabs();
+  populateTabs(true);
 }
 
 function getDirectory(p) {
@@ -1155,7 +1156,10 @@ function addTabElem(info) {
   if (info.active) tab.scrollIntoView();
 }
 
-function populateTabs() {
+function populateTabs(force) {
+  if (!force && JSON.stringify(prevTabs) === JSON.stringify(tabs)) return;
+  prevTabs = tabs;
+
   emptyTabElems();
   tabs.sort((a, b) => a.order - b.order).forEach(async (t) => await addTabElem(t));
 }
@@ -1632,7 +1636,7 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   // Tabs
   await setupTabs();
-  populateTabs();
+  populateTabs(true);
   document.querySelector(".kr-add-tab").addEventListener("click", addNewTab);
 
   // Auto Login
