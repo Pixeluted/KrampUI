@@ -40,6 +40,10 @@ function checkActive() {
   } else {
     exploitSection.classList.remove("active");
     loginSection.classList.add("active");
+    exploitInject.classList.add("disabled");
+    exploitInject.classList.add("disabled");
+    exploitExecute.classList.add("disabled");
+    exploitIndicator.style.color = "var(--text)";
   }
 }
 
@@ -176,25 +180,27 @@ async function deleteDirectory(directory, recursive) {
 }
 
 async function getToken() {
-  return await readFile("kr-token");
+  return await readFile("kr-data/token");
 }
 
 async function setToken(token) {
-  return await writeFile("kr-token", token);
+  return await writeFile("kr-data/token", token);
 }
 
 async function getAutoInject() {
-  const text = await readFile("kr-auto-inject");
+  const text = await readFile("kr-data/auto-inject");
   return text ? text === "true" : false;
 }
 
 async function setAutoInject(bool) {
-  return await writeFile("kr-auto-inject", bool.toString());
+  return await writeFile("kr-data/auto-inject", bool.toString());
 }
 
-function randomString(length) {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+function randomString(length, extra) {
+  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let values = new Uint32Array(length);
+
+  if (extra) characters = `${characters}${extra}`;
   window.crypto.getRandomValues(values);
 
   let text = "";
@@ -489,7 +495,7 @@ async function addScript({ name, path }, folder) {
   dropdown.className = "kr-dropdown-content";
   dropdownExecute.innerText = "Execute";
   dropdownExecuteIcon.className = "fa-solid fa-scroll";
-  dropdownExport.innerText = "Export";
+  dropdownExport.innerText = "Export To";
   dropdownExportIcon.className = "fa-solid fa-floppy-disk";
   dropdownRename.innerText = "Rename";
   dropdownRenameIcon.className = "fa-solid fa-font";
@@ -527,8 +533,7 @@ async function addScript({ name, path }, folder) {
 
   script.addEventListener("click", async function () {
     if (script.contentEditable === "true") return;
-    const text = await readFile(path);
-    if (editorSetText) editorSetText(text, true);
+    await addScriptTab(path);
   });
 
   script.addEventListener("mousedown", function (e) {
@@ -693,7 +698,8 @@ async function getTabContent(tab) {
   let content = "";
 
   if (script) {
-    // TODO: script get content logic
+    const text = await readFile(tab.path);
+    if (text) content = text;
   } else {
     content = tab.data || "";
   }
@@ -705,15 +711,16 @@ async function setTabContent(tab, content) {
   const script = tab.path;
 
   if (script) {
-    // TODO: script set content logic
+    writeFile(tab.path, content);
   } else {
     tabs = tabs.map((t) => {
-      if (t.name === tab.name) tab.data = content;
+      if (t.id === tab.id) tab.data = content;
       return t;
     });
-    await setTabs();
-    populateTabs();
   }
+
+  await setTabs();
+  populateTabs();
 }
 
 async function getActiveTabContent() {
@@ -727,7 +734,7 @@ async function setActiveTabContent(content) {
 }
 
 async function getTabs() {
-  const text = await readFile("kr-tabs");
+  const text = await readFile("kr-data/tabs");
   let json;
   try { json = JSON.parse(text); }
   catch { return false; };
@@ -735,7 +742,7 @@ async function getTabs() {
 }
 
 async function setTabs() {
-  await writeFile("kr-tabs", JSON.stringify(tabs));
+  await writeFile("kr-data/tabs", JSON.stringify(tabs));
 }
 
 async function addTab(data, dontLoad) {
@@ -746,73 +753,74 @@ async function addTab(data, dontLoad) {
     });
   }
 
-  tabs.push(data);
+  tabs.push({ ...data, id: randomString(40, "!?'£$%^&*()_+=#/\\.;'[]=-") });
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
   if (dontLoad !== true) populateTabs();
 }
 
-async function deleteTab(name) {
+async function deleteTab(id) {
   if (tabs.length === 1) return;
   let order = 0;
   
-  const tab = tabs.find((t) => t.name === name);
+  const tab = tabs.find((t) => t.id === id);
   if (!tab) return;
   
   const tabIndex = tabs.indexOf(tab);
   const newTab = tabs[tabIndex - 1] || tabs[tabIndex + 1];
-  const script = tab.path;
 
-  if (script) {
-    // TODO: script delete logic
-  } else {
-    tabs = tabs
-      .filter(function (t) {
-        return t.name !== name;
-      })
-      .map(function (t) {
-        order = order + 1;
-        if (tab?.active) {
-          if (t.name === newTab?.name) t.active = true;
-          else t.active = false;
-        }
-        t.order = order;
-        return t;
-      });
-  }
+  tabs = tabs
+    .filter(function (t) {
+      return t.id !== id;
+    })
+    .map(function (t) {
+      order = order + 1;
+      if (tab?.active) {
+        if (t.id === newTab?.id) t.active = true;
+        else t.active = false;
+      }
+      t.order = order;
+      return t;
+    });
 
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
   populateTabs();
 }
 
-async function renameTab(name, newName) {
-  if (tabs.find((t) => t.name === newName)) return;
-
-  const tab = tabs.find((t) => t.name === name);
+async function renameTab(id, newName) {
+  const tab = tabs.find((t) => t.id === id);
   if (!tab) return;
 
   const script = tab.path;
 
   if (script) {
-    // TODO: script rename logic
+    const directory = await getDirectory(tab.path);
+    const newPath = `${directory}\\${newName}`;
+    await renameFile(tab.path, newPath);
+
+    tabs = tabs.map(function (t) {
+      if (t.id === id) t.path = newPath;
+      return t;
+    });
   } else {
     tabs = tabs.map(function (t) {
-      if (t.name === name) t.name = newName;
+      if (t.id === id) t.name = newName;
       return t;
     });
   }
 
   await setTabs();
   populateTabs();
+  loadScripts();
 }
 
-async function changeTabOrder(name, newOrder) {
-  const tabToChange = tabs.find(tab => tab.name === name);
+async function changeTabOrder(id, newOrder) {
+  const tabToChange = tabs.find((t) => t.id === id);
   const oldOrder = tabToChange.order;
   
   tabs.forEach((t) => {
-    if (t.name !== name) {
+    if (t.id !== id) {
       if (t.order >= newOrder && t.order < oldOrder) {
         t.order++;
       } else if (t.order <= newOrder && t.order > oldOrder) {
@@ -827,11 +835,11 @@ async function changeTabOrder(name, newOrder) {
   populateTabs();
 }
 
-async function setTabActive(name) {
-  if (tabs.find((t) => t.name === name)?.active) return;
+async function setTabActive(id) {
+  if (tabs.find((t) => t.id === id)?.active) return;
 
   tabs = tabs.map(function (t) {
-    t.active = t.name === name;
+    t.active = t.id === id;
     return t;
   });
   
@@ -840,32 +848,38 @@ async function setTabActive(name) {
   populateTabs();
 }
 
-function getNextScriptTab() {
-  let number = 0;
+function getDirectory(p) {
+  const path = p.split(/[\\\/]/);
+  if (path[path.length - 1].includes(".")) path.pop();
+  return path.join("\\");
+}
 
-  function get() {
-    number = number + 1;
-    if (tabs.find((t) => t.name === `Script ${number}`)) return get();
-    return number;
-  }
-
-  return get();
+function getTabName(tab) {
+  const script = tab.path;
+  if (script) return tab.path.split(/[\\\/]/).pop();
+  else return tab.name;
 }
 
 function getNextOrder() {
-  let number = 0;
+  const orders = tabs.map((t) => t.order);
+  let largest = orders[0] || 1;
 
-  function get() {
-    number = number + 1;
-    if (tabs.find((t) => t.order === number)) return get();
-    return number;
+  for (var i = 0; i < orders.length; i++) {
+    if (orders[i] > largest) largest = orders[i];
   }
 
-  return get();
+  return largest + 1;
 }
 
 async function addNewTab(dontLoad) {
-  await addTab({ name: `Script ${getNextScriptTab()}`, data: "", order: getNextOrder(), active: true }, dontLoad);
+  await addTab({ name: "Script", data: "", order: getNextOrder(), active: true }, dontLoad);
+}
+
+async function addScriptTab(path) {
+  const tab = tabs.find((t) => t.path === path);
+
+  if (tab) setTabActive(tab.id);
+  else await addTab({ path, data: "", order: getNextOrder(), active: true });
 }
 
 async function setupTabs() {
@@ -889,6 +903,10 @@ function addTabElem(info) {
   const dropdownDelete = document.createElement("div");
   const dropdownDeleteIcon = document.createElement("i");
 
+  const name = getTabName(info);
+  const extension = name.split(".").pop();
+
+  tab.setAttribute("kr-id", info.id);
   tabDropdown.className = "kr-dropdown";
   dropdown.className = "kr-dropdown-content";
   dropdownRename.innerText = "Rename";
@@ -926,8 +944,9 @@ function addTabElem(info) {
 
   window.addEventListener("mouseup", async function () {
     if (selectedTab) {
-      const tab = tabs.find((t) => t.name === selectedTab?.innerText);
-      if (tab) await changeTabOrder(info.name, tab.order);
+      const id = selectedTab?.getAttribute("kr-id") || "";
+      const tab = tabs.find((t) => t.id === id);
+      if (tab) await changeTabOrder(info.id, tab.order);
     }
 
     if (selected) unselect();
@@ -958,7 +977,7 @@ function addTabElem(info) {
     else if (selected) unselect();
   });
 
-  dropdownDelete.addEventListener("click", () => deleteTab(info.name));
+  dropdownDelete.addEventListener("click", () => deleteTab(info.id));
 
   tab.addEventListener("input", function () {
     if (tab.contentEditable === "true") changeContentEditableText(tab, tab.innerText.replace(/[<>:"/\\|?*]/g, ""));
@@ -967,14 +986,24 @@ function addTabElem(info) {
   async function enter(e) {
     if (tab.contentEditable === "true") {
       if (e) e.preventDefault();
+      
       dropdown.classList.remove("disabled");
       tab.contentEditable = false;
       tab.innerText = tab.innerText.trim();
 
-      if (tab.innerText.trim() === "") tab.innerText = info.name;
+      if (script && (!tab.innerText.toLowerCase().endsWith(".lua") && !tab.innerText.toLowerCase().endsWith(".txt"))) {
+        tab.innerText = `${tab.innerText}.${extension}`;
+      }
+
+      if (script) {
+        let defaultName = tab.innerText.split(".");
+        defaultName.pop();
+        defaultName = defaultName.join("");
+        if (defaultName.trim() === "") tab.innerText = name;
+      } else if (tab.innerText.trim() === "") tab.innerText = name;
 
       tab.append(icon);
-      await renameTab(info.name, tab.innerText);
+      await renameTab(info.id, tab.innerText);
     }
   }
 
@@ -987,17 +1016,24 @@ function addTabElem(info) {
     dropdown.classList.add("disabled");
     icon.remove();
     tab.contentEditable = true;
+    if (script) {
+      let defaultName = tab.innerText.split(".");
+      defaultName.pop();
+      defaultName = defaultName.join("");
+      tab.innerText = defaultName;
+    }
     tab.focus();
     focusAtEnd(tab);
   });
 
   tab.className = "kr-tab";
-  tab.innerText = info.name;
+  tab.spellcheck = false;
+  tab.innerText = name;
   if (info.active) tab.classList.add("active");
   icon.className = script ? "fa-solid fa-file" : "fa-solid fa-scroll";
   tab.append(icon);
   tab.addEventListener("click", function () {
-    if (tab.contentEditable !== "true") setTabActive(info.name);
+    if (tab.contentEditable !== "true") setTabActive(info.id);
   });
 
   tabDropdown.append(tab);
@@ -1135,8 +1171,7 @@ async function _import() {
   });
 
   if (selected) {
-    const text = await readFile(selected);
-    if (text && editorSetText) editorSetText(text, true);
+    await addScriptTab(selected);
     exploitImport.classList.remove("disabled");
     return true;
   }
@@ -1436,6 +1471,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   await createDirectory("", true);
   await createDirectory("scripts", true);
   await createDirectory("autoexec", true);
+  await createDirectory("kr-data", true);
 
   // Titlebar
   document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
