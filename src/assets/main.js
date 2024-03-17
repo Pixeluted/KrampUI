@@ -32,6 +32,19 @@ async function exit() {
   await process.exit();
 }
 
+function debounce(func, wait) {
+  let timeout;
+
+  return function executedFunction(...args) {
+    clearTimeout(timeout);
+    
+    timeout = setTimeout(function () {
+      clearTimeout(timeout);
+      func(...args);
+    }, wait);
+  };
+}
+
 function checkActive() {
   if (websocket && websocket.readyState === websocket.OPEN) {
     loginSection.classList.remove("active");
@@ -1487,9 +1500,13 @@ function setupEditor() {
       }
     }
 
-    editor.onDidChangeModelContent(async function() {
+    const setContent = debounce(function () {
+      setActiveTabContent(editorGetText());
+    }, 1000);
+
+    editor.onDidChangeModelContent(function() {
       updateIntelliSense();
-      await setActiveTabContent(editorGetText());
+      setContent();
     });
 
     updateIntelliSense();
