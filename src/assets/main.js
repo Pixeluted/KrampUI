@@ -765,12 +765,17 @@ function parseScripts(files) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function parseFolders(files) {
+function parseFolders(files, scriptsOnly) {
   return files
     .filter((f) => f.path && f.name && f.children)
     .filter((f) => {
       const scripts = parseScripts(f.children);
-      return f.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()) || scripts.some((s) => s.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()));
+      const namesCheck = f.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase());
+      const scriptsCheck = scripts.some((s) => s.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()));
+
+      return scriptsOnly
+        ? scriptsCheck
+        : namesCheck || scriptsCheck;
     })
     .sort((a, b) => b.name.localeCompare(a.name));
 }
@@ -788,7 +793,7 @@ let autoExecPath;
 async function addAutoExecFolder(force) {
   if (!autoExecPath) autoExecPath = await path.join(await path.appConfigDir(), "autoexec");
   const files = await readDirectory("autoexec");
-  const folder = parseFolders([{ path: autoExecPath, name: "Auto-Exec", children: files }]).pop();
+  const folder = parseFolders([{ path: autoExecPath, name: "Auto-Exec", children: files }], true).pop();
   
   if (files && folder) {
     const { name, path, children } = folder;
@@ -799,7 +804,7 @@ async function addAutoExecFolder(force) {
 
     emptyAutoExec();
     await addFolder({ name, path, scripts: parseScripts(children) }, true);
-  }
+  } else emptyAutoExec();
 }
 
 async function populateFolders(folders, force) {
