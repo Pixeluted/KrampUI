@@ -342,6 +342,8 @@ async function addFolder({ name, path, scripts }) {
   const dropdown = document.createElement("div");
   const dropdownNewFile = document.createElement("div");
   const dropdownNewFileIcon = document.createElement("i");
+  const dropdownExplorer = document.createElement("div");
+  const dropdownExplorerIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
   const dropdownRenameIcon = document.createElement("i");
   const dropdownDelete = document.createElement("div");
@@ -359,15 +361,19 @@ async function addFolder({ name, path, scripts }) {
   dropdown.className = "kr-dropdown-content";
   dropdownNewFile.innerText = "New File";
   dropdownNewFileIcon.className = "fa-solid fa-file";
+  dropdownExplorer.innerText = "View Folder";
+  dropdownExplorerIcon.className = "fa-solid fa-folder-tree";
   dropdownRename.innerText = "Rename";
   dropdownRenameIcon.className = "fa-solid fa-font";
   dropdownDelete.innerText = "Delete";
   dropdownDeleteIcon.className = "fa-solid fa-delete-left";
 
   dropdownNewFile.append(dropdownNewFileIcon);
+  dropdownExplorer.append(dropdownExplorerIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
   dropdown.append(dropdownNewFile);
+  dropdown.append(dropdownExplorer);
   dropdown.append(dropdownRename);
   dropdown.append(dropdownDelete);
 
@@ -419,6 +425,10 @@ async function addFolder({ name, path, scripts }) {
     folder.contentEditable = true;
     folder.focus();
     focusAtEnd(folder);
+  });
+
+  dropdownExplorer.addEventListener("click", function () {
+    open(path);
   });
 
   dropdownDelete.addEventListener("click", async function () {
@@ -478,6 +488,8 @@ async function addScript({ name, path }, folder) {
   const dropdown = document.createElement("div");
   const dropdownExecute = document.createElement("div");
   const dropdownExecuteIcon = document.createElement("i");
+  const dropdownExplorer = document.createElement("div");
+  const dropdownExplorerIcon = document.createElement("i");
   const dropdownExport = document.createElement("div");
   const dropdownExportIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
@@ -495,6 +507,8 @@ async function addScript({ name, path }, folder) {
   dropdown.className = "kr-dropdown-content";
   dropdownExecute.innerText = "Execute";
   dropdownExecuteIcon.className = "fa-solid fa-scroll";
+  dropdownExplorer.innerText = "View File";
+  dropdownExplorerIcon.className = "fa-solid fa-file";
   dropdownExport.innerText = "Export To";
   dropdownExportIcon.className = "fa-solid fa-floppy-disk";
   dropdownRename.innerText = "Rename";
@@ -503,11 +517,13 @@ async function addScript({ name, path }, folder) {
   dropdownDeleteIcon.className = "fa-solid fa-delete-left";
 
   dropdownExecute.append(dropdownExecuteIcon);
+  dropdownExplorer.append(dropdownExplorerIcon);
   dropdownExport.append(dropdownExportIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
   dropdown.append(dropdownExecute);
   dropdown.append(dropdownExport);
+  dropdown.append(dropdownExplorer);
   dropdown.append(dropdownRename);
   dropdown.append(dropdownDelete);
 
@@ -585,6 +601,10 @@ async function addScript({ name, path }, folder) {
   dropdownExecute.addEventListener("click", async function () {
     const text = await readFile(path);
     execute(text);
+  });
+
+  dropdownExplorer.addEventListener("click", function () {
+    open(path);
   });
 
   script.addEventListener("input", function () {
@@ -898,6 +918,12 @@ function addTabElem(info) {
   const icon = document.createElement("i");
 
   const dropdown = document.createElement("div");
+  const dropdownExecute = document.createElement("div");
+  const dropdownExecuteIcon = document.createElement("i");
+  const dropdownExplorer = document.createElement("div");
+  const dropdownExplorerIcon = document.createElement("i");
+  const dropdownExplorerFolder = document.createElement("div");
+  const dropdownExplorerFolderIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
   const dropdownRenameIcon = document.createElement("i");
   const dropdownDelete = document.createElement("div");
@@ -909,13 +935,33 @@ function addTabElem(info) {
   tab.setAttribute("kr-id", info.id);
   tabDropdown.className = "kr-dropdown";
   dropdown.className = "kr-dropdown-content";
+  dropdownExecute.innerText = "Execute";
+  dropdownExecuteIcon.className = "fa-solid fa-scroll";
+  dropdownExplorer.innerText = "View File";
+  dropdownExplorerIcon.className = "fa-solid fa-file";
+  dropdownExplorerFolder.innerText = "View Folder";
+  dropdownExplorerFolderIcon.className = "fa-solid fa-folder-tree";
   dropdownRename.innerText = "Rename";
   dropdownRenameIcon.className = "fa-solid fa-font";
-  dropdownDelete.innerText = "Delete";
-  dropdownDeleteIcon.className = "fa-solid fa-delete-left";
+  
+  if (script) {
+    dropdownDelete.innerText = "Close";
+    dropdownDeleteIcon.className = "fa-solid fa-times";
+  } else {
+    dropdownDelete.innerText = "Delete";
+    dropdownDeleteIcon.className = "fa-solid fa-delete-left";
+  }
 
+  dropdownExecute.append(dropdownExecuteIcon);
+  dropdownExplorer.append(dropdownExplorerIcon);
+  dropdownExplorerFolder.append(dropdownExplorerFolderIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
+  dropdown.append(dropdownExecute);
+  if (script) {
+    dropdown.append(dropdownExplorer);
+    dropdown.append(dropdownExplorerFolder);
+  }
   dropdown.append(dropdownRename);
   dropdown.append(dropdownDelete);
 
@@ -1011,6 +1057,21 @@ function addTabElem(info) {
   tab.addEventListener("keydown", function (e) {
     if (e.key === "Enter") enter();
   });
+
+  dropdownExecute.addEventListener("click", async function () {
+    const text = await getTabContent(info);
+    execute(text);
+  });
+
+  if (script) {
+    dropdownExplorer.addEventListener("click", function () {
+      open(info.path);
+    });
+  
+    dropdownExplorerFolder.addEventListener("click", function () {
+      open(getDirectory(info.path));
+    });
+  }
 
   dropdownRename.addEventListener("click", async function () {
     dropdown.classList.add("disabled");
