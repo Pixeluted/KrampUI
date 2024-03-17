@@ -826,13 +826,13 @@ async function addTab(data, dontLoad) {
     });
   }
 
-  tabs.push({ ...data, id: randomString(40, "!?'£$%^&*()_+=#/\\.;'[]=-") });
+  tabs.push({ ...data, id: randomString(40, "!?'£$%^&*()_+=#/\\.;[]=-") });
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
   if (dontLoad !== true) populateTabs();
 }
 
-async function deleteTab(id) {
+async function deleteTab(id, force) {
   if (tabs.length === 1) return;
   let order = 0;
   
@@ -841,6 +841,10 @@ async function deleteTab(id) {
   
   const tabIndex = tabs.indexOf(tab);
   const newTab = tabs[tabIndex - 1] || tabs[tabIndex + 1];
+
+  if (force && tab.path) {
+    await deleteFile(tab.path);
+  }
 
   tabs = tabs
     .filter(function (t) {
@@ -981,6 +985,8 @@ function addTabElem(info) {
   const dropdownRenameIcon = document.createElement("i");
   const dropdownDelete = document.createElement("div");
   const dropdownDeleteIcon = document.createElement("i");
+  const dropdownClose = document.createElement("div");
+  const dropdownCloseIcon = document.createElement("i");
 
   const name = getTabName(info);
   const extension = name.split(".").pop();
@@ -996,20 +1002,16 @@ function addTabElem(info) {
   dropdownExplorerFolderIcon.className = "fa-solid fa-folder-tree";
   dropdownRename.innerText = "Rename";
   dropdownRenameIcon.className = "fa-solid fa-font";
-  
-  if (script) {
-    dropdownDelete.innerText = "Close";
-    dropdownDeleteIcon.className = "fa-solid fa-times";
-  } else {
-    dropdownDelete.innerText = "Delete";
-    dropdownDeleteIcon.className = "fa-solid fa-delete-left";
-  }
-
+  dropdownDelete.innerText = "Delete";
+  dropdownDeleteIcon.className = "fa-solid fa-delete-left";
+  dropdownClose.innerText = "Close";
+  dropdownCloseIcon.className = "fa-solid fa-times";
   dropdownExecute.append(dropdownExecuteIcon);
   dropdownExplorer.append(dropdownExplorerIcon);
   dropdownExplorerFolder.append(dropdownExplorerFolderIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
+  dropdownClose.append(dropdownCloseIcon);
   dropdown.append(dropdownExecute);
   if (script) {
     dropdown.append(dropdownExplorer);
@@ -1017,6 +1019,7 @@ function addTabElem(info) {
   }
   dropdown.append(dropdownRename);
   if (tabs.length > 1) dropdown.append(dropdownDelete);
+  if (script && tabs.length > 1) dropdown.append(dropdownClose);
 
   let selected = false;
   let selectedTab = null;
@@ -1076,7 +1079,8 @@ function addTabElem(info) {
     else if (selected) unselect();
   });
 
-  dropdownDelete.addEventListener("click", () => deleteTab(info.id));
+  dropdownDelete.addEventListener("click", () => deleteTab(info.id, true));
+  dropdownClose.addEventListener("click", () => deleteTab(info.id));
 
   tab.addEventListener("input", function () {
     if (tab.contentEditable === "true") changeContentEditableText(tab, tab.innerText.replace(/[<>:"/\\|?*]/g, ""));
@@ -1543,13 +1547,13 @@ function setupEditor() {
       }
     }
 
-    const setContent = debounce(function () {
-      setActiveTabContent(editorGetText());
-    }, 1000);
+    const setContent = debounce(function (text) {
+      setActiveTabContent(text);
+    }, 500);
 
     editor.onDidChangeModelContent(function() {
       updateIntelliSense();
-      setContent();
+      setContent(editorGetText());
     });
 
     updateIntelliSense();
