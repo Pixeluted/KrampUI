@@ -1,6 +1,6 @@
 <div align="center">
     <h3>KrampUI</h3>
-    <p>Simple and lightweight frontend for Ro-Exec. Allowing you to easily manage all your scripts and giving you multiple tabs to maximize your workflow.</p>
+    <p>Simple and lightweight frontend for Ro-Exec.</p>
     <img src="./assets/showcase.png" alt="An image which showcases KrampUI application." width="475"/>
 </div>
 
