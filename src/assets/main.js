@@ -140,9 +140,9 @@ async function writeFile(file, contents) {
   }
 }
 
-async function readFile(file, noDir) {
+async function readFile(file) {
   try {
-    return await fs.readTextFile(file, { dir: noDir ? undefined : fs.BaseDirectory.AppConfig });
+    return await fs.readTextFile(file, { dir: fs.BaseDirectory.AppConfig });
   } catch {
     return null;
   }
@@ -157,26 +157,9 @@ async function renameFile(file, newFile) {
   }
 }
 
-async function readBinary(file, noDir) {
+async function deleteFile(file) {
   try {
-    return await fs.readBinaryFile(file, { dir: noDir ? undefined : fs.BaseDirectory.AppConfig });
-  } catch {
-    return null;
-  }
-}
-
-async function writeBinary(file, contents) {
-  try {
-    await fs.writeBinaryFile(file, contents, { dir: fs.BaseDirectory.AppConfig });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function deleteFile(file, noDir) {
-  try {
-    await fs.removeFile(file, { dir: noDir ? undefined : fs.BaseDirectory.AppConfig });
+    await fs.removeFile(file, { dir: fs.BaseDirectory.AppConfig });
     return true;
   } catch {
     return false;
@@ -209,12 +192,56 @@ async function setAutoInject(bool) {
   return await writeFile("kr-auto-inject", bool.toString());
 }
 
-async function checkExecutable() {
-  return await exists("kr-executable.exe");
+function randomString(length) {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let values = new Uint32Array(length);
+  window.crypto.getRandomValues(values);
+
+  let text = "";
+  for (let i = 0; i < length; i++) {
+    text += characters.charAt(values[i] % characters.length);
+  }
+
+  return text;
 }
 
-async function setExecutable(data) {
-  return await writeBinary("kr-executable.exe", data);
+function getExecutableName() {
+  return `kr-${randomString(20)}.exe`;
+}
+
+function isExecutable(f) {
+  return f.name?.startsWith("kr-") && f.name?.endsWith(".exe");
+}
+
+async function getExecutables() {
+  const files = await readDirectory("");
+  return files.filter(isExecutable);
+}
+
+async function clearExecutables() {
+  const executables = await getExecutables();
+  executables.map((f) => f.path).forEach(await deleteFile);
+}
+
+async function findExecutable() {
+  const executables = await getExecutables();
+  return executables.shift();
+}
+
+async function getExecutable() {
+  const executable = await findExecutable();
+  return executable?.name || getExecutableName();
+}
+
+async function setExecutable(path) {
+  const currentExecutable = (await findExecutable())?.path?.toLowerCase();
+
+  if (currentExecutable) {
+    if (path.toLowerCase() === currentExecutable) return;
+    await deleteFile(currentExecutable);
+  }
+
+  await renameFile(path, await getExecutable());
 }
 
 async function emptyScripts() {
@@ -1002,15 +1029,9 @@ async function askForExecutable() {
   });
 
   if (selected) {
-    const data = await readBinary(selected, true);
-    
-    if (data) {
-      await setExecutable(data);
-      try { await deleteFile(selected, true); }
-      catch {};
-      if (!prevConnected && !injecting && prevActive) exploitInject.classList.remove("disabled");
-      return true;
-    }
+    await setExecutable(selected);
+    if (!prevConnected && !injecting && prevActive) exploitInject.classList.remove("disabled");
+    return true;
   }
 
   if (!prevConnected && !injecting && prevActive) exploitInject.classList.remove("disabled");
@@ -1025,54 +1046,62 @@ async function killRoblox() {
   return await invoke("kill_process", { name: "RobloxPlayerBeta" });
 }
 
-async function inject(ignoreIfNoExecutable) {
-  if (!await isRobloxRunning()) {
-    return;
+async function inject() {
+  let executable = await findExecutable();
+
+  if (!executable) {
+    if (!await askForExecutable()) return;
+    executable = await findExecutable();
   }
 
-  if (!await checkExecutable()) {
-    if (ignoreIfNoExecutable || !await askForExecutable()) return;
+  injecting = true;
+  exploitInject.classList.add("disabled");
+  exploitIndicator.style.color = "var(--yellow)";
+
+  const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.path], { cwd: await path.appConfigDir() });
+
+  let isDone;
+  let child;
+  let injInterval;
+
+  async function killCheck() {
+    if (child) await child.kill();
   }
 
-  try {
-    injecting = true;
-    exploitInject.classList.add("disabled");
-    exploitIndicator.style.color = "var(--yellow)";
+  async function done() {
+    if (injInterval) clearInterval(injInterval);
+    if (isDone) return;
+    isDone = true;
+    injecting = false;
+    if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
+    exploitIndicator.style.color = `var(--${prevConnected ? "green" : "text"})`;
+    await killCheck();
+  }
 
-    const command = new Command("kr-inject", [], { cwd: await path.appConfigDir() });
+  function onData(line) {
+    const text = line ? line.trim() : "";
+    const blacklist = ["error", "redownload", "make a ticket", "cannot find user"];
 
-    let isDone;
-    let child;
-    let injInterval;
-
-    async function killCheck() {
-      if (child) await child.kill();
+    if (blacklist.some((s) => text.toLowerCase().includes(s)) && !text.toLowerCase().endsWith(":")) {
+      alert(`[Ro-Exec] ${text}`);
+      done();
     }
-
-    async function done() {
-      if (injInterval) clearInterval(injInterval);
-      if (isDone) return;
-      isDone = true;
-      injecting = false;
-      if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
-      exploitIndicator.style.color = `var(--${prevConnected ? "green" : "text"})`;
-      await killCheck();
-    }
-
-    injInterval = setInterval(function () {
-      if (!prevActive && !isDone) done();
-    }, 100);
-
-    command.on("close", done);
-    command.once("error", done);
-
-    child = await command.spawn();
-    setTimeout(done, 120 * 1000);
-    
-    return true;
-  } catch {
-    return false;
   }
+
+  injInterval = setInterval(function () {
+    if (!prevActive && !isDone) done();
+  }, 100);
+
+  command.on("close", done);
+  command.on("error", done);
+
+  command.stdout.on("data", onData);
+  command.stderr.on("data", onData);
+
+  try { child = await command.spawn(); }
+  catch { done(); };
+
+  setTimeout(done, 120 * 1000);
 }
 
 function execute(customText) {
@@ -1109,7 +1138,7 @@ async function _import() {
   });
 
   if (selected) {
-    const text = await readFile(selected, true);
+    const text = await readFile(selected);
     if (text && editorSetText) editorSetText(text, true);
     exploitImport.classList.remove("disabled");
     return true;
@@ -1382,7 +1411,7 @@ async function checkRobloxActive() {
     
     if (newActive) {
       if (!prevConnected && injecting !== true) {
-        if (autoInject) inject(true);
+        if (autoInject && await findExecutable()) inject();
         else exploitInject.classList.remove("disabled");
       }
       exploitKill.classList.remove("disabled");
@@ -1483,8 +1512,11 @@ window.addEventListener("DOMContentLoaded", async function () {
   // Inject Button
   exploitInject.addEventListener("click", inject);
   document.querySelector(".kr-dropdown-select").addEventListener("click", askForExecutable);
-  document.querySelector(".kr-dropdown-delete").addEventListener("click", function () {
-    if (!injecting) deleteFile("kr-executable.exe");
+  document.querySelector(".kr-dropdown-delete").addEventListener("click", async function () {
+    if (!injecting) {
+      const executable = await findExecutable();
+      if (executable) deleteFile(executable.path);
+    }
   });
 
   // Auto Inject

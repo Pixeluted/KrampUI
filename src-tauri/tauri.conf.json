@@ -15,7 +15,8 @@
         "scope": ["**"]
       },
       "shell": {
-        "scope": [{ "name": "kr-inject", "cmd": "$APPCONFIG/kr-executable.exe" }]
+        "open": ".*",
+        "scope": [{ "name": "cmd", "cmd": "cmd", "args": true }]
       }
     },
     "windows": [

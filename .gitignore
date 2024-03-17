@@ -6,6 +6,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 Cargo.lock
+target
+package-lock.json
 
 node_modules
 dist
