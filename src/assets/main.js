@@ -261,12 +261,17 @@ async function setExecutable(path) {
 }
 
 async function emptyScripts() {
-  const scripts = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container:has(> .script:not(.folder))"));
+  const scripts = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container:not(.kr-auto-exec):has(> .script:not(.folder))"));
+  await Promise.all(scripts.map((s) => s.remove()));
+}
+
+async function emptyAutoExec() {
+  const scripts = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container.kr-auto-exec"));
   await Promise.all(scripts.map((s) => s.remove()));
 }
 
 async function emptyFolders() {
-  const folders = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container:has(> .script.folder)"));
+  const folders = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container:not(.kr-auto-exec):has(> .script.folder)"));
   await Promise.all(folders.map((f) => f.remove()));
 }
 
@@ -346,7 +351,7 @@ function removeExpanded(name) {
   expandedFolders.delete(name);
 }
 
-async function addFolder({ name, path, scripts }) {
+async function addFolder({ name, path, scripts }, autoExec) {
   const container = document.createElement("div");
   const folder = document.createElement("div");
   const folderScripts = document.createElement("div");
@@ -363,10 +368,11 @@ async function addFolder({ name, path, scripts }) {
   const dropdownDeleteIcon = document.createElement("i");
 
   container.className = "script-container kr-dropdown";
+  if (autoExec) container.classList.add("kr-auto-exec");
   folder.className = "script folder";
   folder.spellcheck = false;
   folder.innerText = name;
-  icon.className = "fa-solid fa-folder";
+  icon.className = autoExec ? "fa-solid fa-robot" : "fa-solid fa-folder";
   folder.append(icon);
   folderScripts.className = "folder-scripts";
   if (getExpanded(name)) folderScripts.classList.add("expanded");
@@ -387,10 +393,13 @@ async function addFolder({ name, path, scripts }) {
   dropdownDelete.append(dropdownDeleteIcon);
   dropdown.append(dropdownNewFile);
   dropdown.append(dropdownExplorer);
-  dropdown.append(dropdownRename);
-  dropdown.append(dropdownDelete);
 
-  scripts.forEach(async (s) => await addScript(s, { name, element: folderScripts }));
+  if (!autoExec) {
+    dropdown.append(dropdownRename);
+    dropdown.append(dropdownDelete);
+  }
+
+  scripts.forEach(async (s) => await addScript(s, { name, element: folderScripts }, autoExec));
 
   folder.addEventListener("click", function () {
     if (folder.contentEditable !== "true" && !isSearching()) {
@@ -427,7 +436,7 @@ async function addFolder({ name, path, scripts }) {
   });
 
   dropdownNewFile.addEventListener("click", async function () {
-    await newFile(name);
+    await newFile(name, autoExec);
     setExpanded(name, true);
     folderScripts.classList.add("expanded");
   });
@@ -459,12 +468,12 @@ async function addFolder({ name, path, scripts }) {
   else exploitScripts.append(container);
 }
 
-async function getFilePath(folder) {
+async function getFilePath(folder, autoExec) {
   let number = 0;
 
   async function get() {
     number = number + 1;
-    const path = folder ? `scripts/${folder}/Script ${number}.lua` : `scripts/Script ${number}.lua`;
+    const path = autoExec ? `autoexec/Script ${number}.lua` : folder ? `scripts/${folder}/Script ${number}.lua` : `scripts/Script ${number}.lua`;
     return (await exists(path)) ? await get() : path;
   }
 
@@ -483,8 +492,8 @@ async function getFolderPath() {
   return await get();
 }
 
-async function newFile(folder) {
-  await writeFile(await getFilePath(folder), "");
+async function newFile(folder, autoExec) {
+  await writeFile(await getFilePath(folder, autoExec), "");
   loadScripts();
 }
 
@@ -493,7 +502,7 @@ async function newFolder() {
   loadScripts();
 }
 
-async function addScript({ name, path }, folder) {
+async function addScript({ name, path }, folder, autoExec) {
   const container = document.createElement("div");
   const script = document.createElement("div");
   const icon = document.createElement("i");
@@ -571,8 +580,9 @@ async function addScript({ name, path }, folder) {
 
   window.addEventListener("mouseup", async function () {
     if (selectedFolder) {
+      const isAutoExec = selectedFolder.parentElement?.classList.contains("kr-auto-exec");
       const isScripts = selectedFolder.classList.contains("scripts");
-      const result = await renameFile(path, isScripts ? `scripts/${name}` : `scripts/${selectedFolder.innerText}/${name}`);
+      const result = await renameFile(path, isAutoExec ? `autoexec/${name}` : isScripts ? `scripts/${name}` : `scripts/${selectedFolder.innerText}/${name}`);
       if (!isScripts) setExpanded(selectedFolder.innerText, true);
       loadScripts(result === false);
     }
@@ -642,7 +652,7 @@ async function addScript({ name, path }, folder) {
       if (defaultName.trim() === "") script.innerText = name;
 
       script.append(icon);
-      const result = await renameFile(path, folder ? `scripts/${folder.name}/${script.innerText}` : `scripts/${script.innerText}`);
+      const result = await renameFile(path, autoExec ? `autoexec/${script.innerText}` : folder ? `scripts/${folder.name}/${script.innerText}` : `scripts/${script.innerText}`);
       loadScripts(result === false);
     }
   }
@@ -676,6 +686,7 @@ async function addScript({ name, path }, folder) {
 
 let prevScripts;
 let prevFolders;
+let prevAutoExec;
 
 function parseScripts(files) {
   return files
@@ -692,7 +703,7 @@ function parseFolders(files) {
       const scripts = parseScripts(f.children);
       return f.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()) || scripts.some((s) => s.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()));
     })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => b.name.localeCompare(a.name));
 }
 
 async function populateScripts(scripts, force) {
@@ -700,8 +711,26 @@ async function populateScripts(scripts, force) {
   if (!force && scriptNames.join(",") === prevScripts) return;
   prevScripts = scriptNames.join(",");
   emptyScripts();
-  
   scripts.forEach(async (s) => await addScript(s));
+}
+
+let autoExecPath;
+
+async function addAutoExecFolder(force) {
+  if (!autoExecPath) autoExecPath = await path.join(await path.appConfigDir(), "autoexec");
+  const files = await readDirectory("autoexec");
+  const folder = parseFolders([{ path: autoExecPath, name: "Auto-Exec", children: files }]).pop();
+  
+  if (files && folder) {
+    const { name, path, children } = folder;
+    const names = children.map((c) => c.name).join(",");
+
+    if (!force && names === prevAutoExec) return;
+    prevAutoExec = names;
+
+    emptyAutoExec();
+    await addFolder({ name, path, scripts: parseScripts(children) }, true);
+  }
 }
 
 async function populateFolders(folders, force) {
@@ -712,8 +741,16 @@ async function populateFolders(folders, force) {
   if (!force && finalNames === prevFolders) return;
   prevFolders = finalNames;
   emptyFolders();
-
   folders.forEach(async ({ name, path, children }) => await addFolder({ name, path, scripts: parseScripts(children) }));
+}
+
+function checkAutoExec() {
+  const autoExec = exploitScripts.querySelector(".script-container.kr-auto-exec");
+
+  if (autoExec && exploitScripts.firstChild !== autoExec) {
+    exploitScripts.removeChild(autoExec);
+    exploitScripts.insertBefore(autoExec, exploitScripts.firstChild);
+  }
 }
 
 async function loadScripts(force) {
@@ -724,6 +761,8 @@ async function loadScripts(force) {
 
   await populateFolders(folders, force);
   await populateScripts(scripts, force);
+  await addAutoExecFolder(force);
+  checkAutoExec();
 }
 
 async function getTabContent(tab) {
