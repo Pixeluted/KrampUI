@@ -43,6 +43,10 @@
       "identifier": "KrampUI",
       "publisher": "Snipcola",
       "icon": ["./icons/icon.ico"]
+    },
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
     }
   }
 }
