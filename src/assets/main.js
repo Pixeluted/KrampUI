@@ -234,6 +234,9 @@ async function getExecutable() {
 }
 
 async function setExecutable(path) {
+  const currentExecutable = (await findExecutable())?.path?.toLowerCase() || "";
+  if (path.toLowerCase() === currentExecutable) return;
+
   await clearExecutables();
   await renameFile(path, await getExecutable());
 }
