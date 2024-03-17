@@ -3,6 +3,7 @@ const { open, Command } = window.__TAURI__.shell;
 const { appWindow } = window.__TAURI__.window;
 const process = window.__TAURI__.process;
 const dialog = window.__TAURI__.dialog;
+const event = window.__TAURI__.event;
 const path = window.__TAURI__.path;
 const fs = window.__TAURI__.fs;
 
@@ -14,7 +15,7 @@ let loginForm, loginToken, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
-let prevConnected, prevActive, editorReady, tabs, injecting, autoInject;
+let prevConnected, prevActive, editorReady, tabs, injecting, autoInject, topMost, keyToggle;
 
 async function minimize() {
   await appWindow.minimize();
@@ -26,6 +27,24 @@ async function maximize() {
 
 async function isMaximized() {
   return await appWindow.isMaximized();
+}
+
+async function isVisible() {
+  return await window.__TAURI__.window.appWindow.isVisible();
+}
+
+async function show() {
+  await appWindow.show();
+  await appWindow.setFocus();
+}
+
+async function hide() {
+  await appWindow.hide();
+}
+
+async function toggle() {
+  if (await isVisible()) await hide();
+  else await show();
 }
 
 async function exit() {
@@ -202,11 +221,29 @@ async function setToken(token) {
 
 async function getAutoInject() {
   const text = await readFile("kr-data/auto-inject");
-  return text ? text === "true" : false;
+  return text ? text === "true" : true;
 }
 
 async function setAutoInject(bool) {
   return await writeFile("kr-data/auto-inject", bool.toString());
+}
+
+async function getTopMost() {
+  const text = await readFile("kr-data/top-most");
+  return text ? text === "true" : true;
+}
+
+async function setTopMost(bool) {
+  return await writeFile("kr-data/top-most", bool.toString());
+}
+
+async function getKeyToggle() {
+  const text = await readFile("kr-data/key-toggle");
+  return text ? text === "true" : true;
+}
+
+async function setKeyToggle(bool) {
+  return await writeFile("kr-data/key-toggle", bool.toString());
 }
 
 function randomString(length, extra) {
@@ -1674,17 +1711,58 @@ window.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Auto Inject
-  async function checkAutoInject() {
+  function checkAutoInject() {
     document.querySelector(".kr-dropdown-automatic .fa-solid").className = `fa-solid fa-${autoInject ? "check" : "times"}`;
   }
 
   autoInject = await getAutoInject();
-  await checkAutoInject();
+  checkAutoInject();
 
   document.querySelector(".kr-dropdown-automatic").addEventListener("click", async function () {
     autoInject = !autoInject;
     await setAutoInject(autoInject);
-    await checkAutoInject();
+    checkAutoInject();
+  });
+
+  // Top Most
+  async function checkTopMost() {
+    document.querySelector(".kr-dropdown-top-most .fa-solid").className = `fa-solid fa-${topMost ? "check" : "times"}`;
+    await appWindow.setAlwaysOnTop(topMost);
+  }
+
+  topMost = await getTopMost();
+  await checkTopMost();
+
+  document.querySelector(".kr-dropdown-top-most").addEventListener("click", async function () {
+    topMost = !topMost;
+    await setTopMost(topMost);
+    await checkTopMost();
+  });
+
+  // Key Toggle
+  await invoke("init_key_events", { window: appWindow });
+
+  function checkKeyToggle() {
+    document.querySelector(".kr-dropdown-key-toggle .fa-solid").className = `fa-solid fa-${keyToggle ? "check" : "times"}`;
+  }
+
+  keyToggle = await getKeyToggle();
+  await checkKeyToggle();
+
+  document.querySelector(".kr-dropdown-key-toggle").addEventListener("click", async function () {
+    keyToggle = !keyToggle;
+    await setKeyToggle(keyToggle);
+    await checkKeyToggle();
+  });
+  
+  event.listen("key-press", function (e) {
+    const key = (e?.payload?.message || "")?.toLowerCase();
+    if (key === "delete" && keyToggle) toggle();
+  });
+
+  window.addEventListener("keyup", function (e) {
+    const key = (e?.key || "")?.toLowerCase();
+    if (key === "delete" && keyToggle) toggle();
   });
 
   // Active
@@ -1709,8 +1787,13 @@ window.addEventListener("DOMContentLoaded", async function () {
     if (foundDropdownContent && e.target.parentElement === foundDropdownContent) {
       foundDropdownContent.classList.remove("active");
     } else if (foundDropdownContent) {
-      if (button === "right") foundDropdownContent.classList.toggle("active");
-      else if (button === "left") foundDropdownContent.classList.remove("active");
+      if (foundDropdown.classList.contains("left")) {
+        if (button === "left") foundDropdownContent.classList.toggle("active");
+        else if (button === "right") foundDropdownContent.classList.remove("active");
+      } else {
+        if (button === "right") foundDropdownContent.classList.toggle("active");
+        else if (button === "left") foundDropdownContent.classList.remove("active");
+      }
 
       if (foundDropdownContent.classList.contains("active")) {
         const dropdownWidth = foundDropdownContent.clientWidth;
