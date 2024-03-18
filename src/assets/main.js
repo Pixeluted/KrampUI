@@ -1528,6 +1528,9 @@ function setupEditor() {
       catch { };
     }
 
+    const tab = tabs.find((t) => t.active === true);
+    if (tab) editorSetScroll(tab.scroll || 0);
+
     function editorAddIntellisense(l, k, d, i) {
       let t;
         
