@@ -926,7 +926,7 @@ async function deleteTab(id, force) {
   }
 
   if (!tab.path) {
-    await deleteFile(`${dataDirectory}/tabs-data/${tab.id}.lua`);
+    await deleteFile(`${dataDirectory}/tabs-data/${tab.id}`);
   }
 
   tabs = tabs
