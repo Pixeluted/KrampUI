@@ -1646,15 +1646,16 @@ function setupEditor() {
       setActiveTabContent(text);
     }, 150);
 
-    editor.onDidChangeModelContent(function() {
+    editor.onDidChangeModelContent(function () {
       updateIntelliSense();
       setContent(editorGetText());
     });
 
-    editor.onDidScrollChange(function(e) {
+    editor.onDidScrollChange(function (e) {
       setActiveTabScroll(e.scrollTop);
     });
 
+    editor.addCommand(monaco.KeyCode.Delete, () => null);
     updateIntelliSense();
   });
 }
