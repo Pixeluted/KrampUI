@@ -1324,7 +1324,7 @@ async function inject() {
 
   function onData(line) {
     const text = line ? line.trim() : "";
-    const blacklist = ["error", "redownload", "make a ticket", "cannot find user"];
+    const blacklist = ["error:", "redownload", "make a ticket", "cannot find user"];
 
     if (blacklist.some((s) => text.toLowerCase().includes(s)) && !text.toLowerCase().endsWith(":")) {
       alert(`[Ro-Exec] ${text}`);
@@ -1345,7 +1345,7 @@ async function inject() {
   try { child = await command.spawn(); }
   catch { done(); };
 
-  setTimeout(done, 120 * 1000);
+  setTimeout(done, 60 * 1000);
 }
 
 function execute(customText) {
