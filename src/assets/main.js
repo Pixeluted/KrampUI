@@ -568,7 +568,7 @@ async function newFolder() {
   loadScripts();
 }
 
-async function addScript({ name, path }, folder, autoExec) {
+async function addScript({ name, path: _path }, folder, autoExec) {
   const container = document.createElement("div");
   const script = document.createElement("div");
   const icon = document.createElement("i");
@@ -637,7 +637,7 @@ async function addScript({ name, path }, folder, autoExec) {
 
   script.addEventListener("click", async function () {
     if (script.contentEditable === "true") return;
-    await addScriptTab(path);
+    await addScriptTab(_path);
   });
 
   script.addEventListener("mousedown", function (e) {
@@ -648,8 +648,22 @@ async function addScript({ name, path }, folder, autoExec) {
     if (selectedFolder) {
       const isAutoExec = selectedFolder.parentElement?.classList.contains("kr-auto-exec");
       const isScripts = selectedFolder.classList.contains("scripts");
-      const result = await renameFile(path, isAutoExec ? `autoexec/${name}` : isScripts ? `scripts/${name}` : `scripts/${selectedFolder.innerText}/${name}`);
+
+      let newPath = isAutoExec ? `autoexec/${name}` : isScripts ? `scripts/${name}` : `scripts/${selectedFolder.innerText}/${name}`;
+      newPath = await path.join(await path.appConfigDir(), newPath);
+
+      const result = await renameFile(_path, newPath);
       if (!isScripts) setExpanded(selectedFolder.innerText, true);
+
+      if (result !== false) {
+        tabs = tabs.map(function (t) {
+          if (t.path === _path) t.path = newPath;
+          return t;
+        });
+        
+        await setTabs();
+      }
+
       loadScripts(result === false);
     }
 
@@ -683,17 +697,17 @@ async function addScript({ name, path }, folder, autoExec) {
 
   dropdownExport.addEventListener("click", async function () {
     const text = editorGetText() || "";
-    await writeFile(path, text);
+    await writeFile(_path, text);
     loadScripts(true);
   });
 
   dropdownExecute.addEventListener("click", async function () {
-    const text = await readFile(path);
+    const text = await readFile(_path);
     execute(text);
   });
 
   dropdownExplorer.addEventListener("click", function () {
-    open(path);
+    open(_path);
   });
 
   script.addEventListener("input", function () {
@@ -718,7 +732,13 @@ async function addScript({ name, path }, folder, autoExec) {
       if (defaultName.trim() === "") script.innerText = name;
 
       script.append(icon);
-      const result = await renameFile(path, autoExec ? `autoexec/${script.innerText}` : folder ? `scripts/${folder.name}/${script.innerText}` : `scripts/${script.innerText}`);
+      const result = await renameFile(_path, autoExec ? `autoexec/${script.innerText}` : folder ? `scripts/${folder.name}/${script.innerText}` : `scripts/${script.innerText}`);
+      
+      if (result !== false) {
+        const tab = tabs.find((t) => t.path === _path);
+        if (tab) renameTab(tab.id, script.innerText, true);
+      }
+
       loadScripts(result === false);
     }
   }
@@ -741,8 +761,11 @@ async function addScript({ name, path }, folder, autoExec) {
   });
 
   dropdownDelete.addEventListener("click", async function () {
-    await deleteFile(path);
+    await deleteFile(_path);
     loadScripts();
+
+    const tab = tabs.find((t) => t.path === _path);
+    if (tab) await deleteTab(tab.id);
   });
 
   container.append(script);
@@ -952,7 +975,7 @@ async function deleteTab(id, force) {
   populateTabs();
 }
 
-async function renameTab(id, newName) {
+async function renameTab(id, newName, force) {
   const tab = tabs.find((t) => t.id === id);
   if (!tab) return;
 
@@ -961,7 +984,7 @@ async function renameTab(id, newName) {
   if (script) {
     const directory = await getDirectory(tab.path);
     const newPath = `${directory}\\${newName}`;
-    await renameFile(tab.path, newPath);
+    if (!force) await renameFile(tab.path, newPath);
 
     tabs = tabs.map(function (t) {
       if (t.id === id) t.path = newPath;
@@ -975,7 +998,7 @@ async function renameTab(id, newName) {
   }
 
   await setTabs();
-  populateTabs();
+  populateTabs(force);
   loadScripts();
 }
 
