@@ -908,6 +908,7 @@ async function addTab(data, dontLoad) {
   tabs.push({ ...data, id: randomString(20) });
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
+  if (editorSetScroll) editorSetScroll(0);
   if (dontLoad !== true) populateTabs();
 }
 
