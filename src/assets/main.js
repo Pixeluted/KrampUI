@@ -1682,7 +1682,7 @@ function setupEditor() {
       setActiveTabScroll(e.scrollTop);
     });
 
-    editor.addCommand(monaco.KeyCode.Delete, () => null);
+    editor.addCommand(monaco.KeyCode.Home, () => null);
     updateIntelliSense();
   });
 }
@@ -1841,12 +1841,12 @@ window.addEventListener("DOMContentLoaded", async function () {
   
   event.listen("key-press", function (e) {
     const key = (e?.payload?.message || "")?.toLowerCase();
-    if (key === "delete" && settings.keyToggle) toggle();
+    if (key === "home" && settings.keyToggle) toggle();
   });
 
   window.addEventListener("keyup", function (e) {
     const key = (e?.key || "")?.toLowerCase();
-    if (key === "delete" && settings.keyToggle) toggle();
+    if (key === "home" && settings.keyToggle) toggle();
   });
 
   // Active
