@@ -794,6 +794,10 @@ function parseFolders(files, scriptsOnly) {
       const namesCheck = f.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase());
       const scriptsCheck = scripts.some((s) => s.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()));
 
+      if (scriptsOnly && scripts.length === 0) {
+        return true;
+      }
+
       return scriptsOnly
         ? scriptsCheck
         : namesCheck || scriptsCheck;
