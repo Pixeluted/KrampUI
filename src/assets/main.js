@@ -595,8 +595,6 @@ async function addScript({ name, path: _path }, folder, autoExec) {
   const dropdown = document.createElement("div");
   const dropdownExecute = document.createElement("div");
   const dropdownExecuteIcon = document.createElement("i");
-  const dropdownExplorer = document.createElement("div");
-  const dropdownExplorerIcon = document.createElement("i");
   const dropdownExport = document.createElement("div");
   const dropdownExportIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
@@ -614,8 +612,6 @@ async function addScript({ name, path: _path }, folder, autoExec) {
   dropdown.className = "kr-dropdown-content";
   dropdownExecute.innerText = "Execute";
   dropdownExecuteIcon.className = "fa-solid fa-scroll";
-  dropdownExplorer.innerText = "View File";
-  dropdownExplorerIcon.className = "fa-solid fa-file";
   dropdownExport.innerText = "Export To";
   dropdownExportIcon.className = "fa-solid fa-floppy-disk";
   dropdownRename.innerText = "Rename";
@@ -624,13 +620,11 @@ async function addScript({ name, path: _path }, folder, autoExec) {
   dropdownDeleteIcon.className = "fa-solid fa-delete-left";
 
   dropdownExecute.append(dropdownExecuteIcon);
-  dropdownExplorer.append(dropdownExplorerIcon);
   dropdownExport.append(dropdownExportIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
   dropdown.append(dropdownExecute);
   dropdown.append(dropdownExport);
-  dropdown.append(dropdownExplorer);
   dropdown.append(dropdownRename);
   dropdown.append(dropdownDelete);
 
@@ -723,10 +717,6 @@ async function addScript({ name, path: _path }, folder, autoExec) {
   dropdownExecute.addEventListener("click", async function () {
     const text = await readFile(_path);
     execute(text);
-  });
-
-  dropdownExplorer.addEventListener("click", function () {
-    open(_path);
   });
 
   script.addEventListener("input", function () {
@@ -1114,8 +1104,6 @@ function addTabElem(info) {
   const dropdown = document.createElement("div");
   const dropdownExecute = document.createElement("div");
   const dropdownExecuteIcon = document.createElement("i");
-  const dropdownExplorer = document.createElement("div");
-  const dropdownExplorerIcon = document.createElement("i");
   const dropdownExplorerFolder = document.createElement("div");
   const dropdownExplorerFolderIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
@@ -1133,8 +1121,6 @@ function addTabElem(info) {
   dropdown.className = "kr-dropdown-content";
   dropdownExecute.innerText = "Execute";
   dropdownExecuteIcon.className = "fa-solid fa-scroll";
-  dropdownExplorer.innerText = "View File";
-  dropdownExplorerIcon.className = "fa-solid fa-file";
   dropdownExplorerFolder.innerText = "View Folder";
   dropdownExplorerFolderIcon.className = "fa-solid fa-folder-tree";
   dropdownRename.innerText = "Rename";
@@ -1144,16 +1130,12 @@ function addTabElem(info) {
   dropdownClose.innerText = "Close";
   dropdownCloseIcon.className = "fa-solid fa-times";
   dropdownExecute.append(dropdownExecuteIcon);
-  dropdownExplorer.append(dropdownExplorerIcon);
   dropdownExplorerFolder.append(dropdownExplorerFolderIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
   dropdownClose.append(dropdownCloseIcon);
   dropdown.append(dropdownExecute);
-  if (script) {
-    dropdown.append(dropdownExplorer);
-    dropdown.append(dropdownExplorerFolder);
-  }
+  if (script) dropdown.append(dropdownExplorerFolder);
   dropdown.append(dropdownRename);
   if (tabs.length > 1) dropdown.append(dropdownDelete);
   if (script && tabs.length > 1) dropdown.append(dropdownClose);
@@ -1257,11 +1239,7 @@ function addTabElem(info) {
     execute(text);
   });
 
-  if (script) {
-    dropdownExplorer.addEventListener("click", function () {
-      open(info.path);
-    });
-  
+  if (script) {  
     dropdownExplorerFolder.addEventListener("click", function () {
       open(getDirectory(info.path));
     });
@@ -1483,9 +1461,7 @@ async function kill() {
 }
 
 async function logout() {
-  if (websocket) websocket.close();
-  prevConnected = null;
-  checkActive();
+  await closeExistingLogin();
 }
 
 async function openFolder() {
