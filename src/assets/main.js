@@ -1,6 +1,6 @@
 const { invoke } = window.__TAURI__.tauri;
 const { open, Command } = window.__TAURI__.shell;
-const { appWindow } = window.__TAURI__.window;
+const { appWindow, WebviewWindow, getAll, getCurrent } = window.__TAURI__.window;
 const process = window.__TAURI__.process;
 const dialog = window.__TAURI__.dialog;
 const event = window.__TAURI__.event;
@@ -9,13 +9,12 @@ const fs = window.__TAURI__.fs;
 
 require.config({ paths: { "vs": "./assets/monaco" }});
 
-let websocket, websocketInterval;
-let settings, loginSection, loginToken, exploitSection;
+let settings, loginSection, exploitSection;
 let loginForm, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
-let prevConnected, prevActive, editorReady, tabs, injecting, dataDirectory;
+let wsInterval, wsConnected, prevConnected, prevActive, editorReady, tabs, injecting, dataDirectory;
 
 async function minimize() {
   await appWindow.minimize();
@@ -65,7 +64,7 @@ function debounce(func, wait) {
 }
 
 function checkActive() {
-  if (websocket && websocket.readyState === websocket.OPEN) {
+  if (wsConnected) {
     loginSection.classList.remove("active");
     exploitSection.classList.add("active");
     setupEditor();
@@ -79,66 +78,93 @@ function checkActive() {
   }
 }
 
-function initialize() {
-  return new Promise(function (res) {
-    websocket = new WebSocket(`wss://loader.live/?login_token="${loginToken.value}"`);
+async function closeExistingLogin() {
+  const loginWindow = getAll().find((w) => w.label === "login");
 
-    websocket.onopen = function () {
-      websocket.send(JSON.stringify({ type: 1, side_type: "browser" }));
-      checkActive();
+  if (loginWindow) {
+    await loginWindow.close();
+    await event.emit("websocket-close");
+  }
+}
 
-      websocketInterval = setInterval(function () {
-        if (websocket.readyState !== websocket.OPEN) return clearInterval(websocketInterval);
-        websocket.send(JSON.stringify({ type: 2 }));
-      }, 1000);
+async function injectLoginCode() {
+  await evalCode("login", `
+    (async function () {
+      if (window.KR_LOADED) return;
+      window.KR_LOADED = true;
 
-      res(websocket.readyState === websocket.OPEN);
-    };
+      const { listen, emit } = window.__TAURI__.event;
+      const { getCurrent } = window.__TAURI__.window;
+      const loginWindow = getCurrent();
 
-    websocket.onmessage = function (message) {
-      let json;
-
-      try { json = JSON.parse(message.data); }
-      catch { return; };
-      
-      if (json.status) {
-        const connected = json.status === "connected";
-
-        if (prevConnected === connected) {
-          return;
-        } else {
-          prevConnected = connected;
+      if (window.location.pathname === "/dashboard") {
+        async function getToken() {
+          try {
+            const response = await fetch("/dashboard/__data.json");
+            const text = await response.text();
+            const json = JSON.parse(text);
+            const nodes = json.nodes;
+            const node = nodes.find((n) => n.data?.includes("RO-EXEC"));
+            const keys = node.data.find((o) => Object.keys(o).includes("token"));
+            const token = node.data[keys["token"]];
+            return token;
+          } catch {};
         }
 
-        exploitIndicator.style.color = `var(--${connected ? "green" : "text"})`;
+        const token = await getToken();
 
-        if (connected) {
-          exploitExecute.classList.remove("disabled");
-          exploitInject.classList.add("disabled");
-        } else {
-          if (prevActive) exploitInject.classList.remove("disabled");
-          exploitExecute.classList.add("disabled");
+        if (token) {
+          const websocket = new WebSocket(\`wss://loader.live/?login_token="\$\{token\}"\`);
+          await loginWindow.hide();
+          await emit("login");
+          
+          websocket.onopen = async function () {
+            await listen("websocket-send", function (e) {
+              websocket.send(e.payload);
+            });
+
+            await emit("websocket-open");
+          };
+
+          websocket.onmessage = async function (message) {
+            await emit("websocket-message", message.data);
+          };
+
+          websocket.onerror = async function () {
+            await emit("websocket-close");
+          };
+
+          websocket.onclose = async function () {
+            await emit("websocket-close");
+          };
         }
       }
-    };
-
-    websocket.onerror = function () {
-      checkActive();
-      res(false);
-    };
-
-    websocket.onclose = function () {
-      checkActive();
-      res(false);
-    };
-  });
+    })();
+  `, true);
 }
 
 async function login() {
   loginForm.classList.add("disabled");
-  await setToken(loginToken.value);
-  await initialize();
-  loginForm.classList.remove("disabled");
+  await closeExistingLogin();
+
+  const window = new WebviewWindow("login", {
+    title: "KrampUI (Login)",
+    url: "https://loader.live",
+    width: 500,
+    height: 650,
+    alwaysOnTop: true,
+    focus: true,
+    center: true,
+    minimizable: false,
+    maximizable: false,
+    resizable: false,
+    skipTaskbar: true
+  });
+
+  window.onCloseRequested(async function () {
+    loginForm.classList.remove("disabled");
+    await event.emit("websocket-close");
+  });
 }
 
 async function createDirectory(directory, recursive) {
@@ -235,14 +261,12 @@ async function getSettings() {
   catch { return false; };
 
   if (json) return {
-    token: json.token || null,
     autoInject: json.autoInject,
     topMost: json.topMost,
     keyToggle: json.keyToggle
   };
   else {
     const settings = {
-      token: null,
       autoInject: true,
       topMost: true,
       keyToggle: true
@@ -255,11 +279,6 @@ async function getSettings() {
 
 async function setSettings(data) {
   await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
-}
-
-async function setToken(token) {
-  settings.token = token;
-  await setSettings();
 }
 
 async function setAutoInject(bool) {
@@ -1318,6 +1337,12 @@ async function killRoblox() {
   return await invoke("kill_process", { name: "RobloxPlayerBeta" });
 }
 
+let evalInterval;
+
+async function evalCode(name, code) {
+  return await invoke("eval", { name, code });
+}
+
 async function inject() {
   let executable = await findExecutable();
 
@@ -1376,12 +1401,12 @@ async function inject() {
   setTimeout(done, 60 * 1000);
 }
 
-function execute(customText) {
+async function execute(customText) {
   try {
     const text = typeof customText === "string" ? customText : editorGetText();
 
-    if (text && websocket && websocket.readyState === websocket.OPEN) {
-      websocket.send(`<SCRIPT>${text}`);
+    if (text && wsConnected) {
+      await event.emit("websocket-send", `<SCRIPT>${text}`);
     }
 
     return true;
@@ -1694,7 +1719,7 @@ function setupEditor() {
 async function checkRobloxActive() {
   const newActive = await isRobloxRunning();
   
-  if (prevActive !== newActive && websocket && websocket.readyState === websocket.OPEN && prevConnected !== undefined) {
+  if (prevActive !== newActive && wsConnected && prevConnected !== undefined) {
     prevActive = newActive;
     
     if (newActive) {
@@ -1729,6 +1754,58 @@ window.addEventListener("DOMContentLoaded", async function () {
   await createDirectory(dataDirectory, true);
   await createDirectory("scripts", true);
   await createDirectory("autoexec", true);
+  setInterval(injectLoginCode, 100);
+
+  // Events
+  event.listen("login", function () {
+    loginForm.classList.remove("disabled");
+  });
+
+  event.listen("websocket-open", async function () {
+    wsConnected = true;
+    await event.emit("websocket-send", JSON.stringify({ type: 1, side_type: "browser" }));
+    checkActive();
+
+    wsInterval = setInterval(async function () {
+      if (!wsConnected) return clearInterval(wsInterval);
+      await event.emit("websocket-send", JSON.stringify({ type: 2 }));
+    }, 1000);
+  });
+
+  event.listen("websocket-message", function (e) {
+    const message = e.payload;
+    
+    let json;
+
+    try { json = JSON.parse(message); }
+    catch { return; };
+
+    if (json.status) {
+      const connected = json.status === "connected";
+
+      if (prevConnected === connected) {
+        return;
+      } else {
+        prevConnected = connected;
+      }
+
+      exploitIndicator.style.color = `var(--${connected ? "green" : "text"})`;
+
+      if (connected) {
+        exploitExecute.classList.remove("disabled");
+        exploitInject.classList.add("disabled");
+      } else {
+        if (prevActive) exploitInject.classList.remove("disabled");
+        exploitExecute.classList.add("disabled");
+      }
+    }
+  });
+
+  event.listen("websocket-close", async function () {
+    wsConnected = false;
+    await closeExistingLogin();
+    checkActive();
+  });
 
   // Titlebar
   document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
@@ -1753,7 +1830,6 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   // Login
   loginForm = document.querySelector(".login .form");
-  loginToken = document.querySelector(".login .kr-input.token");
   loginSubmit = document.querySelector(".login .kr-button.submit");
   loginSubmit.addEventListener("click", login);
 
@@ -1777,12 +1853,6 @@ window.addEventListener("DOMContentLoaded", async function () {
   await setupTabs();
   populateTabs(true);
   document.querySelector(".kr-add-tab").addEventListener("click", addNewTab);
-
-  // Auto Login
-  if (settings.token && settings.token !== "") {
-    loginToken.value = settings.token;
-    login();
-  }
 
   // Buttons
   exploitInject = document.querySelector(".kr-inject");

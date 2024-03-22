@@ -35,7 +35,10 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "dangerousRemoteDomainIpcAccess": [
+        { "domain": "loader.live", "windows": ["login"], "enableTauriAPI": true }
+      ]
     },
     "bundle": {
       "active": true,

@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::{command, Window, Builder, WindowEvent, SystemTray, CustomMenuItem, SystemTrayMenu, SystemTrayEvent, generate_context, generate_handler};
+use tauri::{command, Manager, AppHandle, Window, Builder, WindowEvent, SystemTray, CustomMenuItem, SystemTrayMenu, SystemTrayEvent, generate_context, generate_handler};
 use std::{thread::{self, sleep}, time::Duration, process};
 use std::sync::atomic::{AtomicBool, Ordering};
 use rdev::{listen, Event, EventType};
@@ -43,6 +43,17 @@ fn init_key_events(window: Window) {
     }
 }
 
+#[command]
+fn eval(app: AppHandle, name: &str, code: &str) -> bool {
+    return match app.get_window(name) {
+        Some(window) => match window.eval(code) {
+            Ok(_) => true,
+            Err(_) => false
+        },
+        None => false
+    };
+}
+
 fn main() {
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let tray = SystemTrayMenu::new().add_item(quit);
@@ -63,7 +74,7 @@ fn main() {
             }
             _ => {}
           })
-        .invoke_handler(generate_handler![init_key_events, is_process_running, kill_process])
+        .invoke_handler(generate_handler![init_key_events, is_process_running, kill_process, eval])
         .run(generate_context!())
         .expect("Failed to launch application.");
 }

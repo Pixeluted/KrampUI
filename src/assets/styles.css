@@ -272,11 +272,6 @@ body.kr-maximized .kr-titlebar {
     flex-direction: column;
     gap: 1rem;
     max-width: 30rem;
-    width: 100%;
-}
-
-.login .form .kr-input {
-    width: 100%;
 }
 
 /* Exploit */
