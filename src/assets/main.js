@@ -150,8 +150,9 @@ async function login() {
   const window = new WebviewWindow("login", {
     title: "KrampUI (Login)",
     url: "https://loader.live",
-    width: 500,
-    height: 650,
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    width: 700,
+    height: 450,
     alwaysOnTop: true,
     focus: true,
     center: true,
