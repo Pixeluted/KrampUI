@@ -1352,7 +1352,7 @@ async function inject() {
 
   function onData(line) {
     const text = line ? line.trim() : "";
-    const blacklist = ["error:", "redownload", "make a ticket", "cannot find user"];
+    const blacklist = ["error:", "redownload", "create a ticket", "make a ticket", "cannot find user"];
 
     if (blacklist.some((s) => text.toLowerCase().includes(s)) && !text.toLowerCase().endsWith(":")) {
       alert(`[Ro-Exec] ${text}`);
