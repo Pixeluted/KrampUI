@@ -90,8 +90,8 @@ async function closeExistingLogin() {
 async function injectLoginCode() {
   await evalCode("login", `
     (async function () {
-      if (window.KR_LOADED) return;
-      window.KR_LOADED = true;
+      if (window.KR_LOADED === window.location.href) return;
+      window.KR_LOADED = window.location.href;
 
       const { listen, emit } = window.__TAURI__.event;
       const { getCurrent } = window.__TAURI__.window;
@@ -115,8 +115,22 @@ async function injectLoginCode() {
 
         if (token) {
           const websocket = new WebSocket(\`wss://loader.live/?login_token="\$\{token\}"\`);
-          await loginWindow.hide();
+          // await loginWindow.hide();
           await emit("login");
+
+          await listen("logout", async function () {
+            const form = document.querySelector("form[action='/dashboard?/logout']");
+
+            if (form) {
+              const response = await fetch(form.action, {
+                method: form.method,
+                body: new FormData(form)
+              });
+
+              await emit("websocket-close");
+              await loginWindow.close();
+            }
+          });
           
           websocket.onopen = async function () {
             await listen("websocket-send", function (e) {
@@ -1462,7 +1476,7 @@ async function kill() {
 }
 
 async function logout() {
-  await closeExistingLogin();
+  await event.emit("logout");
 }
 
 async function openFolder() {
