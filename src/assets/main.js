@@ -65,26 +65,24 @@ function debounce(func, wait) {
 
 function checkActive() {
   if (wsConnected) {
-    loginSection.classList.remove("active");
-    exploitSection.classList.add("active");
+    if (loginSection) loginSection.classList.remove("active");
+    if (exploitSection) exploitSection.classList.add("active");
     setupEditor();
   } else {
-    exploitSection.classList.remove("active");
-    loginSection.classList.add("active");
-    exploitInject.classList.add("disabled");
-    exploitInject.classList.add("disabled");
-    exploitExecute.classList.add("disabled");
-    exploitIndicator.style.color = "var(--text)";
+    if (exploitSection) exploitSection.classList.remove("active");
+    if (loginSection) loginSection.classList.add("active");
+    if (exploitInject) exploitInject.classList.add("disabled");
+    if (exploitExecute) exploitExecute.classList.add("disabled");
+    if (exploitIndicator) exploitIndicator.style.color = "var(--text)";
   }
 }
 
 async function closeExistingLogin() {
   const loginWindow = getAll().find((w) => w.label === "login");
-
-  if (loginWindow) {
-    await loginWindow.close();
-    await event.emit("websocket-close");
-  }
+  if (loginWindow) await loginWindow.close();
+  if (wsConnected) wsConnected = false;
+  checkActive();
+  loginForm.classList.remove("disabled");
 }
 
 async function injectLoginCode() {
@@ -97,6 +95,8 @@ async function injectLoginCode() {
       const { getCurrent } = window.__TAURI__.window;
       const fs = window.__TAURI__.fs;
       const loginWindow = getCurrent();
+
+      let websocket;
 
       if (window.location.pathname === "/dashboard") {
         async function getToken() {
@@ -121,32 +121,34 @@ async function injectLoginCode() {
           }
         }
 
+        async function logout() {
+          const form = document.querySelector("form[action='/dashboard?/logout']");
+
+          if (form) {
+            try {
+              await fetch(form.action, {
+                method: form.method,
+                body: new FormData(form)
+              });
+            } catch { };
+
+            if (websocket) websocket.close();
+            await emit("websocket-close");
+            await loginWindow.close();
+          }
+        }
+
+        await loginWindow.hide();
         const token = await getToken();
 
         if (token) {
-          const websocket = new WebSocket(\`wss://loader.live/?login_token="\$\{token\}"\`);
-          await loginWindow.hide();
+          websocket = new WebSocket(\`wss://loader.live/?login_token="\$\{token\}"\`);
           
           websocket.onopen = async function () {
-            await listen("logout", async function () {
-              const form = document.querySelector("form[action='/dashboard?/logout']");
-  
-              if (form) {
-                try {
-                  await fetch(form.action, {
-                    method: form.method,
-                    body: new FormData(form)
-                  });
-                } catch { };
-  
-                websocket.close();
-                await emit("websocket-close");
-                await loginWindow.close();
-              }
-            });
+            await listen("logout", logout);
 
             await listen("websocket-send", function (e) {
-              websocket.send(e.payload);
+              if (websocket) websocket.send(e.payload);
             });
 
             await listen("set-executable", async function (e) {
@@ -175,15 +177,15 @@ async function injectLoginCode() {
           websocket.onclose = async function () {
             await emit("websocket-close");
           };
-        }
+        } else logout();
       }
     })();
   `, true);
 }
 
 async function login() {
-  loginForm.classList.add("disabled");
   await closeExistingLogin();
+  loginForm.classList.add("disabled");
 
   const window = new WebviewWindow("login", {
     title: "KrampUI (Login)",
@@ -201,8 +203,7 @@ async function login() {
   });
 
   window.onCloseRequested(async function () {
-    loginForm.classList.remove("disabled");
-    await event.emit("websocket-close");
+    await closeExistingLogin();
   });
 }
 
@@ -1792,11 +1793,7 @@ window.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
-  event.listen("websocket-close", async function () {
-    wsConnected = false;
-    await closeExistingLogin();
-    checkActive();
-  });
+  event.listen("websocket-close", closeExistingLogin);
 
   // Titlebar
   document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
