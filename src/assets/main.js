@@ -1345,7 +1345,7 @@ async function inject() {
   exploitInject.classList.add("disabled");
   exploitIndicator.style.color = "var(--yellow)";
 
-  const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.path], { cwd: await path.appConfigDir() });
+  const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.name], { cwd: await path.appConfigDir() });
 
   let isDone;
   let child;
