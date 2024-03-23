@@ -178,7 +178,7 @@ async function injectLoginCode() {
             await emit("websocket-close");
           };
         } else logout();
-      }
+      } else await loginWindow.show();
     })();
   `, true);
 }
@@ -199,7 +199,8 @@ async function login() {
     minimizable: false,
     maximizable: false,
     resizable: false,
-    skipTaskbar: true
+    skipTaskbar: true,
+    visible: false
   });
 
   window.onCloseRequested(async function () {
