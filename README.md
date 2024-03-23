@@ -16,10 +16,6 @@
 3. Run `npm run start` or `npm run build` depending on what you need.
 4. Access the executable at `src-tauri/target/release` or `src-tauri/target/debug`.
 
-## Setting it up
-Once you've downloaded the software, you'll need to login with a token.<br/>
-You can copy this login token from the <a href="https://loader.live/dashboard" target="_blank">loader.live dashboard</a>.
-
 ## Making injection work
 1. Right-click the Inject button (even if its disabled).
 2. Click on the Select button.
