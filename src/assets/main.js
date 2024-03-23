@@ -115,7 +115,7 @@ async function injectLoginCode() {
 
         if (token) {
           const websocket = new WebSocket(\`wss://loader.live/?login_token="\$\{token\}"\`);
-          // await loginWindow.hide();
+          await loginWindow.hide();
           await emit("login");
 
           await listen("logout", async function () {
