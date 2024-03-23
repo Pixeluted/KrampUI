@@ -276,12 +276,14 @@ async function getSettings() {
   catch { return false; };
 
   if (json) return {
+    autoLogin: json.autoLogin,
     autoInject: json.autoInject,
     topMost: json.topMost,
     keyToggle: json.keyToggle
   };
   else {
     const settings = {
+      autoLogin: true,
       autoInject: true,
       topMost: true,
       keyToggle: true
@@ -294,6 +296,11 @@ async function getSettings() {
 
 async function setSettings(data) {
   await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
+}
+
+async function setAutoLogin(bool) {
+  settings.autoLogin = bool;
+  await setSettings();
 }
 
 async function setAutoInject(bool) {
@@ -1845,6 +1852,9 @@ window.addEventListener("DOMContentLoaded", async function () {
   populateTabs(true);
   document.querySelector(".kr-add-tab").addEventListener("click", addNewTab);
 
+  // Auto Login
+  if (settings.autoLogin) login();
+
   // Buttons
   exploitInject = document.querySelector(".kr-inject");
   exploitExecute = document.querySelector(".kr-execute");
@@ -1868,13 +1878,24 @@ window.addEventListener("DOMContentLoaded", async function () {
     if (!injecting) clearExecutables();
   });
 
+  // Auto Login
+  function checkAutoLogin() {
+    document.querySelector(".kr-dropdown-auto-login .fa-solid").className = `fa-solid fa-${settings.autoLogin ? "check" : "times"}`;
+  }
+
+  checkAutoLogin();
+  document.querySelector(".kr-dropdown-auto-login").addEventListener("click", async function () {
+    await setAutoLogin(!settings.autoLogin);
+    checkAutoLogin();
+  });
+
   // Auto Inject
   function checkAutoInject() {
-    document.querySelector(".kr-dropdown-automatic .fa-solid").className = `fa-solid fa-${settings.autoInject ? "check" : "times"}`;
+    document.querySelector(".kr-dropdown-auto-inject .fa-solid").className = `fa-solid fa-${settings.autoInject ? "check" : "times"}`;
   }
 
   checkAutoInject();
-  document.querySelector(".kr-dropdown-automatic").addEventListener("click", async function () {
+  document.querySelector(".kr-dropdown-auto-inject").addEventListener("click", async function () {
     await setAutoInject(!settings.autoInject);
     checkAutoInject();
   });
