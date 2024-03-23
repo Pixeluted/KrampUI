@@ -16,17 +16,11 @@
 3. Run `npm run start` or `npm run build` depending on what you need.
 4. Access the executable at `src-tauri/target/release` or `src-tauri/target/debug`.
 
-## Making injection work
-1. Right-click the Inject button (even if its disabled).
-2. Click on the Select button.
-3. Find the Ro-Exec executable and click it.
-
-You're done. Now, <b>don't forget to repeat these steps whenever Ro-Exec has an update</b>.
-
-## Where is the scripts and autoexec folder?
+## Q&A
+### Where is the scripts and autoexec folder?
 It's located at ``%appdata%/krampui``, or just press the folder icon on the UI and navigate one folder up.
 
-## I don't see the UI, how do I fix it?
+### I don't see the UI, how do I fix it?
 Perhaps your computer doesn't have Microsoft Edge Webview installed.</br>
 Install it from <a href="https://developer.microsoft.com/en-us/microsoft-edge/webview2" target="_blank">here</a> (scroll down & install Evergreen Bootstrapper), and see if that fixes your issue.
 

@@ -95,6 +95,7 @@ async function injectLoginCode() {
 
       const { listen, emit } = window.__TAURI__.event;
       const { getCurrent } = window.__TAURI__.window;
+      const fs = window.__TAURI__.fs;
       const loginWindow = getCurrent();
 
       if (window.location.pathname === "/dashboard") {
@@ -111,34 +112,56 @@ async function injectLoginCode() {
           } catch {};
         }
 
+        async function writeBinaryFile(file, contents) {
+          try {
+            await fs.writeBinaryFile(file, contents, { dir: fs.BaseDirectory.AppConfig });
+            return true;
+          } catch {
+            return false;
+          }
+        }
+
         const token = await getToken();
 
         if (token) {
           const websocket = new WebSocket(\`wss://loader.live/?login_token="\$\{token\}"\`);
           await loginWindow.hide();
-          await emit("login");
-
-          await listen("logout", async function () {
-            const form = document.querySelector("form[action='/dashboard?/logout']");
-
-            if (form) {
-              const response = await fetch(form.action, {
-                method: form.method,
-                body: new FormData(form)
-              });
-
-              websocket.close();
-              await emit("websocket-close");
-              await loginWindow.close();
-            }
-          });
           
           websocket.onopen = async function () {
+            await listen("logout", async function () {
+              const form = document.querySelector("form[action='/dashboard?/logout']");
+  
+              if (form) {
+                try {
+                  await fetch(form.action, {
+                    method: form.method,
+                    body: new FormData(form)
+                  });
+                } catch { };
+  
+                websocket.close();
+                await emit("websocket-close");
+                await loginWindow.close();
+              }
+            });
+
             await listen("websocket-send", function (e) {
               websocket.send(e.payload);
             });
 
-            await emit("websocket-open");
+            await listen("set-executable", async function (e) {
+              const executable = e.payload;
+
+              try {
+                const download = await fetch("/download?product=RO-EXEC");
+                if (download.status === 200) await writeBinaryFile(executable, await download.arrayBuffer());
+              } catch { };
+
+              await emit("login");
+              await emit("websocket-open");
+            });
+
+            await emit("get-executable");
           };
 
           websocket.onmessage = async function (message) {
@@ -358,14 +381,6 @@ async function findExecutable() {
 async function getExecutable() {
   const executable = await findExecutable();
   return executable?.name || getExecutableName();
-}
-
-async function setExecutable(path) {
-  const currentExecutable = (await findExecutable())?.path?.toLowerCase() || "";
-  if (path.toLowerCase() === currentExecutable) return;
-
-  await clearExecutables();
-  await renameFile(path, await getExecutable());
 }
 
 async function emptyScripts() {
@@ -1306,30 +1321,6 @@ function populateTabs(force) {
   tabs.sort((a, b) => a.order - b.order).forEach(async (t) => await addTabElem(t));
 }
 
-async function askForExecutable() {
-  exploitInject.classList.add("disabled");
-
-  const selected = await dialog.open({
-    title: "Select Ro-Exec",
-    defaultPath: await path.downloadDir(),
-    filters: [
-      {
-        name: "Ro-Exec Executable",
-        extensions: ["exe"]
-      }
-    ]
-  });
-
-  if (selected) {
-    await setExecutable(selected);
-    if (!prevConnected && !injecting && prevActive) exploitInject.classList.remove("disabled");
-    return true;
-  }
-
-  if (!prevConnected && !injecting && prevActive) exploitInject.classList.remove("disabled");
-  return false;
-}
-
 async function isRobloxRunning() {
   return await invoke("is_process_running", { name: "RobloxPlayerBeta" });
 }
@@ -1346,11 +1337,7 @@ async function evalCode(name, code) {
 
 async function inject() {
   let executable = await findExecutable();
-
-  if (!executable) {
-    if (!await askForExecutable()) return;
-    executable = await findExecutable();
-  }
+  if (!executable) return;
 
   injecting = true;
   exploitInject.classList.add("disabled");
@@ -1760,6 +1747,11 @@ window.addEventListener("DOMContentLoaded", async function () {
     loginForm.classList.remove("disabled");
   });
 
+  event.listen("get-executable", async function () {
+    await clearExecutables();
+    event.emit("set-executable", await getExecutable());
+  });
+
   event.listen("websocket-open", async function () {
     wsConnected = true;
     await event.emit("websocket-send", JSON.stringify({ type: 1, side_type: "browser" }));
@@ -1874,10 +1866,6 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   // Inject Button
   exploitInject.addEventListener("click", inject);
-  document.querySelector(".kr-dropdown-select").addEventListener("click", askForExecutable);
-  document.querySelector(".kr-dropdown-delete").addEventListener("click", function () {
-    if (!injecting) clearExecutables();
-  });
 
   // Auto Login
   function checkAutoLogin() {
