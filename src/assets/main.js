@@ -131,11 +131,11 @@ async function injectLoginCode() {
                 body: new FormData(form)
               });
             } catch { };
-
-            if (websocket) websocket.close();
-            await emit("websocket-close");
-            await loginWindow.close();
           }
+
+          if (websocket) websocket.close();
+          await emit("websocket-close");
+          await loginWindow.close();
         }
 
         await loginWindow.hide();
