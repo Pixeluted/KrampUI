@@ -127,6 +127,7 @@ async function injectLoginCode() {
                 body: new FormData(form)
               });
 
+              websocket.close();
               await emit("websocket-close");
               await loginWindow.close();
             }
