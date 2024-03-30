@@ -32,13 +32,31 @@ async function isVisible() {
   return await window.__TAURI__.window.appWindow.isVisible();
 }
 
+let toggleLock = false;
+
 async function show() {
+  if (toggleLock) return;
+
+  toggleLock = true;
   await appWindow.show();
   await appWindow.setFocus();
+  document.body.classList.remove("kr-hidden");
+
+  setTimeout(function () {
+    toggleLock = false;
+  }, 100);
 }
 
 async function hide() {
-  await appWindow.hide();
+  if (toggleLock) return;
+
+  toggleLock = true;
+  document.body.classList.add("kr-hidden");
+
+  setTimeout(async function () {
+    await appWindow.hide();
+    toggleLock = false;
+  }, 100);
 }
 
 async function toggle() {

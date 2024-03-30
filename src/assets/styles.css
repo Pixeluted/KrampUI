@@ -64,6 +64,11 @@ body > .container {
     box-sizing: border-box;
     border: 1px solid var(--lighter);
     background-color: var(--dark);
+    transition: opacity 0.1s ease-in;
+}
+
+body.kr-hidden > .container {
+    opacity: 0;
 }
 
 body.kr-maximized > .container {
