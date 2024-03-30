@@ -14,7 +14,7 @@ let loginForm, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
-let wsInterval, wsConnected, prevConnected, prevActive, editorReady, tabs, injecting, dataDirectory;
+let wsInterval, wsConnected, prevConnected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
 
 async function minimize() {
   await appWindow.minimize();
@@ -22,10 +22,6 @@ async function minimize() {
 
 async function maximize() {
   await appWindow.toggleMaximize();
-}
-
-async function isMaximized() {
-  return await appWindow.isMaximized();
 }
 
 async function isVisible() {
@@ -47,20 +43,8 @@ async function toggle() {
 }
 
 async function exit() {
+  await setUnsavedTabData();
   await process.exit();
-}
-
-function debounce(func, wait) {
-  let timeout;
-
-  return function executedFunction(...args) {
-    clearTimeout(timeout);
-    
-    timeout = setTimeout(function () {
-      clearTimeout(timeout);
-      func(...args);
-    }, wait);
-  };
 }
 
 function checkActive() {
@@ -79,7 +63,7 @@ function checkActive() {
 
 async function closeExistingLogin() {
   const loginWindow = getAll().find((w) => w.label === "login");
-  if (loginWindow) await loginWindow.close();
+  if (loginWindow) try { await loginWindow.close(); } catch { };
   if (wsConnected) wsConnected = false;
   checkActive();
   loginForm.classList.remove("disabled");
@@ -312,7 +296,7 @@ async function getSettings() {
       autoLogin: true,
       autoInject: true,
       topMost: true,
-      keyToggle: true
+      keyToggle: false
     };
 
     await setSettings(settings);
@@ -322,6 +306,22 @@ async function getSettings() {
 
 async function setSettings(data) {
   await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
+}
+
+async function getUnsavedTabData() {
+  try {
+    const text = await readFile(`${dataDirectory}/unsaved-tab-data`);
+    const json = JSON.parse(text);
+    return new Map(json);
+  } catch {
+    return new Map();
+  }
+}
+
+async function setUnsavedTabData() {
+  const array = Array.from(unsavedTabData);
+  const text = JSON.stringify(array);
+  await writeFile(`${dataDirectory}/unsaved-tab-data`, text);
 }
 
 async function setAutoLogin(bool) {
@@ -485,8 +485,6 @@ async function addFolder({ name, path, scripts }, autoExec) {
   const dropdown = document.createElement("div");
   const dropdownNewFile = document.createElement("div");
   const dropdownNewFileIcon = document.createElement("i");
-  const dropdownExplorer = document.createElement("div");
-  const dropdownExplorerIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
   const dropdownRenameIcon = document.createElement("i");
   const dropdownDelete = document.createElement("div");
@@ -505,19 +503,15 @@ async function addFolder({ name, path, scripts }, autoExec) {
   dropdown.className = "kr-dropdown-content";
   dropdownNewFile.innerText = "New File";
   dropdownNewFileIcon.className = "fa-solid fa-file";
-  dropdownExplorer.innerText = "View Folder";
-  dropdownExplorerIcon.className = "fa-solid fa-folder-tree";
   dropdownRename.innerText = "Rename";
   dropdownRenameIcon.className = "fa-solid fa-font";
   dropdownDelete.innerText = "Delete";
   dropdownDeleteIcon.className = "fa-solid fa-delete-left";
 
   dropdownNewFile.append(dropdownNewFileIcon);
-  dropdownExplorer.append(dropdownExplorerIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
   dropdown.append(dropdownNewFile);
-  dropdown.append(dropdownExplorer);
 
   if (!autoExec) {
     dropdown.append(dropdownRename);
@@ -572,10 +566,6 @@ async function addFolder({ name, path, scripts }, autoExec) {
     folder.contentEditable = true;
     folder.focus();
     focusAtEnd(folder);
-  });
-
-  dropdownExplorer.addEventListener("click", function () {
-    open(path);
   });
 
   dropdownDelete.addEventListener("click", async function () {
@@ -635,8 +625,6 @@ async function addScript({ name, path: _path }, folder, autoExec) {
   const dropdown = document.createElement("div");
   const dropdownExecute = document.createElement("div");
   const dropdownExecuteIcon = document.createElement("i");
-  const dropdownExport = document.createElement("div");
-  const dropdownExportIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
   const dropdownRenameIcon = document.createElement("i");
   const dropdownDelete = document.createElement("div");
@@ -652,19 +640,15 @@ async function addScript({ name, path: _path }, folder, autoExec) {
   dropdown.className = "kr-dropdown-content";
   dropdownExecute.innerText = "Execute";
   dropdownExecuteIcon.className = "fa-solid fa-scroll";
-  dropdownExport.innerText = "Export To";
-  dropdownExportIcon.className = "fa-solid fa-floppy-disk";
   dropdownRename.innerText = "Rename";
   dropdownRenameIcon.className = "fa-solid fa-font";
   dropdownDelete.innerText = "Delete";
   dropdownDeleteIcon.className = "fa-solid fa-delete-left";
 
   dropdownExecute.append(dropdownExecuteIcon);
-  dropdownExport.append(dropdownExportIcon);
   dropdownRename.append(dropdownRenameIcon);
   dropdownDelete.append(dropdownDeleteIcon);
   dropdown.append(dropdownExecute);
-  dropdown.append(dropdownExport);
   dropdown.append(dropdownRename);
   dropdown.append(dropdownDelete);
 
@@ -672,6 +656,8 @@ async function addScript({ name, path: _path }, folder, autoExec) {
 
   let selected = false;
   let selectedFolder = null;
+  let isMouseDown = false;
+  let mouseDownTime;
 
   function select() {
     selected = true;
@@ -694,10 +680,19 @@ async function addScript({ name, path: _path }, folder, autoExec) {
   });
 
   script.addEventListener("mousedown", function (e) {
-    if (e.button === 0 && script.contentEditable !== "true") select();
+    isMouseDown = true;
+
+    if (e.button === 0 && script.contentEditable !== "true") {
+      mouseDownTime = Date.now();
+      setTimeout(function () {
+        if (isMouseDown && Date.now() - mouseDownTime >= 175) select();
+      }, 175);
+    }
   });
 
   window.addEventListener("mouseup", async function () {
+    isMouseDown = false;
+
     if (selectedFolder) {
       const isAutoExec = selectedFolder.parentElement?.classList.contains("kr-auto-exec");
       const isScripts = selectedFolder.classList.contains("scripts");
@@ -746,12 +741,6 @@ async function addScript({ name, path: _path }, folder, autoExec) {
       } else selectedFolder = null;
     }
     else if (selected) unselect();
-  });
-
-  dropdownExport.addEventListener("click", async function () {
-    const text = editorGetText() || "";
-    await writeFile(_path, text);
-    loadScripts(true);
   });
 
   dropdownExecute.addEventListener("click", async function () {
@@ -913,9 +902,14 @@ async function loadScripts(force) {
   checkAutoExec();
 }
 
-async function getTabContent(tab) {
+async function getTabContent(tab, force) {
   const script = tab.path;
   let content = "";
+
+  if (!force) {
+    const unsavedTab = unsavedTabData.get(tab?.id);
+    if (unsavedTab && unsavedTab?.content !== null) return unsavedTab.content;
+  }
 
   if (script) {
     const text = await readFile(tab.path);
@@ -953,12 +947,58 @@ async function getActiveTabContent() {
 
 async function setActiveTabContent(content) {
   const tab = tabs.find((t) => t.active === true);
-  if (tab) await setTabContent(tab, content);
+  
+  if (tab) {
+    const tabContent = await getTabContent(tab, true);
+    const unsavedTab = unsavedTabData.get(tab.id);
+
+    if (content !== tabContent) {
+      if (unsavedTab) unsavedTabData.set(tab.id, { content, scroll: unsavedTab.scroll || tab.scroll || 0 });
+      else unsavedTabData.set(tab.id, { content, scroll: tab.scroll || 0 });
+    } else if (unsavedTab && unsavedTab.scroll === tab.scroll) unsavedTabData.delete(tab.id);
+
+    populateTabs(true);
+  }
 }
 
 async function setActiveTabScroll(scroll) {
   const tab = tabs.find((t) => t.active === true);
-  if (tab) await setTabScroll(tab, scroll);
+  
+  if (tab) {
+    const unsavedTab = unsavedTabData.get(tab.id);
+
+    if (scroll !== tab.scroll) {
+      if (unsavedTab) unsavedTabData.set(tab.id, { content: unsavedTab.content || null, scroll });
+      else unsavedTabData.set(tab.id, { content: null, scroll });
+    } else if (unsavedTab && unsavedTab.content === null) unsavedTabData.delete(tab.id);
+
+    populateTabs(true);
+  }
+}
+
+async function saveTabContent(tab) {
+  const unsavedTab = unsavedTabData.get(tab.id);
+  
+  if (unsavedTab) {
+    if (unsavedTab.content !== null) await setTabContent(tab, unsavedTab.content);
+    await setTabScroll(tab, unsavedTab.scroll);
+    unsavedTabData.delete(tab.id);
+    populateTabs(true);
+  }
+}
+
+async function revertTabContent(tab) {
+  const unsavedTab = unsavedTabData.get(tab.id);
+
+  if (unsavedTab) {
+    const content = await getTabContent(tab, true);
+    await setTabContent(tab, content || "");
+    await setTabScroll(tab, tab.scroll || 0);
+    if (editorSetText) editorSetText(content || "");
+    if (editorSetScroll) editorSetScroll(tab.scroll || 0);
+    unsavedTabData.delete(tab.id);
+    populateTabs(true);
+  }
 }
 
 async function getTabs() {
@@ -988,19 +1028,18 @@ async function addTab(data, dontLoad) {
   if (dontLoad !== true) populateTabs();
 }
 
-async function deleteTab(id, force) {
+async function deleteTab(id) {
   if (tabs.length === 1) return;
   let order = 0;
   
   const tab = tabs.find((t) => t.id === id);
   if (!tab) return;
+
+  const unsavedTab = unsavedTabData.get(tab.id);
+  if (unsavedTab) unsavedTabData.delete(tab.id);
   
   const tabIndex = tabs.indexOf(tab);
   const newTab = tabs[tabIndex - 1] || tabs[tabIndex + 1];
-
-  if (force && tab.path) {
-    await deleteFile(tab.path);
-  }
 
   if (!tab.path) {
     await deleteFile(`${dataDirectory}/tabs-data/${tab.id}`);
@@ -1086,8 +1125,17 @@ async function setTabActive(id) {
 
   const scroll = tab?.scroll;
   await setTabs();
-  if (editorSetText) editorSetText(await getActiveTabContent());
-  if (editorSetScroll) editorSetScroll(scroll || 0);
+  const unsavedTab = unsavedTabData.get(tab.id);
+  if (unsavedTab) {
+    if (editorSetText) {
+      if (unsavedTab.content !== null) editorSetText(unsavedTab.content || "");
+      else editorSetText(await getActiveTabContent());
+    }
+    if (editorSetScroll) editorSetScroll(unsavedTab.scroll || 0);
+  } else {
+    if (editorSetText) editorSetText(await getActiveTabContent());
+    if (editorSetScroll) editorSetScroll(scroll || 0);
+  }
   populateTabs(true);
 }
 
@@ -1140,18 +1188,14 @@ function addTabElem(info) {
   const tabDropdown = document.createElement("div");
   const tab = document.createElement("div");
   const icon = document.createElement("i");
+  const closeIcon = document.createElement("i");
+  const editIcon = document.createElement("i");
 
   const dropdown = document.createElement("div");
   const dropdownExecute = document.createElement("div");
   const dropdownExecuteIcon = document.createElement("i");
-  const dropdownExplorerFolder = document.createElement("div");
-  const dropdownExplorerFolderIcon = document.createElement("i");
   const dropdownRename = document.createElement("div");
   const dropdownRenameIcon = document.createElement("i");
-  const dropdownDelete = document.createElement("div");
-  const dropdownDeleteIcon = document.createElement("i");
-  const dropdownClose = document.createElement("div");
-  const dropdownCloseIcon = document.createElement("i");
 
   const name = getTabName(info);
   const extension = name.split(".").pop();
@@ -1161,27 +1205,17 @@ function addTabElem(info) {
   dropdown.className = "kr-dropdown-content";
   dropdownExecute.innerText = "Execute";
   dropdownExecuteIcon.className = "fa-solid fa-scroll";
-  dropdownExplorerFolder.innerText = "View Folder";
-  dropdownExplorerFolderIcon.className = "fa-solid fa-folder-tree";
   dropdownRename.innerText = "Rename";
   dropdownRenameIcon.className = "fa-solid fa-font";
-  dropdownDelete.innerText = "Delete";
-  dropdownDeleteIcon.className = "fa-solid fa-delete-left";
-  dropdownClose.innerText = "Close";
-  dropdownCloseIcon.className = "fa-solid fa-times";
   dropdownExecute.append(dropdownExecuteIcon);
-  dropdownExplorerFolder.append(dropdownExplorerFolderIcon);
   dropdownRename.append(dropdownRenameIcon);
-  dropdownDelete.append(dropdownDeleteIcon);
-  dropdownClose.append(dropdownCloseIcon);
   dropdown.append(dropdownExecute);
-  if (script) dropdown.append(dropdownExplorerFolder);
   dropdown.append(dropdownRename);
-  if (tabs.length > 1) dropdown.append(dropdownDelete);
-  if (script && tabs.length > 1) dropdown.append(dropdownClose);
 
   let selected = false;
   let selectedTab = null;
+  let isMouseDown = false;
+  let mouseDownTime;
 
   function select() {
     selected = true;
@@ -1200,10 +1234,19 @@ function addTabElem(info) {
   }
 
   tab.addEventListener("mousedown", function (e) {
-    if (e.button === 0 && tab.contentEditable !== "true" && tabs.length > 1) select();
+    isMouseDown = true;
+
+    if (e.button === 0 && tab.contentEditable !== "true" && tabs.length > 1) {
+      mouseDownTime = Date.now();
+      setTimeout(function () {
+        if (isMouseDown && Date.now() - mouseDownTime >= 175) select();
+      }, 175);
+    }
   });
 
   window.addEventListener("mouseup", async function () {
+    isMouseDown = false;
+
     if (selectedTab) {
       const id = selectedTab?.getAttribute("kr-id") || "";
       const tab = tabs.find((t) => t.id === id);
@@ -1238,8 +1281,9 @@ function addTabElem(info) {
     else if (selected) unselect();
   });
 
-  dropdownDelete.addEventListener("click", () => deleteTab(info.id, true));
-  dropdownClose.addEventListener("click", () => deleteTab(info.id));
+  closeIcon.addEventListener("click", function () {
+    deleteTab(info.id);
+  });
 
   tab.addEventListener("input", function () {
     if (tab.contentEditable === "true") changeContentEditableText(tab, tab.innerText.replace(/[<>:"/\\|?*]/g, ""));
@@ -1265,6 +1309,8 @@ function addTabElem(info) {
       } else if (tab.innerText.trim() === "") tab.innerText = name;
 
       tab.append(icon);
+      if (unsavedTabData.get(info.id)) tab.append(editIcon);
+      if (tabs.length > 1) tab.append(closeIcon);
       await renameTab(info.id, tab.innerText);
     }
   }
@@ -1279,15 +1325,11 @@ function addTabElem(info) {
     execute(text);
   });
 
-  if (script) {  
-    dropdownExplorerFolder.addEventListener("click", function () {
-      open(getDirectory(info.path));
-    });
-  }
-
   dropdownRename.addEventListener("click", async function () {
     dropdown.classList.add("disabled");
     icon.remove();
+    editIcon.remove();
+    closeIcon.remove();
     tab.contentEditable = true;
     if (script) {
       let defaultName = tab.innerText.split(".");
@@ -1304,9 +1346,17 @@ function addTabElem(info) {
   tab.innerText = name;
   if (info.active) tab.classList.add("active");
   icon.className = script ? "fa-solid fa-file" : "fa-solid fa-scroll";
+  editIcon.className = "fa-solid fa-pencil";
+  editIcon.style = "order: -1";
+  closeIcon.className = "fa-solid fa-times";
+  closeIcon.style = "order: -2";
   tab.append(icon);
-  tab.addEventListener("click", function () {
-    if (tab.contentEditable !== "true") setTabActive(info.id);
+  if (unsavedTabData.get(info.id)) tab.append(editIcon);
+  if (tabs.length > 1) tab.append(closeIcon);
+  tab.addEventListener("click", function (e) {
+    if (tab.contentEditable !== "true" && !info.active && !e.target?.classList.contains("fa-times")) {
+      setTabActive(info.id);
+    }
   });
 
   tabDropdown.append(tab);
@@ -1367,7 +1417,7 @@ async function inject() {
 
   function onData(line) {
     const text = line ? line.trim() : "";
-    const blacklist = ["error:", "redownload", "create a ticket", "make a ticket", "cannot find user"];
+    const blacklist = ["error:", "redownload", "create a ticket", "make a ticket", "cannot find user", "mismatch", "out of date", "failed to"];
 
     if (blacklist.some((s) => text.toLowerCase().includes(s)) && !text.toLowerCase().endsWith(":")) {
       alert(`[Ro-Exec] ${text}`);
@@ -1511,11 +1561,19 @@ function setupEditor() {
         { token: "keyword", foreground: "f86d7c", fontStyle: "bold" },
         { token: "comment", foreground: "388234" },
         { token: "number", foreground: "ffc600" },
-        { token: "string", foreground: "adf195" },
-        { token: "custom", foreground: "66ffcc", fontStle: "bold" },
+        { token: "string", foreground: "adf195" }
       ],
       colors: {
-        "editor.background": "#191a1e"
+        "editor.background": "#191c29",
+        "editor.foreground": "#c6cff3",
+        "list.hoverBackground": "#2f354e",
+        "editor.selectionBackground": "#282d42",
+        "editorSuggestWidget.background": "#282d42",
+        "editorSuggestWidget.selectedBackground": "#2f354e",
+        "editorSuggestWidget.highlightForeground": "#c6cff3",
+        "editor.lineHighlightBackground": "#1d2130",
+        "editorCursor.foreground": "#c6cff3",
+        "editor.selectionHighlightBorder": "#282d42"
       }
     });
 
@@ -1523,8 +1581,8 @@ function setupEditor() {
       language: "lua",
       theme: "dark",
       value: await getActiveTabContent(),
-      fontFamily: "Source Sans 3",
-      fontSize: 13,
+      fontFamily: "Fira Code",
+      fontSize: 12,
       acceptSuggestionOnEnter: "smart",
       suggestOnTriggerCharacters: true,
       suggestSelection: "recentlyUsed",
@@ -1686,17 +1744,23 @@ function setupEditor() {
       }
     }
 
-    const setContent = debounce(function (text) {
-      setActiveTabContent(text);
-    }, 150);
-
     editor.onDidChangeModelContent(function () {
       updateIntelliSense();
-      setContent(editorGetText());
+      setActiveTabContent(editorGetText());
     });
 
     editor.onDidScrollChange(function (e) {
       setActiveTabScroll(e.scrollTop);
+    });
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, function () {
+      const activeTab = tabs.find((t) => t.active === true);
+      if (activeTab) saveTabContent(activeTab);
+    });
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, function () {
+      const activeTab = tabs.find((t) => t.active === true);
+      if (activeTab) revertTabContent(activeTab);
     });
 
     editor.addCommand(monaco.KeyCode.Home, () => null);
@@ -1738,6 +1802,7 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   // Set-up
   dataDirectory = await getData();
+  unsavedTabData = await getUnsavedTabData();
   await createDirectory("", true);
   await createDirectory(dataDirectory, true);
   await createDirectory("scripts", true);
@@ -1800,15 +1865,6 @@ window.addEventListener("DOMContentLoaded", async function () {
   document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
   document.querySelector(".tb-button.maximize").addEventListener("click", maximize);
   document.querySelector(".tb-button.exit").addEventListener("click", exit);
-
-  // Maximized
-  async function checkMaximized() {
-    const maximized = await isMaximized();
-    document.body.classList.toggle("kr-maximized", maximized);
-  }
-
-  checkMaximized();
-  window.addEventListener("resize", checkMaximized);
 
   // Settings
   settings = await getSettings();
@@ -1964,4 +2020,7 @@ window.addEventListener("DOMContentLoaded", async function () {
       }
     }
   });
+
+  // Show
+  show();
 });

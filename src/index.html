@@ -11,22 +11,21 @@
     <script type="module" src="./assets/main.js" defer></script>
   </head>
   <body>
-    <div class="kr-bg"></div>
     <div class="kr-titlebar">
       <div class="tb-drag" data-tauri-drag-region></div>
       <div class="brand">
         <img class="image" src="./assets/icon.png">
         <p class="text">KrampUI</p>
-        <p class="version">(0.0.7)</p>
+        <p class="version">(0.0.8)</p>
       </div>
       <div class="buttons">
         <div class="kr-dropdown left">
           <button class="tb-button"><i class="fa-solid fa-cog"></i></button>
           <div class="kr-dropdown-content">
+            <div class="kr-dropdown-key-toggle">Home Toggle <i class="fa-solid fa-times"></i></div>
             <div class="kr-dropdown-auto-login">Auto Login <i class="fa-solid fa-times"></i></div>
             <div class="kr-dropdown-auto-inject">Auto Inject <i class="fa-solid fa-times"></i></div>
             <div class="kr-dropdown-top-most">Top Most <i class="fa-solid fa-times"></i></div>
-            <div class="kr-dropdown-key-toggle">Home Toggle <i class="fa-solid fa-times"></i></div>
           </div>
         </div>
         <button class="tb-button minimize"><i class="fa-solid fa-minus"></i></button>
@@ -47,15 +46,12 @@
       <div class="bar">
         <div class="buttons">
           <button class="kr-button kr-inject disabled"><i class="fa-solid fa-syringe"></i> <span class="text">Inject</span></button>
-          <button class="kr-button kr-kill disabled before-seperator"><i class="fa-solid fa-ban"></i> <span class="text">Kill</span></button>
-          <div class="seperator"></div>
-          <button class="kr-button kr-execute disabled after-seperator"><i class="fa-solid fa-scroll"></i> <span class="text">Execute</span></button>
-          <button class="kr-button kr-clear before-seperator"><i class="fa-solid fa-delete-left"></i> <span class="text">Clear</span></button>
-          <div class="seperator"></div>
-          <button class="kr-button kr-import after-seperator"><i class="fa-solid fa-upload"></i> <span class="text">Import</span></button>
-          <button class="kr-button kr-export before-seperator"><i class="fa-solid fa-floppy-disk"></i> <span class="text">Export</span></button>
-          <div class="seperator"></div>
-          <button class="kr-button kr-logout after-seperator"><i class="fa-solid fa-right-from-bracket"></i> <span class="text">Logout</span></button>
+          <button class="kr-button kr-kill disabled"><i class="fa-solid fa-ban"></i> <span class="text">Kill</span></button>
+          <button class="kr-button kr-execute disabled"><i class="fa-solid fa-scroll"></i> <span class="text">Execute</span></button>
+          <button class="kr-button kr-clear"><i class="fa-solid fa-delete-left"></i> <span class="text">Clear</span></button>
+          <button class="kr-button kr-import"><i class="fa-solid fa-upload"></i> <span class="text">Import</span></button>
+          <button class="kr-button kr-export"><i class="fa-solid fa-floppy-disk"></i> <span class="text">Export</span></button>
+          <button class="kr-button kr-logout"><i class="fa-solid fa-right-from-bracket"></i> <span class="text">Logout</span></button>
         </div>
       </div>
       <div class="main">

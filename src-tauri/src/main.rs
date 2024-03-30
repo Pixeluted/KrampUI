@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::{command, Manager, AppHandle, Window, Builder, WindowEvent, SystemTray, CustomMenuItem, SystemTrayMenu, SystemTrayEvent, generate_context, generate_handler};
-use std::{thread::{self, sleep}, time::Duration, process};
+use tauri::{command, Manager, AppHandle, Window, Builder, WindowEvent, generate_context, generate_handler};
+use std::{thread::{self, sleep}, time::Duration};
 use std::sync::atomic::{AtomicBool, Ordering};
 use rdev::{listen, Event, EventType};
 use sysinfo::System;
@@ -61,25 +61,12 @@ fn eval(app: AppHandle, name: &str, code: &str) -> bool {
 }
 
 fn main() {
-    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-    let tray = SystemTrayMenu::new().add_item(quit);
-
     Builder::default()
         .on_window_event(|e| {
             if let WindowEvent::Resized(_) = e.event() {
                 sleep(Duration::from_millis(5));
             }
         })
-        .system_tray(SystemTray::new().with_menu(tray))
-        .on_system_tray_event(| _, e | match e {
-            SystemTrayEvent::MenuItemClick { id, .. } => {
-              match id.as_str() {
-                "quit" => process::exit(0),
-                _ => {}
-              }
-            }
-            _ => {}
-          })
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             app.emit_all("single-instance", Payload2 { args: argv, cwd }).unwrap();
         }))

@@ -6,7 +6,7 @@
   },
   "package": {
     "productName": "KrampUI",
-    "version": "0.0.7"
+    "version": "0.0.8"
   },
   "tauri": {
     "allowlist": {
@@ -30,8 +30,8 @@
         "maximizable": true,
         "alwaysOnTop": true,
         "center": true,
-        "decorations": false,
-        "transparent": true
+        "visible": false,
+        "decorations": false
       }
     ],
     "security": {

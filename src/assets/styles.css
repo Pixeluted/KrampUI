@@ -1,21 +1,28 @@
 /* Variables */
 :root {
-    --darker: #0e0f11;
-    --dark: #131417;
-    --light: #191a1e;
-    --lighter: #35373b;
-    --lightest: #2a2c32;
-    --primary: rgb(33, 78, 226);
-    --text: #aaabad;
-    --green: #93e685;
-    --yellow: #eecd3d;
-    --red: #e64040;
+    --darker: #090a0e;
+    --dark: #10121a;
+    --light: #191c29;
+    --lighter: #282d42;
+    --lightest: #2f354e;
+    --primary: #5267bb;
+    --text: #c6cff3;
+    --green: #befdb3;
+    --yellow: #f1e092;
+    --red: #ee9b9b;
 }
 
 /* Font */
 @font-face {
     font-family: "Source Sans 3";
     src: url(font.ttf) format("truetype");
+    font-weight: 350;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Fira Code";
+    src: url(code_font.ttf) format("truetype");
     font-weight: 350;
     font-style: normal;
 }
@@ -46,27 +53,12 @@
 /* Global */
 body {
     height: 100vh;
-    background-color: transparent;
+    background-color: var(--dark);
     margin: 0;
     overflow: hidden;
 }
 
-.kr-bg {
-    position: absolute;
-    z-index: -1;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: var(--dark);
-    border-radius: 5px;
-}
-
-body.kr-maximized .kr-bg {
-    border-radius: 0;
-}
-
-body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
+body > *:not(.active):not(.kr-titlebar) {
     position: absolute !important;
     z-index: -999999 !important;
     pointer-events: none !important;
@@ -98,7 +90,7 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
     border: 1px solid var(--lighter);
     padding: 0.5rem 1rem;
     box-sizing: border-box;
-    border-radius: 5px;
+    border-radius: 2.5px;
     user-select: none;
     -webkit-user-drag: none;
 }
@@ -113,7 +105,7 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
     background-color: var(--primary);
     padding: 0.5rem 1rem;
     box-sizing: border-box;
-    border-radius: 5px;
+    border-radius: 2.5px;
     cursor: pointer;
     text-align: center;
     user-select: none;
@@ -127,7 +119,7 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
     z-index: 5;
     background-color: var(--dark);
     border: 1px solid var(--lighter);
-    border-radius: 5px;
+    border-radius: 2.5px;
     box-sizing: border-box;
     overflow: hidden;
     user-select: none;
@@ -138,12 +130,12 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
 }
 
 .kr-dropdown-content > div {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     display: flex;
-    justify-content: start;
+    justify-content: center;
     align-items: center;
     gap: 0.25rem;
-    padding: 0.1rem 0.5rem;
+    padding: 0.05rem 0.25rem;
     flex-direction: row-reverse;
 }
 
@@ -151,7 +143,8 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 1rem !important;
+    width: 0.75rem !important;
+    font-size: 0.5rem !important;
 }
 
 .kr-dropdown-content > div:not(:first-child) {
@@ -172,18 +165,7 @@ body > *:not(.active):not(.kr-bg):not(.kr-titlebar) {
     height: 1.5rem;
     box-sizing: border-box;
     user-select: none;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
     position: relative;
-}
-
-.kr-titlebar:has(.tb-button:last-child:hover) {
-    overflow: hidden;
-}
-
-body.kr-maximized .kr-titlebar {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
 }
 
 .kr-titlebar .tb-drag {
@@ -203,8 +185,8 @@ body.kr-maximized .kr-titlebar {
 }
 
 .kr-titlebar .image {
-    width: 1rem;
-    height: 1rem;
+    width: 0.75rem;
+    height: 0.75rem;
 }
 
 .kr-titlebar .text {
@@ -257,12 +239,13 @@ body.kr-maximized .kr-titlebar {
 
 .login .title .text {
     margin: 0;
+    font-weight: 500;
 }
 
 .login .title .image {
     border: 1px solid var(--lighter);
-    border-radius: 5px;
-    padding: 0.25rem;
+    border-radius: 2.5px;
+    padding: 0.35rem;
     box-sizing: border-box;
     width: 2.5rem;
 }
@@ -287,18 +270,7 @@ body.kr-maximized .kr-titlebar {
 .exploit .bar .buttons {
     display: flex;
     width: 100%;
-}
-
-.exploit .bar .buttons > *:not(.seperator) {
-    flex-grow: 1;
-}
-
-.exploit .bar .buttons .kr-dropdown {
-    margin-right: -1px;
-}
-
-.exploit .bar .buttons .kr-dropdown .kr-button {
-    width: 100%;
+    gap: 0.35rem;
 }
 
 .exploit .bar .buttons .kr-button {
@@ -306,44 +278,17 @@ body.kr-maximized .kr-titlebar {
     border: 0.25px solid var(--lighter);
     box-sizing: border-box;
     background-color: var(--dark);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0.35rem 0.5rem;
     gap: 0.5rem;
+    flex-grow: 1;
 }
 
 .exploit .bar .buttons .kr-button:hover {
     background-color: var(--light);
-}
-
-.exploit .bar .buttons .kr-button:not(:first-child):not(:last-child) {
-    border-radius: 0;
-}
-
-.exploit .bar .buttons .kr-button:first-child {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.exploit .bar .buttons .kr-button:last-child {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-.exploit .bar .buttons .seperator {
-    padding: 0.25rem;
-}
-
-.exploit .bar .buttons .after-seperator {
-    border-top-left-radius: 5px !important;
-    border-bottom-left-radius: 5px !important;
-}
-
-.exploit .bar .buttons .before-seperator {
-    border-top-right-radius: 5px !important;
-    border-bottom-right-radius: 5px !important;
 }
 
 .exploit > .main {
@@ -353,9 +298,9 @@ body.kr-maximized .kr-titlebar {
 }
 
 .exploit > .main > * {
-    height: calc(100vh - 30px - 22px - 27px);
+    height: calc(100vh - 28px - 22px - 27px);
     border: 1px solid var(--lighter);
-    border-radius: 5px;
+    border-radius: 2.5px;
     box-sizing: border-box;
 }
 
@@ -420,8 +365,8 @@ body.kr-maximized .kr-titlebar {
     background-color: var(--light);
     border: 1px solid var(--lighter);
     padding: 0.1rem 0.25rem;
-    font-size: 0.75rem;
-    border-radius: 5px;
+    font-size: 0.7rem;
+    border-radius: 2.5px;
     box-sizing: border-box;
     user-select: none;
 }
@@ -459,7 +404,7 @@ body.kr-maximized .kr-titlebar {
 .exploit > .main > .container > .editor {
     height: 100%;
     border: 1px solid var(--lighter);
-    border-radius: 5px;
+    border-radius: 2.5px;
     box-sizing: border-box;
     overflow: hidden;
 }
@@ -499,7 +444,7 @@ body.kr-maximized .kr-titlebar {
 }
 
 .exploit > .main > .container-2 > .scripts {
-    border-radius: 5px;
+    border-radius: 2.5px;
     background-color: var(--light);
     border: 1px solid var(--lighter);
     box-sizing: border-box;
@@ -530,9 +475,9 @@ body.kr-maximized .kr-titlebar {
     flex-direction: row-reverse;
     white-space: nowrap;
     padding: 0.1rem 0.2rem;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     width: fit-content;
-    border-radius: 5px;
+    border-radius: 2.5px;
     gap: 0.3rem;
 }
 
