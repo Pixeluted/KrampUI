@@ -940,6 +940,10 @@ async function setTabScroll(tab, scroll) {
   await setTabs();
 }
 
+function roundToTen(num) {
+  return Math.round(num / 10) * 10;
+}
+
 async function getActiveTabContent() {
   const tab = tabs.find((t) => t.active === true);
   return tab ? await getTabContent(tab) : "";
@@ -953,21 +957,22 @@ async function setActiveTabContent(content) {
     const unsavedTab = unsavedTabData.get(tab.id);
 
     if (content !== tabContent) {
-      if (unsavedTab) unsavedTabData.set(tab.id, { content, scroll: unsavedTab.scroll || tab.scroll || 0 });
-      else unsavedTabData.set(tab.id, { content, scroll: tab.scroll || 0 });
-    } else if (unsavedTab && unsavedTab.scroll === tab.scroll) unsavedTabData.delete(tab.id);
+      if (unsavedTab) unsavedTabData.set(tab.id, { content, scroll: roundToTen(unsavedTab.scroll || tab.scroll || 0) });
+      else unsavedTabData.set(tab.id, { content, scroll: roundToTen(tab.scroll || 0) });
+    } else if (unsavedTab && unsavedTab.scroll === roundToTen(tab.scroll)) unsavedTabData.delete(tab.id);
 
     populateTabs(true);
   }
 }
 
-async function setActiveTabScroll(scroll) {
+async function setActiveTabScroll(_scroll) {
   const tab = tabs.find((t) => t.active === true);
+  const scroll = roundToTen(_scroll);
   
   if (tab) {
     const unsavedTab = unsavedTabData.get(tab.id);
 
-    if (scroll !== tab.scroll) {
+    if (scroll !== roundToTen(tab.scroll)) {
       if (unsavedTab) unsavedTabData.set(tab.id, { content: unsavedTab.content || null, scroll });
       else unsavedTabData.set(tab.id, { content: null, scroll });
     } else if (unsavedTab && unsavedTab.content === null) unsavedTabData.delete(tab.id);
@@ -1897,7 +1902,8 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitScriptsFolder = document.querySelector(".kr-folder");
 
   exploitTabs.addEventListener("wheel", function (e) {
-    console.log(e.deltaY);
+    e.preventDefault();
+    exploitTabs.scrollLeft += (e.deltaY / 5);
   });
 
   // Scripts
