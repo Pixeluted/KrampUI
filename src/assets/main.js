@@ -1021,6 +1021,7 @@ async function addTab(data, dontLoad) {
     });
   }
 
+  scrollIntoView = true;
   tabs.push({ ...data, id: randomString(20) });
   await setTabs();
   if (editorSetText) editorSetText(await getActiveTabContent());
@@ -1169,7 +1170,10 @@ async function addNewTab(dontLoad) {
 async function addScriptTab(path) {
   const tab = tabs.find((t) => t.path === path);
 
-  if (tab) setTabActive(tab.id);
+  if (tab) {
+    scrollIntoView = true;
+    setTabActive(tab.id);
+  }
   else await addTab({ path, order: getNextOrder(), active: true, scroll: 0 });
 }
 
@@ -1182,6 +1186,8 @@ async function setupTabs() {
 function emptyTabElems() {
   exploitTabs.innerHTML = "";
 }
+
+let scrollIntoView = false;
 
 function addTabElem(info) {
   const script = info.path;
@@ -1362,7 +1368,11 @@ function addTabElem(info) {
   tabDropdown.append(tab);
   tabDropdown.append(dropdown);
   exploitTabs.append(tabDropdown);
-  if (info.active) tab.scrollIntoView();
+
+  if (info.active && scrollIntoView) {
+    tab.scrollIntoView();
+    scrollIntoView = false;
+  }
 }
 
 function populateTabs(force) {
@@ -1885,6 +1895,10 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitScripts = document.querySelector(".exploit .main .container-2 .scripts");
   exploitScriptsSearch = document.querySelector(".exploit .main .container-2 .kr-input.search");
   exploitScriptsFolder = document.querySelector(".kr-folder");
+
+  exploitTabs.addEventListener("wheel", function (e) {
+    console.log(e.deltaY);
+  });
 
   // Scripts
   await loadScripts();
