@@ -11,66 +11,68 @@
     <script type="module" src="./assets/main.js" defer></script>
   </head>
   <body>
-    <div class="kr-titlebar">
-      <div class="tb-drag" data-tauri-drag-region></div>
-      <div class="brand">
-        <img class="image" src="./assets/icon.png">
-        <p class="text">KrampUI</p>
-        <p class="version">(0.0.8)</p>
-      </div>
-      <div class="buttons">
-        <div class="kr-dropdown left">
-          <button class="tb-button"><i class="fa-solid fa-cog"></i></button>
-          <div class="kr-dropdown-content">
-            <div class="kr-dropdown-key-toggle">Home Toggle <i class="fa-solid fa-times"></i></div>
-            <div class="kr-dropdown-auto-login">Auto Login <i class="fa-solid fa-times"></i></div>
-            <div class="kr-dropdown-auto-inject">Auto Inject <i class="fa-solid fa-times"></i></div>
-            <div class="kr-dropdown-top-most">Top Most <i class="fa-solid fa-times"></i></div>
-          </div>
+    <div class="container">
+      <div class="kr-titlebar">
+        <div class="tb-drag" data-tauri-drag-region></div>
+        <div class="brand">
+          <img class="image" src="./assets/icon.png">
+          <p class="text">KrampUI</p>
+          <p class="version">(0.0.8)</p>
         </div>
-        <button class="tb-button minimize"><i class="fa-solid fa-minus"></i></button>
-        <button class="tb-button maximize"><i class="fa-regular fa-square"></i></button>
-        <button class="tb-button exit"><i style="font-size: 0.825rem !important" class="fa-solid fa-times"></i></button>
-      </div>
-    </div>
-    <div class="login active">
-      <div class="title">
-        <img class="image" src="./assets/icon.png">
-        <h3 class="text">KrampUI</h3>
-      </div>
-      <div class="form">
-        <button class="kr-button submit">Authenticate via loader.live</button>
-      </div>
-    </div>
-    <div class="exploit">
-      <div class="bar">
         <div class="buttons">
-          <button class="kr-button kr-inject disabled"><i class="fa-solid fa-syringe"></i> <span class="text">Inject</span></button>
-          <button class="kr-button kr-kill disabled"><i class="fa-solid fa-ban"></i> <span class="text">Kill</span></button>
-          <button class="kr-button kr-execute disabled"><i class="fa-solid fa-scroll"></i> <span class="text">Execute</span></button>
-          <button class="kr-button kr-clear"><i class="fa-solid fa-delete-left"></i> <span class="text">Clear</span></button>
-          <button class="kr-button kr-import"><i class="fa-solid fa-upload"></i> <span class="text">Import</span></button>
-          <button class="kr-button kr-export"><i class="fa-solid fa-floppy-disk"></i> <span class="text">Export</span></button>
-          <button class="kr-button kr-logout"><i class="fa-solid fa-right-from-bracket"></i> <span class="text">Logout</span></button>
+          <div class="kr-dropdown left">
+            <button class="tb-button"><i class="fa-solid fa-cog"></i></button>
+            <div class="kr-dropdown-content">
+              <div class="kr-dropdown-key-toggle">Home Toggle <i class="fa-solid fa-times"></i></div>
+              <div class="kr-dropdown-auto-login">Auto Login <i class="fa-solid fa-times"></i></div>
+              <div class="kr-dropdown-auto-inject">Auto Inject <i class="fa-solid fa-times"></i></div>
+              <div class="kr-dropdown-top-most">Top Most <i class="fa-solid fa-times"></i></div>
+            </div>
+          </div>
+          <button class="tb-button minimize"><i class="fa-solid fa-minus"></i></button>
+          <button class="tb-button maximize"><i class="fa-regular fa-square"></i></button>
+          <button class="tb-button exit"><i style="font-size: 0.825rem !important" class="fa-solid fa-times"></i></button>
         </div>
       </div>
-      <div class="main">
-        <div class="container">
-          <div class="tabs">
-            <div class="list"></div>
-            <button class="kr-button kr-add-tab"><i class="fa-solid fa-plus"></i></button>
-          </div>
-          <div class="editor"></div>
+      <div class="login active">
+        <div class="title">
+          <img class="image" src="./assets/icon.png">
+          <h3 class="text">KrampUI</h3>
         </div>
-        <div class="container container-2">
-          <div class="script-header">
-            <input class="kr-input search" placeholder="Search">
-            <button class="kr-button kr-folder"><i class="fa-solid fa-folder"></i></button>
+        <div class="form">
+          <button class="kr-button submit">Authenticate via loader.live</button>
+        </div>
+      </div>
+      <div class="exploit">
+        <div class="bar">
+          <div class="buttons">
+            <button class="kr-button kr-inject disabled"><i class="fa-solid fa-syringe"></i> <span class="text">Inject</span></button>
+            <button class="kr-button kr-kill disabled"><i class="fa-solid fa-ban"></i> <span class="text">Kill</span></button>
+            <button class="kr-button kr-execute disabled"><i class="fa-solid fa-scroll"></i> <span class="text">Execute</span></button>
+            <button class="kr-button kr-clear"><i class="fa-solid fa-delete-left"></i> <span class="text">Clear</span></button>
+            <button class="kr-button kr-import"><i class="fa-solid fa-upload"></i> <span class="text">Import</span></button>
+            <button class="kr-button kr-export"><i class="fa-solid fa-floppy-disk"></i> <span class="text">Export</span></button>
+            <button class="kr-button kr-logout"><i class="fa-solid fa-right-from-bracket"></i> <span class="text">Logout</span></button>
           </div>
-          <div class="scripts kr-dropdown">
-            <div class="kr-dropdown-content">
-              <div class="kr-scripts-new-file">New File <i class="fa-solid fa-file"></i></div>
-              <div class="kr-scripts-new-folder">New Folder <i class="fa-solid fa-folder"></i></div>
+        </div>
+        <div class="main">
+          <div class="container">
+            <div class="tabs">
+              <div class="list"></div>
+              <button class="kr-button kr-add-tab"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div class="editor"></div>
+          </div>
+          <div class="container container-2">
+            <div class="script-header">
+              <input class="kr-input search" placeholder="Search">
+              <button class="kr-button kr-folder"><i class="fa-solid fa-folder"></i></button>
+            </div>
+            <div class="scripts kr-dropdown">
+              <div class="kr-dropdown-content">
+                <div class="kr-scripts-new-file">New File <i class="fa-solid fa-file"></i></div>
+                <div class="kr-scripts-new-folder">New Folder <i class="fa-solid fa-folder"></i></div>
+              </div>
             </div>
           </div>
         </div>

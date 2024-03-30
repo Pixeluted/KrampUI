@@ -24,6 +24,10 @@ async function maximize() {
   await appWindow.toggleMaximize();
 }
 
+async function isMaximized() {
+  return await appWindow.isMaximized();
+}
+
 async function isVisible() {
   return await window.__TAURI__.window.appWindow.isVisible();
 }
@@ -1881,12 +1885,21 @@ window.addEventListener("DOMContentLoaded", async function () {
   document.querySelector(".tb-button.maximize").addEventListener("click", maximize);
   document.querySelector(".tb-button.exit").addEventListener("click", exit);
 
+  // Maximized
+  async function checkMaximized() {
+    const maximized = await isMaximized();
+    document.body.classList.toggle("kr-maximized", maximized);
+  }
+
+  checkMaximized();
+  window.addEventListener("resize", checkMaximized);
+
   // Settings
   settings = await getSettings();
 
   // Sections
-  loginSection = document.querySelector("body > .login");
-  exploitSection = document.querySelector("body > .exploit");
+  loginSection = document.querySelector("body > .container > .login");
+  exploitSection = document.querySelector("body > .container > .exploit");
 
   // Login
   loginForm = document.querySelector(".login .form");

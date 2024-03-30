@@ -53,12 +53,25 @@
 /* Global */
 body {
     height: 100vh;
-    background-color: var(--dark);
     margin: 0;
-    overflow: hidden;
 }
 
-body > *:not(.active):not(.kr-titlebar) {
+body > .container {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    border-radius: 5px;
+    box-sizing: border-box;
+    border: 1px solid var(--lighter);
+    background-color: var(--dark);
+}
+
+body.kr-maximized > .container {
+    border-radius: 0;
+    border: none;
+}
+
+body > .container > *:not(.active):not(.kr-titlebar) {
     position: absolute !important;
     z-index: -999999 !important;
     pointer-events: none !important;
