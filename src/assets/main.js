@@ -294,7 +294,7 @@ async function getSettings() {
   else {
     const settings = {
       autoLogin: true,
-      autoInject: true,
+      autoInject: false,
       topMost: true,
       keyToggle: false
     };
