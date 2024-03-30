@@ -24,5 +24,9 @@ It's located at ``%appdata%/krampui``, or just press the folder icon on the UI a
 Perhaps your computer doesn't have Microsoft Edge Webview installed.</br>
 Install it from <a href="https://developer.microsoft.com/en-us/microsoft-edge/webview2" target="_blank">here</a> (scroll down & install Evergreen Bootstrapper), and see if that fixes your issue.
 
+### How to fix it injecting but not executing scripts?
+There is no difference between using KrampUI to inject and running the executable yourself.
+Meaning, it's a issue with Ro-Exec. It's advised to wait until you load into game before injecting.
+
 ## Found a bug?
 Feel free to let me know, ``@Snipcola`` on Discord.
