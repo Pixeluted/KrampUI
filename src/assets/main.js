@@ -887,7 +887,7 @@ async function addScript({ name, path: _path }, folder, autoExec) {
       script.contentEditable = false;
       script.innerText = script.innerText.trim();
 
-      if (!script.innerText.toLowerCase().endsWith(".lua") && !script.innerText.toLowerCase().endsWith(".txt")) {
+      if (!script.innerText.toLowerCase().endsWith(".lua") && !script.innerText.toLowerCase().endsWith(".luau") && !script.innerText.toLowerCase().endsWith(".txt")) {
         script.innerText = `${script.innerText}.${extension}`;
       }
 
@@ -947,7 +947,7 @@ let prevTabs;
 function parseScripts(files) {
   return files
     .filter((s) => s.path && s.name)
-    .filter((s) => [".lua", ".txt"].some((e) => s.name.endsWith(e)))
+    .filter((s) => [".lua", ".luau", ".txt"].some((e) => s.name.endsWith(e)))
     .filter((s) => s.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -1446,7 +1446,7 @@ function addTabElem(info) {
       tab.contentEditable = false;
       tab.innerText = tab.innerText.trim();
 
-      if (script && (!tab.innerText.toLowerCase().endsWith(".lua") && !tab.innerText.toLowerCase().endsWith(".txt"))) {
+      if (script && (!tab.innerText.toLowerCase().endsWith(".lua") && !tab.innerText.toLowerCase().endsWith(".luau") && !tab.innerText.toLowerCase().endsWith(".txt"))) {
         tab.innerText = `${tab.innerText}.${extension}`;
       }
 
@@ -1617,12 +1617,8 @@ async function _import() {
     defaultPath: await path.join(await path.appConfigDir(), "scripts"),
     filters: [
       {
-        name: "Scripts",
+        name: "Script",
         extensions: ["lua", "luau", "txt"]
-      },
-      {
-        name: "All Files",
-        extensions: ["*"]
       }
     ]
   });
@@ -1645,12 +1641,16 @@ async function _export() {
     defaultPath: await path.join(await path.appConfigDir(), "scripts"),
     filters: [
       {
-        name: "Scripts",
-        extensions: ["lua", "luau", "txt"]
+        name: "Lua File",
+        extensions: ["lua"]
       },
       {
-        name: "All Files",
-        extensions: ["*"]
+        name: "LuaU File",
+        extensions: ["luau"]
+      },
+      {
+        name: "Text File",
+        extensions: ["txt"]
       }
     ]
   });
