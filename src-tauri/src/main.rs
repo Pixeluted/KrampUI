@@ -18,8 +18,8 @@ struct Payload2 {
 }
 
 #[command]
-fn kill_process(name: &str) -> bool {
-    return match System::new_all().processes_by_name(&name).next() {
+fn kill_roblox() -> bool {
+    return match System::new_all().processes_by_name("RobloxPlayerBeta.exe").next() {
         Some(process) => process.kill(),
         _ => false
     };
@@ -70,7 +70,7 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             app.emit_all("single-instance", Payload2 { args: argv, cwd }).unwrap();
         }))
-        .invoke_handler(generate_handler![init_key_events, is_roblox_running, kill_process, eval])
+        .invoke_handler(generate_handler![init_key_events, is_roblox_running, kill_roblox, eval])
         .run(generate_context!())
         .expect("Failed to launch application.");
 }
