@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::{command, Manager, AppHandle, Window, Builder, WindowEvent, generate_context, generate_handler};
+use tauri::{command, Manager, AppHandle, Window, Builder, WindowEvent, SystemTray, CustomMenuItem, SystemTrayMenu, SystemTrayEvent, generate_context, generate_handler};
 use std::{thread::{self, sleep}, time::Duration};
 use std::sync::atomic::{AtomicBool, Ordering};
 use rdev::{listen, Event, EventType};
@@ -61,12 +61,29 @@ fn eval(app: AppHandle, name: &str, code: &str) -> bool {
 }
 
 fn main() {
+    let toggle = CustomMenuItem::new("toggle".to_string(), "Toggle");
+    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
+    let tray = SystemTrayMenu::new().add_item(toggle).add_item(quit);
+    
     Builder::default()
         .on_window_event(|e| {
             if let WindowEvent::Resized(_) = e.event() {
                 sleep(Duration::from_millis(5));
             }
         })
+        .system_tray(SystemTray::new().with_menu(tray))
+        .on_system_tray_event(| app, e | match e {
+            SystemTrayEvent::MenuItemClick { id, .. } => {
+                let window = app.get_window("main").unwrap();
+                
+                match id.as_str() {
+                    "toggle" => window.emit("toggle", Payload { message: "".to_string() }).unwrap(),
+                    "quit" => window.emit("exit", Payload { message: "".to_string() }).unwrap(),
+                    _ => {}
+                }
+            }
+            _ => {}
+          })
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             app.emit_all("single-instance", Payload2 { args: argv, cwd }).unwrap();
         }))

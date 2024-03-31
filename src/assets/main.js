@@ -62,8 +62,8 @@ async function hide(onlyAnimation) {
   else toggleLock = false;
 }
 
-async function toggle() {
-  if (await isVisible() && settings.keyToggle) await hide();
+async function toggle(force) {
+  if (await isVisible() && (force || settings.keyToggle)) await hide();
   else await show();
 }
 
@@ -2035,6 +2035,14 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   event.listen("get-credentials", async function () {
     event.emit("set-credentials-login", { ...await getCredentials(), autoLogin: settings.autoLogin });
+  });
+
+  event.listen("exit", async function () {
+    await exit();
+  });
+
+  event.listen("toggle", async function () {
+    await toggle(true);
   });
 
   // Titlebar
