@@ -63,7 +63,7 @@ async function hide(onlyAnimation) {
 }
 
 async function toggle() {
-  if (await isVisible()) await hide();
+  if (await isVisible() && settings.keyToggle) await hide();
   else await show();
 }
 
@@ -192,7 +192,47 @@ async function injectLoginCode() {
             await emit("websocket-close");
           };
         } else logout();
-      } else await loginWindow.show();
+      } else {
+        if (window.location.pathname === "/") {
+          let loginInterval;
+
+          loginInterval = setInterval(async function () {
+            const form = document.querySelector("form[action='?/login']");
+
+            if (form) {
+              clearInterval(loginInterval);
+
+              const email = form.querySelector("input[type='text']");
+              const password = form.querySelector("input[type='password']");
+              const submit = form.querySelector("button");
+
+              if (email && password) {
+                async function setValues() {
+                  await emit("set-credentials", { email: email.value || "", password: password.value || "" });
+                }
+  
+                await listen("set-credentials-login", function (e) {
+                  const credentials = e.payload;
+    
+                  if (credentials.email && credentials.password) {
+                    email.value = credentials.email;
+                    password.value = credentials.password;
+                    if (submit && credentials.autoLogin) submit.click();
+                  }
+  
+                  setValues();
+                  email.addEventListener("input", setValues);
+                  password.addEventListener("input", setValues);
+                });
+    
+                await emit("get-credentials");
+              }
+            }
+          }, 100);
+        }
+
+        await loginWindow.show();
+      }
     })();
   `, true);
 }
@@ -336,6 +376,31 @@ async function getSettings() {
 
 async function setSettings(data) {
   await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
+}
+
+async function getCredentials() {
+  const text = await readFile(`${dataDirectory}/credentials`);
+  let json;
+  try { json = JSON.parse(text); }
+  catch { return false; };
+
+  if (json) return {
+    email: json.email,
+    password: json.password
+  };
+  else {
+    const credentials = {
+      email: "",
+      password: ""
+    };
+
+    await setCredentials(credentials);
+    return credentials;
+  }
+}
+
+async function setCredentials(data) {
+  await writeFile(`${dataDirectory}/credentials`, JSON.stringify(data));
 }
 
 async function getUnsavedTabData() {
@@ -1568,6 +1633,7 @@ async function kill() {
 }
 
 async function logout() {
+  await setCredentials({ email: "", password: "" });
   await event.emit("logout");
 }
 
@@ -1908,7 +1974,21 @@ window.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
-  event.listen("websocket-close", closeExistingLogin);
+  event.listen("websocket-close", function () {
+    closeExistingLogin();
+  });
+
+  event.listen("set-credentials", function (e) {
+    const data = e.payload;
+    
+    if (data.email && data.password) {
+      setCredentials(data);
+    }
+  });
+
+  event.listen("get-credentials", async function () {
+    event.emit("set-credentials-login", { ...await getCredentials(), autoLogin: settings.autoLogin });
+  });
 
   // Titlebar
   document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
@@ -2033,12 +2113,12 @@ window.addEventListener("DOMContentLoaded", async function () {
   
   event.listen("key-press", function (e) {
     const key = (e?.payload?.message || "")?.toLowerCase();
-    if (key === "home" && settings.keyToggle) toggle();
+    if (key === "home") toggle();
   });
 
   window.addEventListener("keyup", function (e) {
     const key = (e?.key || "")?.toLowerCase();
-    if (key === "home" && settings.keyToggle) toggle();
+    if (key === "home") toggle();
   });
 
   // Active
