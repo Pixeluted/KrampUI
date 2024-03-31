@@ -392,7 +392,8 @@ body > .container > *:not(.active):not(.kr-titlebar) {
 }
 
 .exploit > .main > .container > .tabs > .list .kr-tab.selected {
-    background-color: var(--lighter);
+    opacity: 25% !important;
+    pointer-events: none !important;
 }
 
 .exploit > .main > .container > .tabs > .list .kr-tab[contentEditable="true"] {
@@ -506,7 +507,8 @@ body > .container > *:not(.active):not(.kr-titlebar) {
 }
 
 .exploit > .main > .container-2 > .scripts > .script-container .script.selected {
-    background-color: var(--lighter);
+    opacity: 25% !important;
+    pointer-events: none !important;
 }
 
 .exploit > .main > .container-2 > .scripts > .script-container .script > i {

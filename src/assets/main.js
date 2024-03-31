@@ -753,20 +753,40 @@ async function addScript({ name, path: _path }, folder, autoExec) {
   let selectedFolder = null;
   let isMouseDown = false;
   let mouseDownTime;
+  let scriptClone;
 
-  function select() {
+  function select(e) {
     selected = true;
+    if (scriptClone) scriptClone.remove();
+    scriptClone = script.cloneNode(true);
+    scriptClone.className = "script";
+    scriptClone.style.backgroundColor = "var(--lighter)";
+    script.parentElement.append(scriptClone);
+    moveToCursor(e);
     script.classList.add("selected");
   }
 
   function unselect() {
     selected = false;
-    script.style.pointerEvents = "auto";
-    script.style.position = "static";
-    script.style.zIndex = "0";
+    if (scriptClone) scriptClone.remove();
     script.classList.remove("selected");
     if (selectedFolder) selectedFolder.classList.remove("highlight");
     selectedFolder = null;
+  }
+
+  function moveToCursor(e) {
+    scriptClone.style.pointerEvents = "none";
+    scriptClone.style.position = "absolute";
+    scriptClone.style.zIndex = "10";
+
+    const scriptWidth = scriptClone.clientWidth;
+    const scriptHeight = scriptClone.clientHeight;
+    const offset = 10;
+    const offsetX = (e.clientX + scriptWidth / 2 > window.innerWidth) ? window.innerWidth - (scriptWidth + offset) : e.clientX - scriptWidth / 2;
+    const offsetY = (e.clientY + scriptHeight / 2 > window.innerHeight) ? window.innerHeight - (scriptHeight + offset) : e.clientY - scriptHeight / 2;
+
+    scriptClone.style.top = `${offsetY}px`;
+    scriptClone.style.left = `${offsetX}px`;
   }
 
   script.addEventListener("click", async function () {
@@ -780,7 +800,7 @@ async function addScript({ name, path: _path }, folder, autoExec) {
     if (e.button === 0 && script.contentEditable !== "true") {
       mouseDownTime = Date.now();
       setTimeout(function () {
-        if (isMouseDown && Date.now() - mouseDownTime >= 175) select();
+        if (isMouseDown && Date.now() - mouseDownTime >= 175) select(e);
       }, 175);
     }
   });
@@ -815,23 +835,14 @@ async function addScript({ name, path: _path }, folder, autoExec) {
 
   window.addEventListener("mousemove", function (e) {
     if (script.contentEditable !== "true" && selected) {
-      script.style.pointerEvents = "none";
-      script.style.position = "absolute";
-      script.style.zIndex = "10";
-      script.style.top = "1px";
-
-      const scriptWidth = script.clientWidth;
-      const scriptHeight = script.clientHeight;
-      const offset = 10;
-      const offsetX = (e.clientX + scriptWidth / 2 > window.innerWidth) ? window.innerWidth - (scriptWidth + offset) : e.clientX - scriptWidth / 2;
-      const offsetY = (e.clientY + scriptHeight / 2 > window.innerHeight) ? window.innerHeight - (scriptHeight + offset) : e.clientY - scriptHeight / 2;
-
-      script.style.top = `${offsetY}px`;
-      script.style.left = `${offsetX}px`;
+      if (scriptClone) moveToCursor(e);
 
       if (selectedFolder) selectedFolder.classList.remove("highlight");
       if ((e.target?.classList.contains("script") && e.target?.classList.contains("folder")) || e.target?.classList.contains("scripts")) {
         selectedFolder = e.target;
+        selectedFolder.classList.add("highlight");
+      } else if ((e.target?.parentElement?.classList.contains("script") && e.target?.parentElement?.classList.contains("folder")) || e.target?.parentElement?.classList.contains("scripts")) {
+        selectedFolder = e.target.parentElement;
         selectedFolder.classList.add("highlight");
       } else selectedFolder = null;
     }
@@ -1322,21 +1333,40 @@ function addTabElem(info) {
   let selectedTab = null;
   let isMouseDown = false;
   let mouseDownTime;
+  let tabClone;
 
-  function select() {
+  function select(e) {
     selected = true;
+    if (tabClone) tabClone.remove();
+    tabClone = tab.cloneNode(true);
+    tabClone.className = "kr-tab";
+    tabClone.style.backgroundColor = "var(--lighter)";
+    tab.parentElement.append(tabClone);
+    moveToCursor(e);
     tab.classList.add("selected");
-    exploitTabs.classList.add("selecting");
   }
 
   function unselect() {
     selected = false;
-    tab.style.pointerEvents = "auto";
-    tab.style.position = "static";
-    tab.style.zIndex = "0";
+    if (tabClone) tabClone.remove();
     tab.classList.remove("selected");
     if (selectedTab) selectedTab.classList.remove("highlight");
     selectedTab = null;
+  }
+
+  function moveToCursor(e) {
+    tabClone.style.pointerEvents = "none";
+    tabClone.style.zIndex = "10";
+    tabClone.style.position = "absolute";
+
+    const tabWidth = tabClone.clientWidth;
+    const tabHeight = tabClone.clientHeight;
+    const offset = 10;
+    const offsetX = (e.clientX + tabWidth / 2 > window.innerWidth) ? window.innerWidth - (tabWidth + offset) : e.clientX - tabWidth / 2;
+    const offsetY = (e.clientY + tabHeight / 2 > window.innerHeight) ? window.innerHeight - (tabHeight + offset) : e.clientY - tabHeight / 2;
+
+    tabClone.style.top = `${offsetY}px`;
+    tabClone.style.left = `${offsetX}px`;
   }
 
   tab.addEventListener("mousedown", function (e) {
@@ -1345,7 +1375,7 @@ function addTabElem(info) {
     if (e.button === 0 && tab.contentEditable !== "true" && tabs.length > 1) {
       mouseDownTime = Date.now();
       setTimeout(function () {
-        if (isMouseDown && Date.now() - mouseDownTime >= 175) select();
+        if (isMouseDown && Date.now() - mouseDownTime >= 175) select(e);
       }, 175);
     }
   });
@@ -1364,23 +1394,14 @@ function addTabElem(info) {
 
   window.addEventListener("mousemove", function (e) {
     if (tab.contentEditable !== "true" && selected) {
-      tab.style.pointerEvents = "none";
-      tab.style.zIndex = "10";
-      tab.style.position = "absolute";
-      tab.style.top = "1px";
-
-      const tabWidth = tab.clientWidth;
-      const tabHeight = tab.clientHeight;
-      const offset = 10;
-      const offsetX = (e.clientX + tabWidth / 2 > window.innerWidth) ? window.innerWidth - (tabWidth + offset) : e.clientX - tabWidth / 2;
-      const offsetY = (e.clientY + tabHeight / 2 > window.innerHeight) ? window.innerHeight - (tabHeight + offset) : e.clientY - tabHeight / 2;
-
-      tab.style.top = `${offsetY}px`;
-      tab.style.left = `${offsetX}px`;
+      if (tabClone) moveToCursor(e);
 
       if (selectedTab) selectedTab.classList.remove("highlight");
       if (e.target?.classList.contains("kr-tab")) {
-        selectedTab = e.target
+        selectedTab = e.target;
+        selectedTab.classList.add("highlight");
+      } else if (e.target?.parentElement?.classList.contains("kr-tab")) {
+        selectedTab = e.target.parentElement;
         selectedTab.classList.add("highlight");
       } else selectedTab = null;
     }
