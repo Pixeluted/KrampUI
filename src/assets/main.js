@@ -47,16 +47,19 @@ async function show() {
   }, 100);
 }
 
-async function hide() {
+async function hide(onlyAnimation) {
   if (toggleLock) return;
 
   toggleLock = true;
   document.body.classList.add("kr-hidden");
 
-  setTimeout(async function () {
-    await appWindow.hide();
-    toggleLock = false;
-  }, 100);
+  if (!onlyAnimation) {
+    setTimeout(async function () {
+      await appWindow.hide();
+      toggleLock = false;
+    }, 100);
+  }
+  else toggleLock = false;
 }
 
 async function toggle() {
@@ -65,8 +68,13 @@ async function toggle() {
 }
 
 async function exit() {
-  await setUnsavedTabData();
-  await process.exit();
+  const isToggleLock = toggleLock;
+  if (!isToggleLock) hide(true);
+
+  setTimeout(async function () {
+    await setUnsavedTabData();
+    await process.exit();
+  }, isToggleLock ? 0 : 100);
 }
 
 function checkActive() {
@@ -1608,9 +1616,12 @@ function setupEditor() {
         "editorSuggestWidget.background": "#282d42",
         "editorSuggestWidget.selectedBackground": "#2f354e",
         "editorSuggestWidget.highlightForeground": "#c6cff3",
+        "editorSuggestWidget.border": "#2f354e",
+        "editorOverviewRuler.border": "#2f354e",
         "editor.lineHighlightBackground": "#1d2130",
         "editorCursor.foreground": "#c6cff3",
-        "editor.selectionHighlightBorder": "#282d42"
+        "editor.selectionHighlightBorder": "#282d42",
+        "editorGutter.background": "#171a26"
       }
     });
 
@@ -1828,11 +1839,12 @@ window.addEventListener("DOMContentLoaded", async function () {
   // Prevent Events
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", function(e) {
-    if (e.key === "F5" || (e.ctrlKey && e.key === "r") || (e.metaKey && e.key === "r")) {
-      e.preventDefault();
-    }
-
-    if (e.key === "F3" || (e.ctrlKey && e.key === "f") || (e.metaKey && e.key === "f")) {
+    if (
+      e.key === "F5" || (e.ctrlKey && e.key === "r") || (e.metaKey && e.key === "r") ||
+      e.key === "F3" || (e.ctrlKey && e.key === "f") || (e.metaKey && e.key === "f") ||
+      e.key === "F7" ||
+      (e.ctrlKey && e.key === "k") || (e.metaKey && e.key === "k")
+    ) {
       e.preventDefault();
     }
   });

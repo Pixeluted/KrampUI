@@ -40,6 +40,7 @@
 ::-webkit-scrollbar-thumb {
     border-radius: 2.5px;
     background: var(--lighter);
+    transition: background-color 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -111,6 +112,7 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     border-radius: 2.5px;
     user-select: none;
     -webkit-user-drag: none;
+    transition: background-color 0.2s;
 }
 
 .kr-input:focus {
@@ -128,6 +130,7 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     text-align: center;
     user-select: none;
     -webkit-user-drag: none;
+    transition: background-color 0.2s;
 }
 
 /* Dropdown */
@@ -155,6 +158,7 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     gap: 0.25rem;
     padding: 0.05rem 0.25rem;
     flex-direction: row-reverse;
+    transition: background-color 0.2s;
 }
 
 .kr-dropdown-content > div > i {
@@ -230,6 +234,7 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     padding: 0 0.75rem;
     height: 100%;
     box-sizing: border-box;
+    transition: background-color 0.2s;
 }
 
 .kr-titlebar .tb-button:hover {
@@ -382,11 +387,12 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     text-wrap: nowrap;
     background-color: var(--light);
     border: 1px solid var(--lighter);
-    padding: 0.1rem 0.25rem;
+    padding: 0.15rem 0.25rem;
     font-size: 0.7rem;
     border-radius: 2.5px;
     box-sizing: border-box;
     user-select: none;
+    transition: background-color 0.2s;
 }
 
 .exploit > .main > .container > .tabs > .list .kr-tab.highlight {
@@ -497,6 +503,7 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     width: fit-content;
     border-radius: 2.5px;
     gap: 0.3rem;
+    transition: background-color 0.2s;
 }
 
 .exploit > .main > .container-2 > .scripts > .script-container:last-child {
