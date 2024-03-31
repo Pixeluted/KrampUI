@@ -1527,7 +1527,7 @@ function populateTabs(force) {
 }
 
 async function isRobloxRunning() {
-  return await invoke("is_process_running", { name: "RobloxPlayerBeta" });
+  return await invoke("is_roblox_running");
 }
 
 async function killRoblox() {
@@ -1547,6 +1547,10 @@ async function inject() {
   injecting = true;
   exploitInject.classList.add("disabled");
   exploitIndicator.style.color = "var(--yellow)";
+
+  await new Promise(function (resolve) {
+    setTimeout(() => resolve(), 2000);
+  });
 
   const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.name], { cwd: await path.appConfigDir() });
 
