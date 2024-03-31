@@ -2026,7 +2026,7 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   exploitTabs.addEventListener("wheel", function (e) {
     e.preventDefault();
-    exploitTabs.scrollLeft += (e.deltaY / 5);
+    exploitTabs.scrollLeft += (e.deltaY / 2);
   });
 
   // Scripts
