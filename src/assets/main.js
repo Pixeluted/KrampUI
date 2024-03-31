@@ -135,17 +135,13 @@ async function injectLoginCode() {
           }
         }
 
-        async function logout() {
-          const form = document.querySelector("form[action='/dashboard?/logout']");
-
-          if (form) {
-            try {
-              await fetch(form.action, {
-                method: form.method,
-                body: new FormData(form)
-              });
-            } catch { };
-          }
+        async function logout(form) {
+          try {
+            await fetch(form.action, {
+              method: form.method,
+              body: new FormData(form.data)
+            });
+          } catch { };
 
           if (websocket) websocket.close();
           await emit("websocket-close");
@@ -159,7 +155,30 @@ async function injectLoginCode() {
           websocket = new WebSocket(\`wss://loader.live/?login_token="\$\{token\}"\`);
           
           websocket.onopen = async function () {
-            await listen("logout", logout);
+            const form = await new Promise(function (resolve) {
+              let interval;
+
+              interval = setInterval(function () {
+                const form = document.querySelector("form[action='/dashboard?/logout']");
+
+                if (form) {
+                  clearInterval(interval);
+                  resolve(form);
+                }
+              }, 100);
+            });
+
+            const formData = {
+              action: form.action,
+              method: form.method,
+              body: new FormData(form)
+            };
+
+            document.documentElement.innerHTML = "";
+
+            await listen("logout", function () {
+              logout(formData);
+            });
 
             await listen("websocket-send", function (e) {
               if (websocket) websocket.send(e.payload);
@@ -194,41 +213,44 @@ async function injectLoginCode() {
         } else logout();
       } else {
         if (window.location.pathname === "/") {
-          let loginInterval;
+          const form = await new Promise(function (resolve) {
+            let interval;
 
-          loginInterval = setInterval(async function () {
-            const form = document.querySelector("form[action='?/login']");
+            interval = setInterval(function () {
+              const form = document.querySelector("form[action='?/login']");
 
-            if (form) {
-              clearInterval(loginInterval);
-
-              const email = form.querySelector("input[type='text']");
-              const password = form.querySelector("input[type='password']");
-              const submit = form.querySelector("button");
-
-              if (email && password) {
-                async function setValues() {
-                  await emit("set-credentials", { email: email.value || "", password: password.value || "" });
-                }
-  
-                await listen("set-credentials-login", function (e) {
-                  const credentials = e.payload;
-    
-                  if (credentials.email && credentials.password) {
-                    email.value = credentials.email;
-                    password.value = credentials.password;
-                    if (submit && credentials.autoLogin) submit.click();
-                  }
-  
-                  setValues();
-                  email.addEventListener("input", setValues);
-                  password.addEventListener("input", setValues);
-                });
-    
-                await emit("get-credentials");
+              if (form) {
+                clearInterval(interval);
+                resolve(form);
               }
+            }, 100);
+          });
+
+          const email = form.querySelector("input[type='text']");
+          const password = form.querySelector("input[type='password']");
+          const submit = form.querySelector("button");
+
+          if (email && password) {
+            async function setValues() {
+              await emit("set-credentials", { email: email.value || "", password: password.value || "" });
             }
-          }, 100);
+
+            await listen("set-credentials-login", function (e) {
+              const credentials = e.payload;
+
+              if (credentials.email && credentials.password) {
+                email.value = credentials.email;
+                password.value = credentials.password;
+                if (submit && credentials.autoLogin) submit.click();
+              }
+
+              setValues();
+              email.addEventListener("input", setValues);
+              password.addEventListener("input", setValues);
+            });
+
+            await emit("get-credentials");
+          }
         }
 
         await loginWindow.show();
