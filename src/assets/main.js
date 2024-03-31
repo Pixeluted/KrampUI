@@ -1531,7 +1531,7 @@ async function isRobloxRunning() {
 }
 
 async function killRoblox() {
-  return await invoke("kill_process", { name: "RobloxPlayerBeta" });
+  return await invoke("kill_roblox");
 }
 
 let evalInterval;
