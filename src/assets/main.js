@@ -1679,8 +1679,6 @@ async function _export() {
   if (selected) {
     const text = editorGetText() || "";
     await writeFile(selected, text);
-    exploitExport.classList.remove("disabled");
-    loadScripts();
 
     const currentTab = tabs.find((t) => t.active === true);
 
@@ -1699,6 +1697,8 @@ async function _export() {
       populateTabs();
     }
 
+    exploitExport.classList.remove("disabled");
+    loadScripts();
     return true;
   }
 
