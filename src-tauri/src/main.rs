@@ -134,6 +134,11 @@ fn init_websocket(window: Window, port: u16) {
 }
 
 #[command]
+fn log(message: String) {
+    println!("[FRONTEND] {}", message);
+}
+
+#[command]
 fn execute_script(text: &str) {    
     if let Some(websocket) = WEBSOCKET.lock().unwrap().clone() {
         websocket.send(text).unwrap();
@@ -167,7 +172,7 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             app.emit_all("single-instance", Payload2 { args: argv, cwd }).unwrap();
         }))
-        .invoke_handler(generate_handler![init_websocket, init_key_events, execute_script, is_roblox_running, kill_roblox, download_executable])
+        .invoke_handler(generate_handler![init_websocket, init_key_events, execute_script, is_roblox_running, kill_roblox, download_executable, log])
         .run(generate_context!())
         .expect("Failed to launch application.");
 }

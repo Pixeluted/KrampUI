@@ -17,6 +17,10 @@ let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, e
 let ready, connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
 let wsPort;
 
+async function log(logMessage) {
+  await invoke("log", { message: logMessage })
+}
+
 async function minimize() {
   await appWindow.minimize();
 }
@@ -2058,5 +2062,3 @@ window.addEventListener("DOMContentLoaded", async function () {
   // Show
   show();
 });
-
-console.log("Lot of fun, dev branch")
