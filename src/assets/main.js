@@ -2058,3 +2058,5 @@ window.addEventListener("DOMContentLoaded", async function () {
   // Show
   show();
 });
+
+console.log("Lot of fun, dev branch")
