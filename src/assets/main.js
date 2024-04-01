@@ -1,6 +1,6 @@
 const { invoke } = window.__TAURI__.tauri;
 const { open, Command } = window.__TAURI__.shell;
-const { appWindow, WebviewWindow, getAll, getCurrent } = window.__TAURI__.window;
+const { appWindow } = window.__TAURI__.window;
 const process = window.__TAURI__.process;
 const dialog = window.__TAURI__.dialog;
 const event = window.__TAURI__.event;
@@ -9,12 +9,13 @@ const fs = window.__TAURI__.fs;
 
 require.config({ paths: { "vs": "./assets/monaco" }});
 
-let settings, loginSection, exploitSection;
+let settings, loginToken, loginSection, exploitSection;
 let loginForm, loginSubmit;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
-let wsInterval, wsConnected, prevConnected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
+let ready, connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
+let wsPort;
 
 async function minimize() {
   await appWindow.minimize();
@@ -78,7 +79,7 @@ async function exit() {
 }
 
 function checkActive() {
-  if (wsConnected) {
+  if (ready) {
     if (loginSection) loginSection.classList.remove("active");
     if (exploitSection) exploitSection.classList.add("active");
     setupEditor();
@@ -91,197 +92,26 @@ function checkActive() {
   }
 }
 
-async function closeExistingLogin() {
-  const loginWindow = getAll().find((w) => w.label === "login");
-  if (loginWindow) try { await loginWindow.close(); } catch { };
-  if (wsConnected) wsConnected = false;
-  checkActive();
+function initialize() {
   loginForm.classList.remove("disabled");
-}
-
-async function injectLoginCode() {
-  await evalCode("login", `
-    (async function () {
-      if (window.KR_LOADED === window.location.href) return;
-      window.KR_LOADED = window.location.href;
-
-      const { listen, emit } = window.__TAURI__.event;
-      const { getCurrent } = window.__TAURI__.window;
-      const fs = window.__TAURI__.fs;
-      const loginWindow = getCurrent();
-
-      let websocket;
-
-      if (window.location.pathname === "/dashboard") {
-        async function getToken() {
-          try {
-            const response = await fetch("/dashboard/__data.json");
-            const text = await response.text();
-            const json = JSON.parse(text);
-            const nodes = json.nodes;
-            const node = nodes.find((n) => n.data?.includes("RO-EXEC"));
-            const keys = node.data.find((o) => Object.keys(o).includes("token"));
-            const token = node.data[keys["token"]];
-            return token;
-          } catch {};
-        }
-
-        async function writeBinaryFile(file, contents) {
-          try {
-            await fs.writeBinaryFile(file, contents, { dir: fs.BaseDirectory.AppConfig });
-            return true;
-          } catch {
-            return false;
-          }
-        }
-
-        async function logout(form) {
-          try {
-            await fetch(form.action, {
-              method: form.method,
-              body: new FormData(form.data)
-            });
-          } catch { };
-
-          if (websocket) websocket.close();
-          await emit("websocket-close");
-          await loginWindow.close();
-        }
-
-        await loginWindow.hide();
-        const token = await getToken();
-
-        if (token) {
-          websocket = new WebSocket(\`wss://loader.live/?login_token="\$\{token\}"\`);
-          
-          websocket.onopen = async function () {
-            const form = await new Promise(function (resolve) {
-              let interval;
-
-              interval = setInterval(function () {
-                const form = document.querySelector("form[action='/dashboard?/logout']");
-
-                if (form) {
-                  clearInterval(interval);
-                  resolve(form);
-                }
-              }, 100);
-            });
-
-            const formData = {
-              action: form.action,
-              method: form.method,
-              body: new FormData(form)
-            };
-
-            document.documentElement.innerHTML = "";
-
-            await listen("logout", function () {
-              logout(formData);
-            });
-
-            await listen("websocket-send", function (e) {
-              if (websocket) websocket.send(e.payload);
-            });
-
-            await listen("set-executable", async function (e) {
-              const executable = e.payload;
-
-              try {
-                const download = await fetch("/download?product=RO-EXEC");
-                if (download.status === 200) await writeBinaryFile(executable, await download.arrayBuffer());
-              } catch { };
-
-              await emit("login");
-              await emit("websocket-open");
-            });
-
-            await emit("get-executable");
-          };
-
-          websocket.onmessage = async function (message) {
-            await emit("websocket-message", message.data);
-          };
-
-          websocket.onerror = async function () {
-            await emit("websocket-close");
-          };
-
-          websocket.onclose = async function () {
-            await emit("websocket-close");
-          };
-        } else logout();
-      } else {
-        if (window.location.pathname === "/") {
-          const form = await new Promise(function (resolve) {
-            let interval;
-
-            interval = setInterval(function () {
-              const form = document.querySelector("form[action='?/login']");
-
-              if (form) {
-                clearInterval(interval);
-                resolve(form);
-              }
-            }, 100);
-          });
-
-          const email = form.querySelector("input[type='text']");
-          const password = form.querySelector("input[type='password']");
-          const submit = form.querySelector("button");
-
-          if (email && password) {
-            async function setValues() {
-              await emit("set-credentials", { email: email.value || "", password: password.value || "" });
-            }
-
-            await listen("set-credentials-login", function (e) {
-              const credentials = e.payload;
-
-              if (credentials.email && credentials.password) {
-                email.value = credentials.email;
-                password.value = credentials.password;
-                if (submit && credentials.autoLogin) submit.click();
-              }
-
-              setValues();
-              email.addEventListener("input", setValues);
-              password.addEventListener("input", setValues);
-            });
-
-            await emit("get-credentials");
-          }
-        }
-
-        await loginWindow.show();
-      }
-    })();
-  `, true);
+  ready = true;
+  checkActive();
 }
 
 async function login() {
-  await closeExistingLogin();
+  const token = loginToken.value;
   loginForm.classList.add("disabled");
 
-  const window = new WebviewWindow("login", {
-    title: "KrampUI (Login)",
-    url: "https://loader.live",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    width: 700,
-    height: 450,
-    alwaysOnTop: true,
-    focus: true,
-    center: true,
-    minimizable: false,
-    maximizable: false,
-    resizable: false,
-    skipTaskbar: true,
-    visible: false
-  });
+  await clearExecutables();
+  const path = await getExecutable();
+  const success = await invoke("download_executable", { path, token });
 
-  window.onCloseRequested(async function () {
-    await closeExistingLogin();
-  });
+  if (success) {
+    await setToken(token);
+    initialize();
+  }
+
+  loginForm.classList.remove("disabled");
 }
 
 async function createDirectory(directory, recursive) {
@@ -400,29 +230,18 @@ async function setSettings(data) {
   await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
 }
 
-async function getCredentials() {
-  const text = await readFile(`${dataDirectory}/credentials`);
-  let json;
-  try { json = JSON.parse(text); }
-  catch { return false; };
-
-  if (json) return {
-    email: json.email,
-    password: json.password
-  };
+async function getToken() {
+  const text = await readFile(`${dataDirectory}/token`);
+  
+  if (text) return text;
   else {
-    const credentials = {
-      email: "",
-      password: ""
-    };
-
-    await setCredentials(credentials);
-    return credentials;
+    setToken("");
+    return "";
   }
 }
 
-async function setCredentials(data) {
-  await writeFile(`${dataDirectory}/credentials`, JSON.stringify(data));
+async function setToken(data) {
+  await writeFile(`${dataDirectory}/token`, data);
 }
 
 async function getUnsavedTabData() {
@@ -459,6 +278,26 @@ async function setTopMost(bool) {
 async function setKeyToggle(bool) {
   settings.keyToggle = bool;
   await setSettings();
+}
+
+async function injectAutoExec() {
+  const text = `
+    while not getgenv().KR_READY and task.wait(1) do
+      pcall(function()
+        getgenv().KR_WEBSOCKET = websocket.connect("ws://127.0.0.1:${wsPort}")
+        getgenv().KR_WEBSOCKET:Send("connect")
+        getgenv().KR_READY = true
+
+        getgenv().KR_WEBSOCKET.OnMessage:Connect(function(message)
+          pcall(function()
+            loadstring(message)()
+          end)
+        end)
+      end)
+    end
+  `;
+
+  await writeFile("autoexec/__krampui", text.replace(/(--.*$|\/\*[\s\S]*?\*\/)/gm, "").replace(/\s+/g, " ").trim());
 }
 
 function randomString(length) {
@@ -734,8 +573,7 @@ async function newFolder() {
   loadScripts();
 }
 
-async function addScript({ name, path: _path }, folder, autoExec) {
-  const container = document.createElement("div");
+async function addScript({ name, path: _path }, folder, autoExec) {  const container = document.createElement("div");
   const script = document.createElement("div");
   const icon = document.createElement("i");
 
@@ -1574,8 +1412,8 @@ async function inject() {
     if (isDone) return;
     isDone = true;
     injecting = false;
-    if (!prevConnected && prevActive) exploitInject.classList.remove("disabled");
-    exploitIndicator.style.color = `var(--${prevConnected ? "green" : "text"})`;
+    if (!connected && prevActive) exploitInject.classList.remove("disabled");
+    exploitIndicator.style.color = `var(--${connected ? "green" : "text"})`;
     await killCheck();
   }
 
@@ -1585,6 +1423,9 @@ async function inject() {
 
     if (blacklist.some((s) => text.toLowerCase().includes(s)) && !text.toLowerCase().endsWith(":")) {
       alert(`[Ro-Exec] ${text}`);
+      done();
+    } else {
+      exploitInject.classList.add("disabled");
       done();
     }
   }
@@ -1609,8 +1450,8 @@ async function execute(customText) {
   try {
     const text = typeof customText === "string" ? customText : editorGetText();
 
-    if (text && wsConnected) {
-      await event.emit("websocket-send", `<SCRIPT>${text}`);
+    if (text && connected) {
+      await invoke("execute_script", { text });
     }
 
     return true;
@@ -1715,8 +1556,9 @@ async function kill() {
 }
 
 async function logout() {
-  await setCredentials({ email: "", password: "" });
-  await event.emit("logout");
+  if (ready) ready = false;
+  checkActive();
+  loginForm.classList.remove("disabled");
 }
 
 async function openFolder() {
@@ -1967,11 +1809,11 @@ function setupEditor() {
 async function checkRobloxActive() {
   const newActive = await isRobloxRunning();
   
-  if (prevActive !== newActive && wsConnected && prevConnected !== undefined) {
+  if (ready && prevActive !== newActive) {
     prevActive = newActive;
     
     if (newActive) {
-      if (!prevConnected && injecting !== true) {
+      if (!connected && injecting !== true) {
         if (settings.autoInject && await findExecutable()) inject();
         else exploitInject.classList.remove("disabled");
       }
@@ -2004,72 +1846,23 @@ window.addEventListener("DOMContentLoaded", async function () {
   await createDirectory(dataDirectory, true);
   await createDirectory("scripts", true);
   await createDirectory("autoexec", true);
-  setInterval(injectLoginCode, 100);
 
   // Events
-  event.listen("login", function () {
-    loginForm.classList.remove("disabled");
-  });
-
-  event.listen("get-executable", async function () {
-    await clearExecutables();
-    event.emit("set-executable", await getExecutable());
-  });
-
-  event.listen("websocket-open", async function () {
-    wsConnected = true;
-    await event.emit("websocket-send", JSON.stringify({ type: 1, side_type: "browser" }));
-    checkActive();
-
-    wsInterval = setInterval(async function () {
-      if (!wsConnected) return clearInterval(wsInterval);
-      await event.emit("websocket-send", JSON.stringify({ type: 2 }));
-    }, 1000);
-  });
-
-  event.listen("websocket-message", function (e) {
-    const message = e.payload;
+  event.listen("update", function (e) {
+    const _connected = e.payload?.message || false;
     
-    let json;
+    if (connected === _connected) return;
+    else connected = _connected;
 
-    try { json = JSON.parse(message); }
-    catch { return; };
+    exploitIndicator.style.color = `var(--${connected ? "green" : "text"})`;
 
-    if (json.status) {
-      const connected = json.status === "connected";
-
-      if (prevConnected === connected) {
-        return;
-      } else {
-        prevConnected = connected;
-      }
-
-      exploitIndicator.style.color = `var(--${connected ? "green" : "text"})`;
-
-      if (connected) {
-        exploitExecute.classList.remove("disabled");
-        exploitInject.classList.add("disabled");
-      } else {
-        if (prevActive) exploitInject.classList.remove("disabled");
-        exploitExecute.classList.add("disabled");
-      }
+    if (connected) {
+      exploitExecute.classList.remove("disabled");
+      exploitInject.classList.add("disabled");
+    } else {
+      if (!prevActive) exploitInject.classList.remove("disabled");
+      exploitExecute.classList.add("disabled");
     }
-  });
-
-  event.listen("websocket-close", function () {
-    closeExistingLogin();
-  });
-
-  event.listen("set-credentials", function (e) {
-    const data = e.payload;
-    
-    if (data.email && data.password) {
-      setCredentials(data);
-    }
-  });
-
-  event.listen("get-credentials", async function () {
-    event.emit("set-credentials-login", { ...await getCredentials(), autoLogin: settings.autoLogin });
   });
 
   event.listen("exit", async function () {
@@ -2079,6 +1872,12 @@ window.addEventListener("DOMContentLoaded", async function () {
   event.listen("toggle", async function () {
     await toggle(true);
   });
+
+  // Set-up Websocket
+  wsPort = 54349;
+
+  await injectAutoExec();
+  await invoke("init_websocket", { port: wsPort });
 
   // Titlebar
   document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
@@ -2103,6 +1902,7 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   // Login
   loginForm = document.querySelector(".login .form");
+  loginToken = document.querySelector(".login .kr-input.token");
   loginSubmit = document.querySelector(".login .kr-button.submit");
   loginSubmit.addEventListener("click", login);
 
@@ -2131,9 +1931,6 @@ window.addEventListener("DOMContentLoaded", async function () {
   await setupTabs();
   populateTabs(true);
   document.querySelector(".kr-add-tab").addEventListener("click", addNewTab);
-
-  // Auto Login
-  if (settings.autoLogin) login();
 
   // Buttons
   exploitInject = document.querySelector(".kr-inject");
@@ -2211,10 +2008,6 @@ window.addEventListener("DOMContentLoaded", async function () {
     if (key === "home") toggle();
   });
 
-  // Active
-  checkRobloxActive();
-  setInterval(checkRobloxActive, 1000);
-
   // Dropdowns
   function findDropdown(e) {
     if (e.classList.contains("kr-dropdown")) return e;
@@ -2253,6 +2046,14 @@ window.addEventListener("DOMContentLoaded", async function () {
       }
     }
   });
+
+  // Roblox Checks
+  checkRobloxActive();
+  setInterval(checkRobloxActive, 1000);
+
+  // Auto Login
+  loginToken.value = await getToken();
+  if (settings.autoLogin) login();
 
   // Show
   show();

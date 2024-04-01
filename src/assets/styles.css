@@ -249,6 +249,8 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     justify-content: center;
     height: calc(100vh - 24px);
     gap: 1.25rem;
+    padding: 1.5rem;
+    box-sizing: border-box;
 }
 
 .login .title {
@@ -268,6 +270,18 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     border-radius: 2.5px;
     box-sizing: border-box;
     width: 2rem;
+}
+
+.login .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 30rem;
+    width: 100%;
+}
+
+.login .form .kr-input {
+    width: 100%;
 }
 
 /* Exploit */
