@@ -7,8 +7,8 @@
 
 ## Getting KrampUI
 ### Download the binary,
-- [Standalone Application](https://git.snipcola.com/snipcola/KrampUI/releases/download/latest/krampui.exe) (single .exe)
-- [Bundled Installer](https://git.snipcola.com/snipcola/KrampUI/releases/download/latest/krampui-installer.msi) (install as application)
+- [Standalone Application](https://git.snipcola.com/snipcola/KrampUI/releases/download/0.0.9/krampui.exe) (single .exe)
+- [Bundled Installer](https://git.snipcola.com/snipcola/KrampUI/releases/download/0.0.9/krampui-installer.msi) (install as application)
 
 ### or... compile it yourself!
 1. Ensure you have `cargo` (`rustup`), `node`, and `npm` installed.
