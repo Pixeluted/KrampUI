@@ -1,6 +1,6 @@
 [package]
 name = "krampui"
-version = "0.0.9"
+version = "0.1.1"
 authors = ["Snipcola"]
 license = "MIT"
 edition = "2021"
