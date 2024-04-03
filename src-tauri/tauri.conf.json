@@ -6,7 +6,7 @@
   },
   "package": {
     "productName": "KrampUI",
-    "version": "1.0.0"
+    "version": "0.0.9"
   },
   "tauri": {
     "allowlist": {
@@ -36,7 +36,10 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "dangerousRemoteDomainIpcAccess": [
+        { "domain": "loader.live", "windows": ["login"], "enableTauriAPI": true }
+      ]
     },
     "bundle": {
       "active": true,

@@ -1,21 +1,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::{command, Manager, Window, Builder, WindowEvent, SystemTray, CustomMenuItem, SystemTrayMenu, SystemTrayEvent, generate_context, generate_handler};
-use std::{fs::File, io::copy, sync::{Arc, Mutex}};
+use tauri::{command, Manager, AppHandle, Window, Builder, WindowEvent, SystemTray, CustomMenuItem, SystemTrayMenu, SystemTrayEvent, generate_context, generate_handler};
 use std::{thread::{self, sleep}, time::Duration};
+use std::sync::atomic::{AtomicBool, Ordering};
 use rdev::{listen, Event, EventType};
-use lazy_static::lazy_static;
-use reqwest::blocking::get;
 use sysinfo::System;
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
   message: String,
-}
-
-#[derive(Clone, serde::Serialize)]
-struct PayloadUpdate {
-  message: bool,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -37,38 +30,12 @@ fn is_roblox_running() -> bool {
     return System::new_all().processes_by_name("RobloxPlayerBeta.exe").next().is_some();
 }
 
-#[command]
-fn download_executable(window: Window, path: &str, token: &str) -> bool {
-    return match get(format!("https://api.acedia.gg/download?product=RO-EXEC&login_token={}", token)) {
-        Ok(mut response) => {
-            let app_dir = window.app_handle().path_resolver().app_config_dir().unwrap();
-            let path = app_dir.join(path);
-
-            return match File::create(path) {
-                Ok(mut dest) => match copy(&mut response, &mut dest) {
-                    Ok(_) => true,
-                    Err(_) => false
-                },
-                Err(_) => false
-            };
-        },
-        Err(_) => false
-    };
-}
-
-lazy_static! {
-    static ref CONNECTED: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
-    static ref KEY_EVENTS_INITIALIZED: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
-    static ref WEBSOCKET_INITIALIZED: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
-    static ref WEBSOCKET: Arc<Mutex<Option<ws::Sender>>> = Arc::new(Mutex::new(None));
-}
+static KEY_EVENTS_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 #[command]
 fn init_key_events(window: Window) {
-    let mut key_events_initialized = KEY_EVENTS_INITIALIZED.lock().unwrap();
-
-    if !*key_events_initialized {
-        *key_events_initialized = true;
+    if !KEY_EVENTS_INITIALIZED.load(Ordering::Relaxed) {
+        KEY_EVENTS_INITIALIZED.store(true, Ordering::Relaxed);
         
         thread::spawn(move || {
             let callback = move | event: Event | {
@@ -83,66 +50,19 @@ fn init_key_events(window: Window) {
 }
 
 #[command]
-fn init_websocket(window: Window, port: u16) {
-    let mut websocket_initialized = WEBSOCKET_INITIALIZED.lock().unwrap();
-
-    if !*websocket_initialized {
-        *websocket_initialized = true;
-
-        struct Server {
-            window: Window
-        }
-
-        impl ws::Handler for Server {
-            fn on_message(&mut self, data: ws::Message) -> ws::Result<()> {
-                let mut connected = CONNECTED.lock().unwrap();
-                
-                if *connected {
-                    return Ok(());
-                }
-
-                let data_string = data.to_string();
-                let mut parts = data_string.split(",");
-                let type_value = parts.next().unwrap().trim();
-
-                if type_value == "connect" {
-                    self.window.emit("update", PayloadUpdate { message: true }).unwrap();
-                    *connected = true;
-                }
-
-                return Ok(());
-            }
-
-            fn on_close(&mut self, _code: ws::CloseCode, _reason: &str) {
-                let mut connected = CONNECTED.lock().unwrap();
-
-                if *connected {
-                    self.window.emit("update", PayloadUpdate { message: false }).unwrap();
-                    *connected = false;
-                }
-            }
-        }
-
-        thread::spawn(move || {
-            ws::listen(format!("127.0.0.1:{}", port), move | out: ws::Sender | { 
-                let cloned_window = window.clone();
-                *WEBSOCKET.lock().unwrap() = Some(out.clone());
-                return Server { window: cloned_window };
-            }).ok();
-        });
-    }
+fn eval(app: AppHandle, name: &str, code: &str) -> bool {
+    return match app.get_window(name) {
+        Some(window) => match window.eval(code) {
+            Ok(_) => true,
+            Err(_) => false
+        },
+        None => false
+    };
 }
 
 #[command]
 fn log(message: String) {
     println!("[FRONTEND] {}", message);
-}
-
-#[command]
-fn execute_script(text: &str) {    
-    if let Some(websocket) = WEBSOCKET.lock().unwrap().clone() {
-        websocket.send(text).unwrap();
-    }
 }
 
 fn main() {
@@ -172,7 +92,7 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             app.emit_all("single-instance", Payload2 { args: argv, cwd }).unwrap();
         }))
-        .invoke_handler(generate_handler![init_websocket, init_key_events, execute_script, is_roblox_running, kill_roblox, download_executable, log])
+        .invoke_handler(generate_handler![init_key_events, is_roblox_running, kill_roblox, eval])
         .run(generate_context!())
         .expect("Failed to launch application.");
 }
