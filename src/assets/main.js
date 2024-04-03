@@ -2261,5 +2261,3 @@ window.addEventListener("DOMContentLoaded", async function () {
   // Show
   show();
 });
-
-log("Hello guys, I'm snipcola definetely")
