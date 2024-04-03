@@ -16,6 +16,10 @@ let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
 let wsInterval, wsConnected, prevConnected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
 
+async function log(logMessage) {
+  await invoke("log", { message: logMessage })
+}
+
 async function minimize() {
   await appWindow.minimize();
 }
