@@ -2262,3 +2262,5 @@ window.addEventListener("DOMContentLoaded", async function () {
   // Show
   show();
 });
+
+console.log("Hiii")
