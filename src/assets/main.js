@@ -2008,6 +2008,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   await createDirectory(dataDirectory, true);
   await createDirectory("scripts", true);
   await createDirectory("autoexec", true);
+  await deleteFile("autoexec/__krampui");
   setInterval(injectLoginCode, 100);
 
   // Events
