@@ -2057,7 +2057,7 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   // Auto Login
   loginToken.value = await getToken();
-  if (settings.autoLogin) login();
+  if (settings.autoLogin && (loginToken.value && loginToken.value !== "")) login();
 
   // Show
   show();
