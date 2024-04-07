@@ -1042,10 +1042,11 @@ async function deleteTab(id, onlyFiles) {
       });
 
     const activeTab = tabs.find((t) => t.active === true);
+    const unsavedTab = unsavedTabData.get(activeTab?.id);
     const scroll = activeTab?.scroll;
     await setTabs();
     if (editorSetText) editorSetText(await getActiveTabContent());
-    if (editorSetScroll) editorSetScroll(scroll || 0);
+    if (editorSetScroll) editorSetScroll((unsavedTab ? unsavedTab.scroll : scroll) || 0);
     populateTabs();
   }
 }
