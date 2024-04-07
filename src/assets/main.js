@@ -113,8 +113,7 @@ async function login() {
 
   if (results[0] == true) {
     loginSubmit.innerText = "Sucessfully logged in!"
-    log(typeof(results[1]))
-    invoke("get_login_token", { session_token: results[1] })
+    invoke("get_login_token", { sessionToken: results[1] })
   } else {
     loginSubmit.classList.remove("disabled");
     loginEmail.classList.remove("disabled");
