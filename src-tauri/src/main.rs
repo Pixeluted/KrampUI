@@ -1,8 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use regex::Regex;
-use serde_json::json;
-use tauri::{command, Manager, Window, Builder, WindowEvent, SystemTray, CustomMenuItem, SystemTrayMenu, SystemTrayEvent, generate_context, generate_handler};
+use serde_json::{json, Value};
+use tauri::{command, generate_context, generate_handler, Builder, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window, WindowEvent};
 use std::{fs::File, io::copy, sync::{Arc, Mutex}};
 use std::{thread::{self, sleep}, time::Duration};
 use rdev::{listen, Event, EventType};
@@ -109,8 +109,56 @@ async fn attempt_login(_window: Window, email: String, password: String) -> (boo
 
 #[command]
 async fn get_login_token(_window: Window, session_token: String) -> (bool, String) {
-    println!("Got {}", session_token);
-    (true, "xd".to_string())
+    let client = reqwest::Client::new();
+    let url = "https://api.acedia.gg/trpc/user.current.get?batch=1&input={\"0\":{\"json\":null,\"meta\":{\"values\":[\"undefined\"]}}}";
+    let user_info_request = client.get(url)
+        .header("Authorization", format!("Bearer {}", session_token))
+        .send()
+        .await;
+
+    match user_info_request {
+        Ok(user_response) => {
+            if user_response.status().is_success() {
+                let parsed_json: Value = match user_response.json().await {
+                    Ok(json) => json,
+                    Err(err) => return (false, err.to_string())
+                };
+
+                let first_element = match parsed_json.get(0) {
+                    Some(elem) => elem,
+                    None => return (false, "Invalid JSON Response".to_string())
+                };
+
+                let result_element = match first_element.get("result") {
+                    Some(elem) => elem,
+                    None => return (false, "Invalid JSON Response".to_string())
+                };
+
+                let data_element = match result_element.get("data") {
+                    Some(elem) => elem,
+                    None => return (false, "Invalid JSON Response".to_string())
+                };
+
+                let user_data = match data_element.get("json") {
+                    Some(elem) => elem,
+                    None => return (false, "Invalid JSON Response".to_string())
+                };
+
+                let login_token = match user_data.get("token") {
+                    Some(elem) => elem.as_str().unwrap(),
+                    None => return (false, "Invalid JSON Response".to_string())
+                };
+
+                (true, login_token.to_string())
+            } else {
+                (false, "Invalid authentication!".to_string())
+            }
+        },
+        Err(err) => {
+            println!("Sending request failed: {}", err.to_string());
+            (false, err.to_string())
+        }
+    }
 }
 
 lazy_static! {

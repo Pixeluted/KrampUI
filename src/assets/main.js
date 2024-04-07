@@ -97,9 +97,18 @@ function checkActive() {
 }
 
 function initialize() {
-  loginForm.classList.remove("disabled");
   ready = true;
   checkActive();
+}
+
+function handleUnsuccessfullLogin(err) {
+  loginSubmit.classList.remove("disabled");
+  loginEmail.classList.remove("disabled");
+  loginPassword.classList.remove("disabled");
+  loginSubmit.innerText = err
+  setTimeout(() => {
+    loginSubmit.innerText = "Login!"
+  }, 1300)
 }
 
 async function login() {
@@ -109,33 +118,33 @@ async function login() {
   loginEmail.classList.add("disabled");
   loginPassword.classList.add("disabled");
   loginSubmit.classList.add("disabled");
-  const results = await invoke("attempt_login", { email, password })
+  const loginResults = await invoke("attempt_login", { email, password })
+  const loginSucessfull = loginResults[0]
+  const loginInfo = loginResults[1]
 
-  if (results[0] == true) {
-    loginSubmit.innerText = "Sucessfully logged in!"
-    invoke("get_login_token", { sessionToken: results[1] })
+  if (loginSucessfull) {
+    const getTokenResults = await invoke("get_login_token", { sessionToken: loginInfo })
+    const tokenSuccess = getTokenResults[0]
+    const tokenInfo = getTokenResults[1]
+    
+    if (tokenSuccess) {
+      await clearExecutables();
+      const path = await getExecutable();
+      const downloadSuccess = await invoke("download_executable", { path, token: tokenInfo });
+
+      if (downloadSuccess) {
+        await setCredentials(email, password)
+        loginSubmit.innerText = "Sucessfully logged in!"
+        initialize()
+      } else {
+        handleUnsuccessfullLogin("Failed to download loader!")
+      }
+    } else {
+      handleUnsuccessfullLogin(tokenInfo)
+    }
   } else {
-    loginSubmit.classList.remove("disabled");
-    loginEmail.classList.remove("disabled");
-    loginPassword.classList.remove("disabled");
-    loginSubmit.innerText = results[1]
-    setTimeout(() => {
-      loginSubmit.innerText = "Login!"
-    }, 1300)
+    handleUnsuccessfullLogin(loginInfo)
   }
-
-  return;
-
-  await clearExecutables();
-  const path = await getExecutable();
-  const success = await invoke("download_executable", { path, token });
-
-  if (success) {
-    await setToken(token);
-    initialize();
-  }
-
-  loginForm.classList.remove("disabled");
 }
 
 async function createDirectory(directory, recursive) {
@@ -254,18 +263,21 @@ async function setSettings(data) {
   await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
 }
 
-async function getToken() {
-  const text = await readFile(`${dataDirectory}/token`);
+async function getCredentials() {
+  const text = await readFile(`${dataDirectory}/credentials`);
   
-  if (text) return text;
+  if (text) return JSON.parse(text);
   else {
-    setToken("");
-    return "";
+    setCredentials("", "");
+    return {
+      email: "",
+      password: ""
+    }
   }
 }
 
-async function setToken(data) {
-  await writeFile(`${dataDirectory}/token`, data);
+async function setCredentials(email, password) {
+  await writeFile(`${dataDirectory}/credentials`, JSON.stringify({ email: email, password: password }));
 }
 
 async function getUnsavedTabData() {
@@ -2077,8 +2089,10 @@ window.addEventListener("DOMContentLoaded", async function () {
   setInterval(checkRobloxActive, 1000);
 
   // Auto Login
-  //loginToken.value = await getToken();
-  //if (settings.autoLogin && (loginToken.value && loginToken.value !== "")) login();
+  const credentials = await getCredentials();
+  loginEmail.value = credentials.email;
+  loginPassword.value = credentials.password;
+  if (settings.autoLogin && (loginEmail.value && loginEmail.value !== "") && (loginPassword.value && loginPassword.value !== "")) login();
 
   // Show
   show();
