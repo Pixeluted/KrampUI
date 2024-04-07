@@ -15,8 +15,16 @@
 4. Access the executable at `src-tauri/target/release` or `src-tauri/target/debug`.
 
 ## Q&A
+
+### I inject but the title doesn't go green? (Applies only when acedia.gg is used)
+It most likely did inject, but because loader.live is down, we have no way of knowing if krampus really did inject or not.
+You will need to join any game and then the title should go green, this is because krampui uses autoexec with websocket to provide execution within the UI.
+
+### I upgraded to version that uses acedia.gg but now I get error "Could not retrieve login token" (Applies only when acedia.gg is used)
+Firstly, click the logout button in krampui and enter your login token again, if that wont help, remove the loader that is located in `%appdata%/Roaming/KrampUI` the loader is first exe in that folder, then restart krampui and try it again.
+
 ### Where is the scripts and autoexec folder?
-It's located at ``%appdata%/krampui``, or just press the folder icon on the UI and navigate one folder up.
+It's located at ``%appdata%/Roaming/KrampUI``, or just press the folder icon on the UI and navigate one folder up.
 
 ### I don't see the UI, how do I fix it?
 Perhaps your computer doesn't have Microsoft Edge Webview installed.</br>
