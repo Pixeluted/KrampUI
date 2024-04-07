@@ -9,8 +9,8 @@ const fs = window.__TAURI__.fs;
 
 require.config({ paths: { "vs": "./assets/monaco" }});
 
-let settings, loginToken, loginSection, exploitSection;
-let loginForm, loginSubmit;
+let settings, loginSection, exploitSection;
+let loginSubmit, loginPassword, loginEmail;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
@@ -103,8 +103,29 @@ function initialize() {
 }
 
 async function login() {
-  const token = loginToken.value;
-  loginForm.classList.add("disabled");
+  const email = loginEmail.value;
+  const password = loginPassword.value;
+
+  loginEmail.classList.add("disabled");
+  loginPassword.classList.add("disabled");
+  loginSubmit.classList.add("disabled");
+  const results = await invoke("attempt_login", { email, password })
+
+  if (results[0] == true) {
+    loginSubmit.innerText = "Sucessfully logged in!"
+    log(typeof(results[1]))
+    invoke("get_login_token", { session_token: results[1] })
+  } else {
+    loginSubmit.classList.remove("disabled");
+    loginEmail.classList.remove("disabled");
+    loginPassword.classList.remove("disabled");
+    loginSubmit.innerText = results[1]
+    setTimeout(() => {
+      loginSubmit.innerText = "Login!"
+    }, 1300)
+  }
+
+  return;
 
   await clearExecutables();
   const path = await getExecutable();
@@ -1906,9 +1927,9 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitSection = document.querySelector("body > .container > .exploit");
 
   // Login
-  loginForm = document.querySelector(".login .form");
-  loginToken = document.querySelector(".login .kr-input.token");
-  loginSubmit = document.querySelector(".login .kr-button.submit");
+  loginEmail = document.querySelector(".login .kr-input.email");
+  loginPassword = document.querySelector(".login .kr-input.password");
+  loginSubmit = document.querySelector(".login .kr-button.login-button");
   loginSubmit.addEventListener("click", login);
 
   // Exploit
@@ -2057,8 +2078,8 @@ window.addEventListener("DOMContentLoaded", async function () {
   setInterval(checkRobloxActive, 1000);
 
   // Auto Login
-  loginToken.value = await getToken();
-  if (settings.autoLogin && (loginToken.value && loginToken.value !== "")) login();
+  //loginToken.value = await getToken();
+  //if (settings.autoLogin && (loginToken.value && loginToken.value !== "")) login();
 
   // Show
   show();

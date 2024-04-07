@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use regex::Regex;
+use serde_json::json;
 use tauri::{command, Manager, Window, Builder, WindowEvent, SystemTray, CustomMenuItem, SystemTrayMenu, SystemTrayEvent, generate_context, generate_handler};
 use std::{fs::File, io::copy, sync::{Arc, Mutex}};
 use std::{thread::{self, sleep}, time::Duration};
@@ -54,6 +56,61 @@ fn download_executable(window: Window, path: &str, token: &str) -> bool {
         },
         Err(_) => false
     };
+}
+
+#[command]
+async fn attempt_login(_window: Window, email: String, password: String) -> (bool, String) {
+    let json_body = json!({
+        "0": {
+            "json": {
+                "emailOrUsername": email,
+                "password": password
+            }
+        }
+    }).to_string();
+
+    let client = reqwest::Client::new();
+    let login_request = client.post("https://api.acedia.gg/trpc/auth.logIn?batch=1")
+        .body(json_body)
+        .header("Content-Type", "application/json")
+        .send()
+        .await;
+
+    match login_request {
+        Ok(login_response) => {
+            if login_response.status().is_success() {
+                let set_cookie_header = login_response.headers().get("Set-Cookie")
+                    .and_then(|value| value.to_str().ok())
+                    .unwrap_or("Not found");
+
+                let re = Regex::new(r"_session=([^;]+)").unwrap();
+                match re.captures(set_cookie_header) {
+                    Some(caps) => {
+                        if let Some(matched) = caps.get(1) {
+                            (true, matched.as_str().to_string())
+                        } else {
+                            (false, "Failed to extract session token!".to_string())
+                        }
+                    },
+                    None => {
+                        (false, "Failed to extract session token!".to_string())
+                    },
+                }
+            } else {
+                (false, "Invalid credentials".to_string())
+            }
+        },
+        Err(err) => {
+            println!("Failed to send request: {}", err.to_string());
+            (false, "Failed to send request".to_string())
+        }
+    }
+}
+
+#[command]
+async fn get_login_token(_window: Window, session_token: String) -> (bool, String) {
+    println!("Got {}", session_token);
+    (true, "xd".to_string())
 }
 
 lazy_static! {
@@ -172,7 +229,7 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             app.emit_all("single-instance", Payload2 { args: argv, cwd }).unwrap();
         }))
-        .invoke_handler(generate_handler![init_websocket, init_key_events, execute_script, is_roblox_running, kill_roblox, download_executable, log])
+        .invoke_handler(generate_handler![init_websocket, init_key_events, execute_script, is_roblox_running, kill_roblox, download_executable, log, attempt_login, get_login_token])
         .run(generate_context!())
         .expect("Failed to launch application.");
 }
