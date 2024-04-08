@@ -5,7 +5,11 @@
 </div>
 <br />
 
+## Tutorial + Showcase
+Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=nSYtvobwBvU
+
 ## Getting KrampUI
+
 ### [Download the binary](https://git.snipcola.com/snipcola/KrampUI/releases/latest),
 
 ### or... compile it yourself!

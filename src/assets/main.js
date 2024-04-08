@@ -1459,9 +1459,9 @@ async function inject() {
 
   function onData(line) {
     const text = line ? line.trim() : "";
-    const blacklist = ["error:", "redownload", "create a ticket", "make a ticket", "cannot find user", "mismatch", "out of date", "failed to"];
+    const errors = ["error:", "redownload", "create a ticket", "make a ticket", "cannot find user", "mismatch", "out of date", "failed to", "no active subscription"];
 
-    if (blacklist.some((s) => text.toLowerCase().includes(s)) && !text.toLowerCase().endsWith(":")) {
+    if (errors.some((s) => text.toLowerCase().includes(s)) && !text.toLowerCase().endsWith(":")) {
       alert(`[Ro-Exec] ${text}`);
       done();
     } else {
