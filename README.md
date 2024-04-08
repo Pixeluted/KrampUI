@@ -16,19 +16,15 @@
 
 ## Q&A
 
-### I inject but the title doesn't go green? (Applies only when acedia.gg is used)
-It most likely did inject, but because loader.live is down, we have no way of knowing if krampus really did inject or not.
-You will need to join any game and then the title should go green, this is because krampui uses autoexec with websocket to provide execution within the UI.
-
-### I upgraded to version that uses acedia.gg but now I get error "Could not retrieve login token" (Applies only when acedia.gg is used)
-Firstly, click the logout button in krampui and enter your login details again, if that wont help, remove the loader that is located in `%appdata%/KrampUI` the loader is first exe in that folder, then restart krampui and try it again.
-
 ### Where is the scripts and autoexec folder?
 It's located at ``%appdata%/KrampUI``, or just press the folder icon on the UI and navigate one folder up.
 
 ### I don't see the UI, how do I fix it?
 Perhaps your computer doesn't have Microsoft Edge Webview installed.</br>
 Install it from <a href="https://developer.microsoft.com/en-us/microsoft-edge/webview2" target="_blank">here</a> (scroll down & install Evergreen Bootstrapper), and see if that fixes your issue.
+
+### It's injected, why is the title gray and the inject button disabled?
+You're probably in the Roblox menu, for the UI to recognize it's connected, join a game.
 
 ### How to fix it injecting but not executing scripts?
 There is no difference between using KrampUI to inject and running the executable yourself.
