@@ -1421,12 +1421,9 @@ async function inject(autoInject) {
   exploitInject.classList.add("disabled");
   exploitIndicator.style.color = "var(--yellow)";
 
-  // This needs to be == true or it will apply auto-inject delay everytime! Already tested it.
-  if (autoInject == true) {
-    await new Promise(function (resolve) {
-      setTimeout(() => resolve(), 3000);
-    });
-  }
+  if (autoInject) await new Promise(function (resolve) {
+    setTimeout(() => resolve(), 3000);
+  });
 
   const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.name], { cwd: await appDirectory() });
 
@@ -1986,7 +1983,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitScriptsFolder.addEventListener("click", openFolder);
 
   // Inject Button
-  exploitInject.addEventListener("click", inject);
+  exploitInject.addEventListener("click", () => inject());
 
   // Auto Login
   function checkAutoLogin() {
