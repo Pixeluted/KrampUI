@@ -6,6 +6,10 @@
 <br />
 
 ## Getting KrampUI
+
+### Tutorial + Showcase
+https://www.youtube.com/watch?v=nSYtvobwBvU
+
 ### [Download the binary](https://git.snipcola.com/snipcola/KrampUI/releases/latest),
 
 ### or... compile it yourself!
