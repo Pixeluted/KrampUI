@@ -1160,7 +1160,8 @@ function getTabName(tab) {
 
 function getNextOrder() {
   const orders = tabs.map((t) => t.order);
-  let largest = orders[0] || 1;
+  if (orders.length === 0) return 1;
+  let largest = orders[0];
 
   for (var i = 0; i < orders.length; i++) {
     if (orders[i] > largest) largest = orders[i];
