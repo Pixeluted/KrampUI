@@ -10,7 +10,7 @@ const fs = window.__TAURI__.fs;
 require.config({ paths: { "vs": "./assets/monaco" }});
 
 let settings, loginSection, exploitSection;
-let loginSubmit, loginPassword, loginEmail;
+let loginForm, loginSubmit, loginPassword, loginEmail;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
@@ -97,54 +97,46 @@ function checkActive() {
 }
 
 function initialize() {
+  loginSubmit.innerText = "Authenticate via acedia.gg";
+  loginForm.classList.remove("disabled");
+
   ready = true;
   checkActive();
 }
 
-function handleUnsuccessfullLogin(err) {
-  loginSubmit.classList.remove("disabled");
-  loginEmail.classList.remove("disabled");
-  loginPassword.classList.remove("disabled");
-  loginSubmit.innerText = err
-  setTimeout(() => {
-    loginSubmit.innerText = "Login!"
-  }, 1300)
-}
-
 async function login() {
+  function handleError(error) {
+    loginSubmit.classList.add("disabled");
+    loginForm.classList.remove("disabled");
+    loginSubmit.innerText = error;
+  
+    setTimeout(function () {
+      loginSubmit.innerText = "Authenticate via acedia.gg";
+      loginSubmit.classList.remove("disabled");
+    }, 1500);
+  }
+
   const email = loginEmail.value;
   const password = loginPassword.value;
+  loginForm.classList.add("disabled");
 
-  loginEmail.classList.add("disabled");
-  loginPassword.classList.add("disabled");
-  loginSubmit.classList.add("disabled");
-  const loginResults = await invoke("attempt_login", { email, password })
-  const loginSucessfull = loginResults[0]
-  const loginInfo = loginResults[1]
+  loginSubmit.innerText = "Authenticating...";
+  const [loginSuccess, loginInfo] = await invoke("attempt_login", { email, password });
+  if (!loginSuccess) return handleError(loginInfo);
 
-  if (loginSucessfull) {
-    const getTokenResults = await invoke("get_login_token", { sessionToken: loginInfo })
-    const tokenSuccess = getTokenResults[0]
-    const tokenInfo = getTokenResults[1]
-    
-    if (tokenSuccess) {
-      await clearExecutables();
-      const path = await getExecutable();
-      const downloadSuccess = await invoke("download_executable", { path, token: tokenInfo });
+  const [tokenSuccess, tokenInfo] = await invoke("get_login_token", { sessionToken: loginInfo });
+  if (!tokenSuccess) return handleError(tokenInfo);
+  
+  await clearExecutables();
+  const path = await getExecutable();
 
-      if (downloadSuccess) {
-        await setCredentials(email, password)
-        loginSubmit.innerText = "Sucessfully logged in!"
-        initialize()
-      } else {
-        handleUnsuccessfullLogin("Failed to download loader!")
-      }
-    } else {
-      handleUnsuccessfullLogin(tokenInfo)
-    }
-  } else {
-    handleUnsuccessfullLogin(loginInfo)
-  }
+  loginSubmit.innerText = "Downloading loader...";
+  const downloadSuccess = await invoke("download_executable", { path, token: tokenInfo });
+  if (!downloadSuccess) return handleError("Failed to download loader");
+
+  await setCredentials({ email, password })
+  loginSubmit.innerText = "Authenticated!";
+  setTimeout(initialize, 250);
 }
 
 async function createDirectory(directory, recursive) {
@@ -236,6 +228,7 @@ async function getData() {
 
 async function getSettings() {
   const text = await readFile(`${dataDirectory}/settings`);
+  
   let json;
   try { json = JSON.parse(text); }
   catch { return false; };
@@ -265,19 +258,28 @@ async function setSettings(data) {
 
 async function getCredentials() {
   const text = await readFile(`${dataDirectory}/credentials`);
+
+  let json;
+  try { json = JSON.parse(text); }
+  catch { return false; };
   
-  if (text) return JSON.parse(text);
+  if (text) return {
+    email: json.email,
+    password: json.password
+  };
   else {
-    setCredentials("", "");
-    return {
+    const credentials = {
       email: "",
       password: ""
-    }
+    };
+
+    await setCredentials(credentials);
+    return credentials;
   }
 }
 
-async function setCredentials(email, password) {
-  await writeFile(`${dataDirectory}/credentials`, JSON.stringify({ email: email, password: password }));
+async function setCredentials(data) {
+  await writeFile(`${dataDirectory}/credentials`, JSON.stringify(data));
 }
 
 async function getUnsavedTabData() {
@@ -1595,7 +1597,6 @@ async function kill() {
 async function logout() {
   if (ready) ready = false;
   checkActive();
-  loginForm.classList.remove("disabled");
 }
 
 async function openFolder() {
@@ -1938,6 +1939,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitSection = document.querySelector("body > .container > .exploit");
 
   // Login
+  loginForm = document.querySelector(".login .form");
   loginEmail = document.querySelector(".login .kr-input.email");
   loginPassword = document.querySelector(".login .kr-input.password");
   loginSubmit = document.querySelector(".login .kr-button.login-button");
@@ -2090,9 +2092,12 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   // Auto Login
   const credentials = await getCredentials();
-  loginEmail.value = credentials.email;
-  loginPassword.value = credentials.password;
-  if (settings.autoLogin && (loginEmail.value && loginEmail.value !== "") && (loginPassword.value && loginPassword.value !== "")) login();
+  
+  if (credentials) {
+    loginEmail.value = credentials.email;
+    loginPassword.value = credentials.password;
+    if (settings.autoLogin && (loginEmail.value && loginEmail.value !== "") && (loginPassword.value && loginPassword.value !== "")) login();
+  }
 
   // Show
   show();

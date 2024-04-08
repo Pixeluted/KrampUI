@@ -1,13 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use regex::Regex;
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use tauri::{command, generate_context, generate_handler, Builder, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window, WindowEvent};
 use std::{fs::File, io::copy, sync::{Arc, Mutex}};
 use std::{thread::{self, sleep}, time::Duration};
 use rdev::{listen, Event, EventType};
 use lazy_static::lazy_static;
-use reqwest::blocking::get;
+use reqwest::blocking::{get, Client};
 use sysinfo::System;
 
 #[derive(Clone, serde::Serialize)]
@@ -40,6 +40,79 @@ fn is_roblox_running() -> bool {
 }
 
 #[command]
+fn attempt_login(_window: Window, email: String, password: String) -> (bool, String) {
+    let mut json_map = Map::new();
+    json_map.insert("0".to_string(), json!({
+        "json": {
+            "emailOrUsername": email,
+            "password": password
+        }
+    }));
+
+    let client = Client::new();
+    let login_request = client.post("https://api.acedia.gg/trpc/auth.logIn?batch=1")
+        .header("Content-Type", "application/json")
+        .json(&json_map)
+        .send();
+
+    return match login_request {
+        Ok(login_response) => {
+            return match login_response.status().is_success() {
+                true => {
+                    let cookies = match login_response.headers().get("Set-Cookie") {
+                        Some(cookies) => match cookies.to_str() {
+                            Ok(cookie_string) => cookie_string,
+                            Err(_) => return (false, "Invalid cookies".to_string())
+                        },
+                        None => return (false, "No cookies".to_string())
+                    };
+        
+                    return match Regex::new(r"_session=([^;]+)").unwrap().captures(cookies) {
+                        Some(captures) => match captures.get(1) {
+                            Some(matched) => (true, matched.as_str().to_string()),
+                            None => (false, "Invalid session token".to_string())
+                        },
+                        None => (false, "Invalid session token".to_string())
+                    };
+                }, false => (false, "Invalid credentials".to_string())
+            };
+        },
+        Err(_) => (false, "Request failed".to_string())
+    };
+}
+
+#[command]
+fn get_login_token(_window: Window, session_token: String) -> (bool, String) {
+    let client = Client::new();
+    let info_request = client.get("https://api.acedia.gg/trpc/user.current.get?batch=1&input={}")
+        .header("Authorization", format!("Bearer {}", session_token))
+        .send();
+
+    return match info_request {
+        Ok(response) => {
+            return match response.status().is_success() {
+                true => {
+                    let json: Value = match response.json() {
+                        Ok(json) => json,
+                        Err(_) => return (false, "Invalid JSON response".to_string())
+                    };
+    
+                    return json.get(0)
+                        .and_then(|first| first.get("result"))
+                        .and_then(|result| result.get("data"))
+                        .and_then(|data| data.get("json"))
+                        .and_then(|user_data| user_data.get("token").and_then(|elem| elem.as_str()))
+                        .map(|login_token| (true, login_token.to_string()))
+                        .unwrap_or((false, "Invalid JSON Response".to_string()));
+                },
+                false => (false, "Invalid session token".to_string())
+            };
+        },
+        Err(_) => (false, "Request failed".to_string())
+    };
+}
+
+#[command]
 fn download_executable(window: Window, path: &str, token: &str) -> bool {
     return match get(format!("https://api.acedia.gg/download?product=RO-EXEC&login_token={}", token)) {
         Ok(mut response) => {
@@ -56,109 +129,6 @@ fn download_executable(window: Window, path: &str, token: &str) -> bool {
         },
         Err(_) => false
     };
-}
-
-#[command]
-async fn attempt_login(_window: Window, email: String, password: String) -> (bool, String) {
-    let json_body = json!({
-        "0": {
-            "json": {
-                "emailOrUsername": email,
-                "password": password
-            }
-        }
-    }).to_string();
-
-    let client = reqwest::Client::new();
-    let login_request = client.post("https://api.acedia.gg/trpc/auth.logIn?batch=1")
-        .body(json_body)
-        .header("Content-Type", "application/json")
-        .send()
-        .await;
-
-    match login_request {
-        Ok(login_response) => {
-            if login_response.status().is_success() {
-                let set_cookie_header = login_response.headers().get("Set-Cookie")
-                    .and_then(|value| value.to_str().ok())
-                    .unwrap_or("Not found");
-
-                let re = Regex::new(r"_session=([^;]+)").unwrap();
-                match re.captures(set_cookie_header) {
-                    Some(caps) => {
-                        if let Some(matched) = caps.get(1) {
-                            (true, matched.as_str().to_string())
-                        } else {
-                            (false, "Failed to extract session token!".to_string())
-                        }
-                    },
-                    None => {
-                        (false, "Failed to extract session token!".to_string())
-                    },
-                }
-            } else {
-                (false, "Invalid credentials".to_string())
-            }
-        },
-        Err(err) => {
-            println!("Failed to send request: {}", err.to_string());
-            (false, "Failed to send request".to_string())
-        }
-    }
-}
-
-#[command]
-async fn get_login_token(_window: Window, session_token: String) -> (bool, String) {
-    let client = reqwest::Client::new();
-    let url = "https://api.acedia.gg/trpc/user.current.get?batch=1&input={\"0\":{\"json\":null,\"meta\":{\"values\":[\"undefined\"]}}}";
-    let user_info_request = client.get(url)
-        .header("Authorization", format!("Bearer {}", session_token))
-        .send()
-        .await;
-
-    match user_info_request {
-        Ok(user_response) => {
-            if user_response.status().is_success() {
-                let parsed_json: Value = match user_response.json().await {
-                    Ok(json) => json,
-                    Err(err) => return (false, err.to_string())
-                };
-
-                let first_element = match parsed_json.get(0) {
-                    Some(elem) => elem,
-                    None => return (false, "Invalid JSON Response".to_string())
-                };
-
-                let result_element = match first_element.get("result") {
-                    Some(elem) => elem,
-                    None => return (false, "Invalid JSON Response".to_string())
-                };
-
-                let data_element = match result_element.get("data") {
-                    Some(elem) => elem,
-                    None => return (false, "Invalid JSON Response".to_string())
-                };
-
-                let user_data = match data_element.get("json") {
-                    Some(elem) => elem,
-                    None => return (false, "Invalid JSON Response".to_string())
-                };
-
-                let login_token = match user_data.get("token") {
-                    Some(elem) => elem.as_str().unwrap(),
-                    None => return (false, "Invalid JSON Response".to_string())
-                };
-
-                (true, login_token.to_string())
-            } else {
-                (false, "Invalid authentication!".to_string())
-            }
-        },
-        Err(err) => {
-            println!("Sending request failed: {}", err.to_string());
-            (false, err.to_string())
-        }
-    }
 }
 
 lazy_static! {
@@ -208,7 +178,10 @@ fn init_websocket(window: Window, port: u16) {
 
                 let data_string = data.to_string();
                 let mut parts = data_string.split(",");
-                let type_value = parts.next().unwrap().trim();
+                let type_value = match parts.next() {
+                    Some(val) => val.trim(),
+                    None => return Ok(())
+                };
 
                 if type_value == "connect" {
                     self.window.emit("update", PayloadUpdate { message: true }).unwrap();
