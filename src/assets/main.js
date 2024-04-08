@@ -1433,6 +1433,7 @@ async function inject(autoInject) {
   exploitInject.classList.add("disabled");
   exploitIndicator.style.color = "var(--yellow)";
 
+  // This needs to be == true or it will apply auto-inject delay everytime! Already tested it.
   if (autoInject == true) {
     await new Promise(function (resolve) {
       setTimeout(() => resolve(), 3000);
