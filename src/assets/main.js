@@ -133,20 +133,20 @@ async function login() {
   const path = await getExecutable();
 
   loginSubmit.innerText = "Downloading loader...";
-  const downloadSuccess = await invoke("download_executable", { path, token: tokenInfo });
-  if (!downloadSuccess) return handleError("Failed to download loader");
+  const [downloadSuccess, downloadInfo] = await invoke("download_executable", { path, token: tokenInfo });
+  if (!downloadSuccess) return handleError(downloadInfo);
 
   await setCredentials({ email, password })
   initialize();
 }
 
-async function createDirectory(directory, recursive) {
-  try {
-    await fs.createDir(directory, { dir: fs.BaseDirectory.AppConfig, recursive });
-    return true;
-  } catch {
-    return false;
-  }
+async function appDirectory() {
+  return await path.appConfigDir();
+}
+
+async function createDirectory(directory, absolute) {
+  const _path = absolute ? directory : await path.join(await appDirectory(), directory);
+  return await invoke("create_directory", { path: _path });
 }
 
 async function readDirectory(directory, recursive) {
@@ -166,13 +166,9 @@ async function exists(path) {
   }
 }
 
-async function writeFile(file, contents) {
-  try {
-    await fs.writeTextFile(file, contents, { dir: fs.BaseDirectory.AppConfig });
-    return true;
-  } catch {
-    return false;
-  }
+async function writeFile(file, contents, absolute) {
+  const _path = absolute ? file : await path.join(await appDirectory(), file);
+  return await invoke("write_file", { path: _path, data: contents });
 }
 
 async function readFile(file) {
@@ -192,22 +188,14 @@ async function renameFile(file, newFile) {
   }
 }
 
-async function deleteFile(file) {
-  try {
-    await fs.removeFile(file, { dir: fs.BaseDirectory.AppConfig });
-    return true;
-  } catch {
-    return false;
-  }
+async function deleteDirectory(directory, absolute) {
+  const _path = absolute ? directory : await path.join(await appDirectory(), directory);
+  return await invoke("delete_directory", { path: _path });
 }
 
-async function deleteDirectory(directory, recursive) {
-  try {
-    await fs.removeDir(directory, { dir: fs.BaseDirectory.AppConfig, recursive });
-    return true;
-  } catch {
-    return false;
-  }
+async function deleteFile(file, absolute) {
+  const _path = absolute ? file : await path.join(await appDirectory(), file);
+  return await invoke("delete_file", { path: _path });
 }
 
 function getDataName() {
@@ -367,7 +355,7 @@ async function getExecutables() {
 
 async function clearExecutables() {
   const executables = await getExecutables();
-  executables.map((f) => f.path).forEach(await deleteFile);
+  await Promise.all(executables.map((f) => f.path).map((path) => deleteFile(path, true)));
 }
 
 async function findExecutable() {
@@ -608,7 +596,7 @@ async function newFile(folder, autoExec) {
 }
 
 async function newFolder() {
-  await createDirectory(await getFolderPath(), true);
+  await createDirectory(await getFolderPath());
   loadScripts();
 }
 
@@ -712,7 +700,7 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
       const isScripts = selectedFolder.classList.contains("scripts");
 
       let newPath = isAutoExec ? `autoexec/${name}` : isScripts ? `scripts/${name}` : `scripts/${selectedFolder.innerText}/${name}`;
-      newPath = await path.join(await path.appConfigDir(), newPath);
+      newPath = await path.join(await appDirectory(), newPath);
 
       const result = await renameFile(_path, newPath);
       if (!isScripts) setExpanded(selectedFolder.innerText, true);
@@ -804,7 +792,7 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
   });
 
   dropdownDelete.addEventListener("click", async function () {
-    await deleteFile(_path);
+    await deleteFile(_path, true);
     loadScripts();
 
     const tab = tabs.find((t) => t.path === _path);
@@ -859,7 +847,7 @@ async function populateScripts(scripts, force) {
 let autoExecPath;
 
 async function addAutoExecFolder(force) {
-  if (!autoExecPath) autoExecPath = await path.join(await path.appConfigDir(), "autoexec");
+  if (!autoExecPath) autoExecPath = await path.join(await appDirectory(), "autoexec");
   const files = await readDirectory("autoexec");
   const folder = parseFolders([{ path: autoExecPath, name: "Auto-Exec", children: files }], true).pop();
   
@@ -930,7 +918,7 @@ async function setTabContent(tab, content) {
   const script = tab.path;
 
   if (script) {
-    writeFile(tab.path, content);
+    writeFile(tab.path, content, true);
   } else {
     writeFile(`${dataDirectory}/tabs-data/${tab.id}`, content);
   }
@@ -1440,7 +1428,7 @@ async function inject(autoInject) {
     });
   }
 
-  const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.name], { cwd: await path.appConfigDir() });
+  const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.name], { cwd: await appDirectory() });
 
   let isDone;
   let child;
@@ -1509,7 +1497,7 @@ async function _import() {
 
   const selected = await dialog.open({
     title: "Import Script",
-    defaultPath: await path.join(await path.appConfigDir(), "scripts"),
+    defaultPath: await path.join(await appDirectory(), "scripts"),
     filters: [
       {
         name: "Script",
@@ -1556,17 +1544,18 @@ async function _export() {
 
   const selected = await dialog.save({
     title: "Export Script",
-    defaultPath: await path.join(await path.appConfigDir(), "scripts", tabName),
+    defaultPath: await path.join(await appDirectory(), "scripts", tabName),
     filters
   });
 
   if (selected) {
     const text = editorGetText() || "";
-    await writeFile(selected, text);
+    await writeFile(selected, text, true);
 
     const currentTab = tabs.find((t) => t.active === true);
 
     if (currentTab && !tabs.find((t) => t.path === selected)) {
+      unsavedTabData.delete(currentTab.id);
       await deleteTab(currentTab.id, true);
       tabs = tabs.map(function (t) {
         if (t.active && !t.path) return {
@@ -1605,7 +1594,7 @@ async function logout() {
 
 async function openFolder() {
   try {
-    await open(await path.join(await path.appConfigDir(), "scripts"));
+    await open(await path.join(await appDirectory(), "scripts"));
     return true;
   } catch {
     return false;
@@ -1885,10 +1874,10 @@ window.addEventListener("DOMContentLoaded", async function () {
   version = await getVersion();
   dataDirectory = await getData();
   unsavedTabData = await getUnsavedTabData();
-  await createDirectory("", true);
-  await createDirectory(dataDirectory, true);
-  await createDirectory("scripts", true);
-  await createDirectory("autoexec", true);
+  await createDirectory("");
+  await createDirectory(dataDirectory);
+  await createDirectory("scripts");
+  await createDirectory("autoexec");
 
   // Version
   const versionElem = document.querySelector(".kr-titlebar .version");

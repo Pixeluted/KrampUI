@@ -3,16 +3,17 @@
 use regex::Regex;
 use serde_json::{json, Map, Value};
 use tauri::{command, generate_context, generate_handler, Builder, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window, WindowEvent};
-use std::{fs::File, io::copy, sync::{Arc, Mutex}};
 use std::{thread::{self, sleep}, time::Duration};
+use std::sync::{Arc, Mutex};
 use std::ffi::OsString;
 use std::os::windows::ffi::OsStrExt;
 use rdev::{listen, Event, EventType};
 use lazy_static::lazy_static;
-use reqwest::blocking::Client;
+use reqwest::Client;
 use colored::{Colorize, ColoredString, control};
 use win_msgbox::{w, YesNo};
 use sysinfo::System;
+use tokio::fs;
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
@@ -44,7 +45,7 @@ fn is_roblox_running() -> bool {
 }
 
 #[command]
-fn attempt_login(_window: Window, email: String, password: String) -> (bool, String) {
+async fn attempt_login(email: String, password: String) -> (bool, String) {
     let mut json_map = Map::new();
     json_map.insert("0".to_string(), json!({
         "json": {
@@ -58,7 +59,8 @@ fn attempt_login(_window: Window, email: String, password: String) -> (bool, Str
         .header("Content-Type", "application/json")
         .json(&json_map)
         .timeout(Duration::from_secs(5))
-        .send();
+        .send()
+        .await;
 
     return match login_request {
         Ok(login_response) => match login_response.status().is_success() {
@@ -85,17 +87,18 @@ fn attempt_login(_window: Window, email: String, password: String) -> (bool, Str
 }
 
 #[command]
-fn get_login_token(_window: Window, session_token: String) -> (bool, String) {
+async fn get_login_token(session_token: String) -> (bool, String) {
     let client = Client::new();
     let info_request = client.get("https://api.acedia.gg/trpc/user.current.get?batch=1&input={}")
         .header("Authorization", format!("Bearer {}", session_token))
         .timeout(Duration::from_secs(5))
-        .send();
+        .send()
+        .await;
 
     return match info_request {
         Ok(response) =>  match response.status().is_success() {
             true => {
-                let json: Value = match response.json() {
+                let json: Value = match response.json().await {
                     Ok(json) => json,
                     Err(_) => return (false, "Invalid JSON response".to_string())
                 };
@@ -115,42 +118,45 @@ fn get_login_token(_window: Window, session_token: String) -> (bool, String) {
 }
 
 #[command]
-fn download_executable(window: Window, path: &str, token: &str) -> bool {
+async fn download_executable(window: Window, path: String, token: String) -> (bool, String) {
     let client = Client::new();
     let response = client.get(format!("https://api.acedia.gg/download?product=RO-EXEC&login_token={}", token))
         .timeout(Duration::from_secs(10))
-        .send();
+        .send()
+        .await;
 
     return match response {
-        Ok(mut response) => match response.status().is_success() {
+        Ok(response) => match response.status().is_success() {
             true => {
                 let app_dir = window.app_handle().path_resolver().app_config_dir().unwrap();
                 let path = app_dir.join(path);
+                let bytes = match response.bytes().await {
+                    Ok(bytes) => bytes,
+                    Err(_) => return (false, "Failed to get loader bytes".to_string())
+                };
 
-                return match File::create(path) {
-                    Ok(mut dest) => match copy(&mut response, &mut dest) {
-                        Ok(_) => true,
-                        Err(_) => false
-                    },
-                    Err(_) => false
+                return match fs::write(&path, &bytes).await {
+                    Ok(_) => (true, "".to_string()),
+                    Err(_) => (false, "Failed to write loader".to_string())
                 };
             },
-            false => false
+            false => (false, "Failed to download loader".to_string())
         },
-        Err(_) => false
+        Err(_) => (false, "Request failed".to_string())
     };
 }
 
-fn get_latest_release() -> Option<(String, String)> {
+async fn get_latest_release() -> Option<(String, String)> {
     let client = Client::new();
     let response = client.get("https://git.snipcola.com/api/v1/repos/snipcola/KrampUI/releases/latest")
         .timeout(Duration::from_secs(5))
-        .send();
+        .send()
+        .await;
 
     return match response {
         Ok(response) =>  match response.status().is_success() {
             true => {
-                let json: Value = match response.json() {
+                let json: Value = match response.json().await {
                     Ok(json) => json,
                     Err(_) => return None
                 };
@@ -176,6 +182,38 @@ fn get_latest_release() -> Option<(String, String)> {
             false => None
         },
         Err(_) => None
+    };
+}
+
+#[command]
+async fn create_directory(path: String) -> bool {
+    return match fs::create_dir_all(&path).await {
+        Ok(_) => true,
+        Err(_) => false
+    };
+}
+
+#[command]
+async fn write_file(path: String, data: String) -> bool {
+    return match fs::write(&path, &data).await {
+        Ok(_) => true,
+        Err(_) => false
+    };
+}
+
+#[command]
+async fn delete_directory(path: String) -> bool {
+    return match fs::remove_dir_all(&path).await {
+        Ok(_) => true,
+        Err(_) => false
+    };
+}
+
+#[command]
+async fn delete_file(path: String) -> bool {
+    return match fs::remove_file(&path).await {
+        Ok(_) => true,
+        Err(_) => false
     };
 }
 
@@ -286,10 +324,11 @@ fn log(message: String, _type: Option<String>) {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     control::set_virtual_terminal(true).ok();
     
-    if let Some((latest_version, link)) = get_latest_release() {
+    if let Some((latest_version, link)) = get_latest_release().await {
         let current_version = env!("CARGO_PKG_VERSION");
 
         if latest_version != current_version {
@@ -333,7 +372,21 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             app.emit_all("single-instance", Payload2 { args: argv, cwd }).unwrap();
         }))
-        .invoke_handler(generate_handler![init_websocket, init_key_events, execute_script, is_roblox_running, kill_roblox, download_executable, log, attempt_login, get_login_token])
+        .invoke_handler(generate_handler![
+            init_websocket,
+            init_key_events,
+            execute_script,
+            is_roblox_running,
+            kill_roblox,
+            download_executable,
+            log,
+            attempt_login,
+            get_login_token,
+            create_directory,
+            write_file,
+            delete_directory,
+            delete_file
+        ])
         .run(generate_context!())
         .expect("Failed to launch application.");
 }
