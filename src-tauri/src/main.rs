@@ -5,10 +5,13 @@ use serde_json::{json, Map, Value};
 use tauri::{command, generate_context, generate_handler, Builder, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window, WindowEvent};
 use std::{fs::File, io::copy, sync::{Arc, Mutex}};
 use std::{thread::{self, sleep}, time::Duration};
+use std::ffi::OsString;
+use std::os::windows::ffi::OsStrExt;
 use rdev::{listen, Event, EventType};
 use lazy_static::lazy_static;
-use reqwest::blocking::{get, Client};
+use reqwest::blocking::Client;
 use colored::{Colorize, ColoredString, control};
+use win_msgbox::{w, YesNo};
 use sysinfo::System;
 
 #[derive(Clone, serde::Serialize)]
@@ -54,29 +57,28 @@ fn attempt_login(_window: Window, email: String, password: String) -> (bool, Str
     let login_request = client.post("https://api.acedia.gg/trpc/auth.logIn?batch=1")
         .header("Content-Type", "application/json")
         .json(&json_map)
+        .timeout(Duration::from_secs(5))
         .send();
 
     return match login_request {
-        Ok(login_response) => {
-            return match login_response.status().is_success() {
-                true => {
-                    let cookies = match login_response.headers().get("Set-Cookie") {
-                        Some(cookies) => match cookies.to_str() {
-                            Ok(cookie_string) => cookie_string,
-                            Err(_) => return (false, "Invalid cookies".to_string())
-                        },
-                        None => return (false, "No cookies".to_string())
-                    };
-        
-                    return match Regex::new(r"_session=([^;]+)").unwrap().captures(cookies) {
-                        Some(captures) => match captures.get(1) {
-                            Some(matched) => (true, matched.as_str().to_string()),
-                            None => (false, "Invalid session token".to_string())
-                        },
+        Ok(login_response) => match login_response.status().is_success() {
+            true => {
+                let cookies = match login_response.headers().get("Set-Cookie") {
+                    Some(cookies) => match cookies.to_str() {
+                        Ok(cookie_string) => cookie_string,
+                        Err(_) => return (false, "Invalid cookies".to_string())
+                    },
+                    None => return (false, "No cookies".to_string())
+                };
+    
+                return match Regex::new(r"_session=([^;]+)").unwrap().captures(cookies) {
+                    Some(captures) => match captures.get(1) {
+                        Some(matched) => (true, matched.as_str().to_string()),
                         None => (false, "Invalid session token".to_string())
-                    };
-                }, false => (false, "Invalid credentials".to_string())
-            };
+                    },
+                    None => (false, "Invalid session token".to_string())
+                };
+            }, false => (false, "Invalid credentials".to_string())
         },
         Err(_) => (false, "Request failed".to_string())
     };
@@ -87,27 +89,26 @@ fn get_login_token(_window: Window, session_token: String) -> (bool, String) {
     let client = Client::new();
     let info_request = client.get("https://api.acedia.gg/trpc/user.current.get?batch=1&input={}")
         .header("Authorization", format!("Bearer {}", session_token))
+        .timeout(Duration::from_secs(5))
         .send();
 
     return match info_request {
-        Ok(response) => {
-            return match response.status().is_success() {
-                true => {
-                    let json: Value = match response.json() {
-                        Ok(json) => json,
-                        Err(_) => return (false, "Invalid JSON response".to_string())
-                    };
-    
-                    return json.get(0)
-                        .and_then(|first| first.get("result"))
-                        .and_then(|result| result.get("data"))
-                        .and_then(|data| data.get("json"))
-                        .and_then(|user_data| user_data.get("token").and_then(|elem| elem.as_str()))
-                        .map(|login_token| (true, login_token.to_string()))
-                        .unwrap_or((false, "Invalid JSON Response".to_string()));
-                },
-                false => (false, "Invalid session token".to_string())
-            };
+        Ok(response) =>  match response.status().is_success() {
+            true => {
+                let json: Value = match response.json() {
+                    Ok(json) => json,
+                    Err(_) => return (false, "Invalid JSON response".to_string())
+                };
+
+                return json.get(0)
+                    .and_then(|first| first.get("result"))
+                    .and_then(|result| result.get("data"))
+                    .and_then(|data| data.get("json"))
+                    .and_then(|user_data| user_data.get("token").and_then(|elem| elem.as_str()))
+                    .map(|login_token| (true, login_token.to_string()))
+                    .unwrap_or((false, "Invalid JSON Response".to_string()));
+            },
+            false => (false, "Invalid session token".to_string())
         },
         Err(_) => (false, "Request failed".to_string())
     };
@@ -115,20 +116,66 @@ fn get_login_token(_window: Window, session_token: String) -> (bool, String) {
 
 #[command]
 fn download_executable(window: Window, path: &str, token: &str) -> bool {
-    return match get(format!("https://api.acedia.gg/download?product=RO-EXEC&login_token={}", token)) {
-        Ok(mut response) => {
-            let app_dir = window.app_handle().path_resolver().app_config_dir().unwrap();
-            let path = app_dir.join(path);
+    let client = Client::new();
+    let response = client.get(format!("https://api.acedia.gg/download?product=RO-EXEC&login_token={}", token))
+        .timeout(Duration::from_secs(10))
+        .send();
 
-            return match File::create(path) {
-                Ok(mut dest) => match copy(&mut response, &mut dest) {
-                    Ok(_) => true,
+    return match response {
+        Ok(mut response) => match response.status().is_success() {
+            true => {
+                let app_dir = window.app_handle().path_resolver().app_config_dir().unwrap();
+                let path = app_dir.join(path);
+
+                return match File::create(path) {
+                    Ok(mut dest) => match copy(&mut response, &mut dest) {
+                        Ok(_) => true,
+                        Err(_) => false
+                    },
                     Err(_) => false
-                },
-                Err(_) => false
-            };
+                };
+            },
+            false => false
         },
         Err(_) => false
+    };
+}
+
+fn get_latest_release() -> Option<(String, String)> {
+    let client = Client::new();
+    let response = client.get("https://git.snipcola.com/api/v1/repos/snipcola/KrampUI/releases/latest")
+        .timeout(Duration::from_secs(5))
+        .send();
+
+    return match response {
+        Ok(response) =>  match response.status().is_success() {
+            true => {
+                let json: Value = match response.json() {
+                    Ok(json) => json,
+                    Err(_) => return None
+                };
+
+                let version = match json.get("tag_name") {
+                    Some(version) => match version.as_str() {
+                        Some(version) => version.replace("v", ""),
+                        None => return None
+                    },
+                    None => return None
+                };
+
+                let release = match json.get("html_url") {
+                    Some(release) => match release.as_str() {
+                        Some(release) => release.to_string(),
+                        None => return None
+                    },
+                    None => return None
+                };
+
+                return Some((version, release));
+            },
+            false => None
+        },
+        Err(_) => None
     };
 }
 
@@ -241,6 +288,24 @@ fn log(message: String, _type: Option<String>) {
 
 fn main() {
     control::set_virtual_terminal(true).ok();
+    
+    if let Some((latest_version, link)) = get_latest_release() {
+        let current_version = env!("CARGO_PKG_VERSION");
+
+        if latest_version != current_version {
+            let message = format!("Would you like to update?\nYou are on v{}, the latest is v{}.", current_version, latest_version);
+            let wide_message: Vec<u16> = OsString::from(&message).encode_wide().chain(Some(0)).collect();
+            let response = win_msgbox::information::<YesNo>(wide_message.as_ptr())
+                .title(w!("KrampUI"))
+                .show()
+                .unwrap();
+            
+            if response == YesNo::Yes {
+                open::that(link).unwrap();
+                return;
+            }
+        }
+    }
 
     let toggle = CustomMenuItem::new("toggle".to_string(), "Toggle");
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");

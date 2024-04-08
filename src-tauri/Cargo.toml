@@ -1,6 +1,6 @@
 [package]
 name = "krampui"
-version = "1.0.5"
+version = "1.0.6"
 authors = ["Snipcola", "Pixeluted"]
 license = "MIT"
 edition = "2021"
@@ -20,6 +20,8 @@ ws = "0.9.2"
 lazy_static = "1.4.0"
 regex = "1"
 colored = "2.1.0"
+win-msgbox = "0.1.3"
+open = "5.1.2"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
