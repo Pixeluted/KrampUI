@@ -1184,7 +1184,7 @@ async function addScriptTab(path) {
 }
 
 async function setupTabs() {
-  await createDirectory(`${dataDirectory}/tabs-data`, true);
+  await createDirectory(`${dataDirectory}/tabs-data`);
   tabs = await getTabs() || [];
   if (tabs.length === 0) await addNewTab(true);
 }
