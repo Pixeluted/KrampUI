@@ -5,8 +5,7 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "KrampUI",
-    "version": "1.0.5"
+    "productName": "KrampUI"
   },
   "tauri": {
     "allowlist": {

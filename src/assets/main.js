@@ -1,6 +1,7 @@
 const { invoke } = window.__TAURI__.tauri;
 const { open, Command } = window.__TAURI__.shell;
 const { appWindow } = window.__TAURI__.window;
+const { getVersion } = window.__TAURI__.app;
 const process = window.__TAURI__.process;
 const dialog = window.__TAURI__.dialog;
 const event = window.__TAURI__.event;
@@ -15,7 +16,7 @@ let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScripts
 let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitLogout;
 let ready, connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
-let wsPort;
+let version, wsPort;
 
 async function log(message, type = "info") {
   await invoke("log", { message, type });
@@ -1878,12 +1879,17 @@ window.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Set-up
+  version = await getVersion();
   dataDirectory = await getData();
   unsavedTabData = await getUnsavedTabData();
   await createDirectory("", true);
   await createDirectory(dataDirectory, true);
   await createDirectory("scripts", true);
   await createDirectory("autoexec", true);
+
+  // Version
+  const versionElem = document.querySelector(".kr-titlebar .version");
+  if (version && versionElem) versionElem.textContent = `(${version})`; 
 
   // Events
   event.listen("update", function (e) {
