@@ -7,6 +7,7 @@
     --lightest: #2f354e;
     --primary: #5267bb;
     --text: #c6cff3;
+    --text-dimmed: #a7afce;
     --green: #befdb3;
     --yellow: #f1e092;
     --red: #ee9b9b;
@@ -113,6 +114,10 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     user-select: none;
     -webkit-user-drag: none;
     transition: background-color 0.2s;
+}
+
+.kr-input::placeholder {
+    color: var(--text-dimmed);
 }
 
 .kr-input:focus {
