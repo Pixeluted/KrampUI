@@ -1425,7 +1425,7 @@ async function evalCode(name, code) {
   return await invoke("eval", { name, code });
 }
 
-async function inject() {
+async function inject(autoInject) {
   let executable = await findExecutable();
   if (!executable) return;
 
@@ -1433,9 +1433,11 @@ async function inject() {
   exploitInject.classList.add("disabled");
   exploitIndicator.style.color = "var(--yellow)";
 
-  await new Promise(function (resolve) {
-    setTimeout(() => resolve(), 3000);
-  });
+  if (autoInject == true) {
+    await new Promise(function (resolve) {
+      setTimeout(() => resolve(), 3000);
+    });
+  }
 
   const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.name], { cwd: await path.appConfigDir() });
 
@@ -1853,7 +1855,7 @@ async function checkRobloxActive() {
     
     if (newActive) {
       if (!connected && injecting !== true) {
-        if (settings.autoInject && await findExecutable()) inject();
+        if (settings.autoInject && await findExecutable()) inject(true);
         else exploitInject.classList.remove("disabled");
       }
       exploitKill.classList.remove("disabled");
