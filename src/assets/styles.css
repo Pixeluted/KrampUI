@@ -284,6 +284,20 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     width: 100%;
 }
 
+@media screen and (max-height: 250px) {
+    .login {
+        gap: 0.75rem;
+    }
+
+    .login .form {
+        gap: 0.5rem;
+    }
+
+    .login .form .kr-input, .login .form .kr-button {
+        padding: 0.25rem 1rem;
+    }
+}
+
 /* Exploit */
 .exploit {
     padding: 0.5rem;

@@ -120,10 +120,11 @@ async function login() {
   const password = loginPassword.value;
   loginForm.classList.add("disabled");
 
-  loginSubmit.innerText = "Authenticating...";
+  loginSubmit.innerText = "Fetching session cookie...";
   const [loginSuccess, loginInfo] = await invoke("attempt_login", { email, password });
   if (!loginSuccess) return handleError(loginInfo);
 
+  loginSubmit.innerText = "Fetching login token...";
   const [tokenSuccess, tokenInfo] = await invoke("get_login_token", { sessionToken: loginInfo });
   if (!tokenSuccess) return handleError(tokenInfo);
   
@@ -135,8 +136,7 @@ async function login() {
   if (!downloadSuccess) return handleError("Failed to download loader");
 
   await setCredentials({ email, password })
-  loginSubmit.innerText = "Authenticated!";
-  setTimeout(initialize, 250);
+  initialize();
 }
 
 async function createDirectory(directory, recursive) {
