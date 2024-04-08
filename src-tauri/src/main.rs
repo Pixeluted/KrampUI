@@ -8,6 +8,7 @@ use std::{thread::{self, sleep}, time::Duration};
 use rdev::{listen, Event, EventType};
 use lazy_static::lazy_static;
 use reqwest::blocking::{get, Client};
+use colored::{Colorize, ColoredString, control};
 use sysinfo::System;
 
 #[derive(Clone, serde::Serialize)]
@@ -219,11 +220,28 @@ fn execute_script(text: &str) {
 }
 
 #[command]
-fn log(message: String) {
-    println!("[FRONTEND] {}", message);
+fn log(message: String, _type: Option<String>) {
+    let prefix: Option<ColoredString> = match _type {
+        Some(_type) => match _type.as_str() {
+            "info" => Some("[ INFO ]".cyan()),
+            "success" => Some("[  OK  ]".green()),
+            "warn" => Some("[ WARN ]".yellow()),
+            "error" => Some("[ FAIL ]".red()),
+            _ => None
+        },
+        None => None
+    };
+
+    if let Some(prefix) = prefix {
+        println!("{} {}", prefix, message);
+    } else {
+        println!("{}", message);
+    }
 }
 
 fn main() {
+    control::set_virtual_terminal(true).ok();
+
     let toggle = CustomMenuItem::new("toggle".to_string(), "Toggle");
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let tray = SystemTrayMenu::new().add_item(toggle).add_item(quit);

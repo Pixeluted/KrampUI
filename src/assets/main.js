@@ -17,8 +17,8 @@ let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, e
 let ready, connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
 let wsPort;
 
-async function log(logMessage) {
-  await invoke("log", { message: logMessage })
+async function log(message, type = "info") {
+  await invoke("log", { message, type });
 }
 
 async function minimize() {
