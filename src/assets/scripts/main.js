@@ -1351,7 +1351,7 @@ async function evalCode(name, code) {
 }
 
 async function inject(autoInject) {
-  let executable = await askForExecutable();
+  const executable = await askForExecutable();
   if (!executable) return;
 
   injecting = true;
