@@ -11,20 +11,21 @@ use lazy_static::lazy_static;
 use reqwest::Client;
 use colored::{Colorize, ColoredString, control};
 use win_msgbox::{w, YesNo};
+use serde::Serialize;
 use sysinfo::System;
 use tokio::fs;
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, Serialize)]
 struct Payload {
   message: String,
 }
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, Serialize)]
 struct PayloadUpdate {
   message: bool,
 }
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, Serialize)]
 struct Payload2 {
   args: Vec<String>,
   cwd: String,
@@ -45,8 +46,9 @@ fn is_roblox_running() -> bool {
 
 async fn get_latest_release() -> Option<(String, String)> {
     let client = Client::new();
-    let response = client.get("https://git.snipcola.com/api/v1/repos/snipcola/KrampUI/releases/latest")
-        .timeout(Duration::from_secs(3))
+    let response = client.get("https://api.github.com/repos/BitdancerStudios/KrampUI/releases/latest")
+        .header("User-Agent", "KrampUI")
+        .timeout(Duration::from_secs(5))
         .send()
         .await;
 
@@ -224,11 +226,21 @@ fn log(message: String, _type: Option<String>) {
 #[tokio::main]
 async fn main() {
     control::set_virtual_terminal(true).ok();
-    
+
     if let Some((latest_version, link)) = get_latest_release().await {
         let current_version = env!("CARGO_PKG_VERSION");
 
-        if latest_version != current_version {
+        let latest_version_number = match latest_version.replace(".", "").parse::<i32>() {
+            Ok(number) => Some(number),
+            Err(_) => None
+        };
+
+        let current_version_number = match current_version.replace(".", "").parse::<i32>() {
+            Ok(number) => Some(number),
+            Err(_) => None
+        };
+
+        if latest_version_number.is_some() && current_version_number.is_some() && latest_version_number.unwrap() > current_version_number.unwrap() {
             let message = format!("Would you like to update?\nYou are on v{}, the latest is v{}.", current_version, latest_version);
             let wide_message: Vec<u16> = OsString::from(&message).encode_wide().chain(Some(0)).collect();
             let response = win_msgbox::information::<YesNo>(wide_message.as_ptr())

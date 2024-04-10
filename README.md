@@ -6,11 +6,12 @@
 <br />
 
 ## Tutorial + Showcase
-Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=nSYtvobwBvU (outdated: you'll now have to get the loader from acedia.gg)
+Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=nSYtvobwBvU</br>
+*(outdated: you'll now have to get the loader from acedia.gg)*
 
 ## Getting KrampUI
 
-### [Download the binary](https://git.snipcola.com/snipcola/KrampUI/releases/latest),
+### [Download the binary](https://github.com/BitdancerStudios/KrampUI/releases/latest),
 
 ### or... compile it yourself!
 1. Ensure you have `cargo` (`rustup`), `node`, and `npm` installed.
@@ -37,4 +38,6 @@ You're probably in the Roblox menu, for the UI to recognize it's connected, join
 It's probably a issue with Ro-Exec. It's advised to wait until you load into game before injecting.
 
 ## Found a bug?
-Feel free to let me know, ``@Snipcola`` on Discord.
+Feel free to let us know, contact one of our team members:
+- [Snipcola](https://discord.com/users/126870350507147264)
+- [Pixeluted](https://discord.com/users/1057760003701882890)

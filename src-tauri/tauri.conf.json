@@ -41,9 +41,9 @@
       "active": true,
       "targets": "all",
       "identifier": "KrampUI",
-      "publisher": "Snipcola, Pixeluted",
+      "publisher": "BitdancerStudios",
       "category": "Utility",
-      "copyright": "Copyright @ 2024 Snipcola, Pixeluted",
+      "copyright": "Copyright @ 2024 BitdancerStudios",
       "shortDescription": "Simple and lightweight frontend for Ro-Exec.",
       "icon": ["./icons/icon.ico"]
     },
