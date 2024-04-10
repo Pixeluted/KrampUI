@@ -3,19 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="./assets/styles.css" />
-    <link rel="stylesheet" href="./assets/fontawesome/css/fontawesome.min.css" />
-    <link rel="stylesheet" href="./assets/fontawesome/css/solid.min.css"/>
-    <link rel="stylesheet" href="./assets/fontawesome/css/regular.min.css" />
-    <script src="./assets/monaco/loader.js"></script>
-    <script type="module" src="./assets/main.js" defer></script>
+    <link rel="stylesheet" href="./assets/styles/main.css" />
+    <link rel="stylesheet" href="./assets/external/fontawesome/css/fontawesome.css" />
+    <link rel="stylesheet" href="./assets/external/fontawesome/css/solid.css"/>
+    <link rel="stylesheet" href="./assets/external/fontawesome/css/regular.css" />
+    <script src="./assets/external/monaco/loader.js"></script>
+    <script type="module" src="./assets/scripts/main.js" defer></script>
   </head>
   <body class="kr-hidden">
     <div class="container">
       <div class="kr-titlebar">
         <div class="tb-drag" data-tauri-drag-region></div>
         <div class="brand">
-          <img class="image" src="./assets/icon.png">
+          <img class="image" src="./assets/images/icon.png">
           <p class="text">KrampUI</p>
           <p class="version"></p>
         </div>
@@ -24,7 +24,6 @@
             <button class="tb-button"><i class="fa-solid fa-cog"></i></button>
             <div class="kr-dropdown-content">
               <div class="kr-dropdown-key-toggle">Home Toggle <i class="fa-solid fa-times"></i></div>
-              <div class="kr-dropdown-auto-login">Auto Login <i class="fa-solid fa-times"></i></div>
               <div class="kr-dropdown-auto-inject">Auto Inject <i class="fa-solid fa-times"></i></div>
               <div class="kr-dropdown-top-most">Top Most <i class="fa-solid fa-times"></i></div>
             </div>
@@ -34,27 +33,21 @@
           <button class="tb-button exit"><i style="font-size: 0.825rem !important" class="fa-solid fa-times"></i></button>
         </div>
       </div>
-      <div class="login active">
-        <div class="title">
-          <img class="image" src="./assets/icon.png">
-          <h3 class="text">KrampUI</h3>
-        </div>
-        <div class="form">
-          <input class="kr-input email" placeholder="Username / Email">
-          <input class="kr-input password" placeholder="Password" type="password" />
-          <button class="kr-button login-button">Authenticate via acedia.gg</button>
-        </div>
-      </div>
-      <div class="exploit">
+      <div class="exploit active">
         <div class="bar">
           <div class="buttons">
-            <button class="kr-button kr-inject disabled"><i class="fa-solid fa-syringe"></i> <span class="text">Inject</span></button>
+            <div class="kr-dropdown">
+              <div class="kr-button kr-inject disabled"><i class="fa-solid fa-syringe"></i><span class="text">Inject</span></div>
+              <div class="kr-dropdown-content">
+                <div class="kr-dropdown-select-loader">Select Loader <i class="fa-solid fa-file"></i></div>
+                <div class="kr-dropdown-delete-loader">Delete Loader <i class="fa-solid fa-delete-left"></i></div>
+              </div>
+            </div>
             <button class="kr-button kr-kill disabled"><i class="fa-solid fa-ban"></i> <span class="text">Kill</span></button>
             <button class="kr-button kr-execute disabled"><i class="fa-solid fa-scroll"></i> <span class="text">Execute</span></button>
             <button class="kr-button kr-clear"><i class="fa-solid fa-delete-left"></i> <span class="text">Clear</span></button>
             <button class="kr-button kr-import"><i class="fa-solid fa-upload"></i> <span class="text">Import</span></button>
             <button class="kr-button kr-export"><i class="fa-solid fa-floppy-disk"></i> <span class="text">Export</span></button>
-            <button class="kr-button kr-logout"><i class="fa-solid fa-right-from-bracket"></i> <span class="text">Logout</span></button>
           </div>
         </div>
         <div class="main">

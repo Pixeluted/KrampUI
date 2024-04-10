@@ -6,7 +6,7 @@
 <br />
 
 ## Tutorial + Showcase
-Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=nSYtvobwBvU
+Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=nSYtvobwBvU (outdated: you'll now have to get the loader from acedia.gg)
 
 ## Getting KrampUI
 
@@ -23,6 +23,9 @@ Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=nSYtvobw
 ### Where is the scripts and autoexec folder?
 It's located at ``%appdata%/KrampUI``, or just press the folder icon on the UI and navigate one folder up.
 
+### Ro-Exec updated, how do I select a new loader?
+Right click the inject button and press "Select Loader".
+
 ### I don't see the UI, how do I fix it?
 Perhaps your computer doesn't have Microsoft Edge Webview installed.</br>
 Install it from <a href="https://developer.microsoft.com/en-us/microsoft-edge/webview2" target="_blank">here</a> (scroll down & install Evergreen Bootstrapper), and see if that fixes your issue.
@@ -31,8 +34,7 @@ Install it from <a href="https://developer.microsoft.com/en-us/microsoft-edge/we
 You're probably in the Roblox menu, for the UI to recognize it's connected, join a game.
 
 ### How to fix it injecting but not executing scripts?
-There is no difference between using KrampUI to inject and running the executable yourself.
-Meaning, it's a issue with Ro-Exec. It's advised to wait until you load into game before injecting.
+It's probably a issue with Ro-Exec. It's advised to wait until you load into game before injecting.
 
 ## Found a bug?
 Feel free to let me know, ``@Snipcola`` on Discord.
