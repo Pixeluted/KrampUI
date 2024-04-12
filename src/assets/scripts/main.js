@@ -1130,7 +1130,7 @@ function emptyTabElems() {
   exploitTabs.innerHTML = "";
 }
 
-let scrollIntoView = false;
+let scrollIntoView = true;
 
 function addTabElem(info) {
   const script = info.path;
