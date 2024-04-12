@@ -6,8 +6,7 @@
 <br />
 
 ## Tutorial + Showcase
-Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=nSYtvobwBvU</br>
-*(outdated: you'll now have to get the loader from acedia.gg)*
+Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=VXCyulSeDS0
 
 ## Getting KrampUI
 
