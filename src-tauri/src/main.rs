@@ -13,7 +13,7 @@ use colored::{Colorize, ColoredString, control};
 use win_msgbox::{w, YesNo};
 use serde::Serialize;
 use sysinfo::System;
-use tokio::fs;
+use tokio::{fs::{self, File}, io::AsyncReadExt};
 
 #[derive(Clone, Serialize)]
 struct Payload {
@@ -223,6 +223,47 @@ fn log(message: String, _type: Option<String>) {
     }
 }
 
+#[command]
+async fn validate_executable(executable_path: String) -> (bool, String) {
+    let mut file = match File::open(executable_path).await {
+        Ok(file) => file,
+        Err(_) => return (false, "Failed to open file!".to_string())
+    };
+
+    let mut buffer = Vec::new();
+
+    match file.read_to_end(&mut buffer).await {
+        Ok(_) => {},
+        Err(_) => return (false, "Failed to read executable".to_string())
+    };
+
+    let min_length = 4;
+    let mut current_string = Vec::new();
+    let mut strings_found: Vec<String> = Vec::new();
+
+    for &byte in &buffer {
+        if byte.is_ascii_graphic() || byte == b' ' {
+            current_string.push(byte);
+        } else {
+            if current_string.len() >= min_length {
+                if let Ok(string) = String::from_utf8(current_string.clone()) {
+                    strings_found.push(string);
+                }
+            }
+
+            current_string.clear();
+        }
+    }
+
+    let string_to_check_for = "Authentication failed: %d".to_string();
+
+    if strings_found.contains(&string_to_check_for) {
+        (true, "".to_string())
+    } else {
+        (false, "This is not krampus loader.".to_string())
+    }
+}
+
 #[tokio::main]
 async fn main() {
     control::set_virtual_terminal(true).ok();
@@ -291,7 +332,8 @@ async fn main() {
             create_directory,
             write_file,
             delete_directory,
-            delete_file
+            delete_file,
+            validate_executable
         ])
         .run(generate_context!())
         .expect("Failed to launch application.");

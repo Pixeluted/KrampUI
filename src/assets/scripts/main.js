@@ -295,8 +295,13 @@ async function askForExecutable(select) {
   });
 
   if (selected) {
-    await clearExecutables();
-    await renameFile(selected, await getExecutable());
+    const [isKrampusLoader, errorMessage] = await invoke("validate_executable", { executablePath: selected });
+    if (isKrampusLoader) {
+      await clearExecutables();
+      await renameFile(selected, await getExecutable());
+    } else {
+      alert(errorMessage);
+    }
   }
 
   const executable = await findExecutable();
