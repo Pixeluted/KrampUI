@@ -510,6 +510,10 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     background-color: var(--lighter);
 }
 
+.exploit > .main > .container-2 > .scripts .script-container:has(.folder-scripts.expanded) .script.folder {
+    background-color: var(--lightest);
+}
+
 .exploit > .main > .container-2 > .scripts .script-container .script:hover {
     cursor: pointer;
     background-color: var(--lighter);
