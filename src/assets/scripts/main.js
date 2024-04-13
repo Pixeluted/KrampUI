@@ -12,7 +12,7 @@ require.config({ paths: { "vs": "./assets/external/monaco" }});
 
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
-let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill;
+let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitFolder;
 let connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
 let settings, version, wsPort;
 
@@ -1526,9 +1526,10 @@ async function kill() {
   if (await isRobloxRunning()) await killRoblox();
 }
 
-async function openFolder() {
+async function openFolder(subDir) {
   try {
-    await open(await path.join(await appDirectory(), "scripts"));
+    const appDir = await appDirectory();
+    await open(subDir ? await path.join(appDir, subDir) : appDir);
     return true;
   } catch {
     return false;
@@ -1873,7 +1874,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitEditor = document.querySelector(".exploit .main .container .editor");
   exploitScripts = document.querySelector(".exploit .main .container-2 .scripts");
   exploitScriptsSearch = document.querySelector(".exploit .main .container-2 .kr-input.search");
-  exploitScriptsFolder = document.querySelector(".kr-folder");
+  exploitScriptsFolder = document.querySelector(".kr-scripts-folder");
 
   exploitTabs.addEventListener("wheel", function (e) {
     e.preventDefault();
@@ -1900,12 +1901,14 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitExport = document.querySelector(".kr-export");
   exploitClear = document.querySelector(".kr-clear");
   exploitKill = document.querySelector(".kr-kill");
+  exploitFolder = document.querySelector(".kr-folder");
   exploitExecute.addEventListener("click", execute);
   exploitImport.addEventListener("click", _import);
   exploitExport.addEventListener("click", _export);
   exploitClear.addEventListener("click", clear);
   exploitKill.addEventListener("click", kill);
-  exploitScriptsFolder.addEventListener("click", openFolder);
+  exploitFolder.addEventListener("click", () => openFolder());
+  exploitScriptsFolder.addEventListener("click", () => openFolder("scripts"));
 
   // Inject
   exploitInject.addEventListener("click", () => inject());
