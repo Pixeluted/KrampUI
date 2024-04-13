@@ -217,18 +217,23 @@ async function setKeyToggle(bool) {
 
 async function injectAutoExec() {
   const text = `
-    while not getgenv().KR_READY and task.wait(1) do
-      pcall(function()
-        getgenv().KR_WEBSOCKET = websocket.connect("ws://127.0.0.1:${wsPort}")
-        getgenv().KR_WEBSOCKET:Send("connect")
-        getgenv().KR_READY = true
+      while not getgenv().KR_READY and task.wait(1) do
+        pcall(function()
+            getgenv().KR_WEBSOCKET = websocket.connect("ws://127.0.0.1:${wsPort}")
+            getgenv().KR_WEBSOCKET:Send("connect")
+            getgenv().KR_READY = true
 
-        getgenv().KR_WEBSOCKET.OnMessage:Connect(function(message)
-          pcall(function()
-            loadstring(message)()
-          end)
+            getgenv().KR_WEBSOCKET.OnMessage:Connect(function(message)
+                local codeToRun = loadstring(message)
+                if codeToRun ~= nil then
+                    task.spawn(codeToRun)
+                else 
+                    task.spawn(function()
+                        error("Failed to compile the code, please check for syntax errors")
+                    end)
+                end
+            end)
         end)
-      end)
     end
   `;
 
