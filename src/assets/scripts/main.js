@@ -13,7 +13,7 @@ require.config({ paths: { "vs": "./assets/external/monaco" }});
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitFolder;
-let connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
+let connected, prevActive, editorReady, editorFontSize = 12, tabs, unsavedTabData, injecting, dataDirectory;
 let settings, version, wsPort;
 
 async function log(message, type = "info") {
@@ -1621,7 +1621,7 @@ function setupEditor() {
       theme: "dark",
       value: await getActiveTabContent(),
       fontFamily: "Fira Code",
-      fontSize: 12,
+      fontSize: editorFontSize,
       acceptSuggestionOnEnter: "smart",
       suggestOnTriggerCharacters: true,
       suggestSelection: "recentlyUsed",
@@ -1817,6 +1817,31 @@ function setupEditor() {
       const activeTab = tabs.find((t) => t.active === true);
       if (activeTab) revertTabContent(activeTab);
     });
+
+    function setZoom() {
+      editor.updateOptions({ fontSize: editorFontSize });
+    }
+
+    function zoomIn() {
+      if (editorFontSize < 30) editorFontSize++;
+      setZoom();
+    }
+
+    function zoomOut() {
+      if (editorFontSize > 1) editorFontSize--;
+      setZoom();
+    }
+
+    function resetZoom() {
+      editorFontSize = 12;
+      setZoom();
+    }
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, zoomIn);
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_ADD, zoomIn);
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, zoomOut);
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_SUBTRACT, zoomOut);
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, resetZoom);
 
     editor.addCommand(monaco.KeyCode.Home, () => null);
     updateIntelliSense();
