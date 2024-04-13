@@ -1,7 +1,7 @@
 const { invoke } = window.__TAURI__.tauri;
 const { open, Command } = window.__TAURI__.shell;
 const { appWindow, LogicalSize } = window.__TAURI__.window;
-const { getVersion } = window.__TAURI__.app;
+const { getName, getVersion } = window.__TAURI__.app;
 const process = window.__TAURI__.process;
 const dialog = window.__TAURI__.dialog;
 const event = window.__TAURI__.event;
@@ -10,11 +10,16 @@ const fs = window.__TAURI__.fs;
 
 require.config({ paths: { "vs": "./assets/external/monaco" }});
 
+let debug = false;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitFolder;
 let connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
-let settings, version, wsPort;
+let settings, title, version, wsPort;
+
+function alert(message, title) {
+  dialog.message(message, title || (debug ? `${title} [DEV]` : title));
+}
 
 async function log(message, type = "info") {
   await invoke("log", { message, type });
@@ -167,14 +172,14 @@ async function getSettings() {
     autoInject: json.autoInject,
     topMost: json.topMost,
     keyToggle: json.keyToggle,
-    editorFontSize: json.editorFontSize || 12
+    editorFontSize: json.editorFontSize || 14
   };
   else {
     const settings = {
       autoInject: false,
       topMost: true,
       keyToggle: false,
-      editorFontSize: 12
+      editorFontSize: 14
     };
 
     await setSettings(settings);
@@ -199,8 +204,8 @@ async function getWindowDimensions() {
   };
   else {
     const windowDimensions = {
-      width: 650,
-      height: 375
+      width: 700,
+      height: 400
     };
 
     await setWindowDimensions(windowDimensions);
@@ -271,7 +276,7 @@ async function injectAutoExec() {
                 task.spawn(codeToRun)
               else 
                 task.spawn(function()
-                  error("[KrampUI] Execution failed, check for syntax errors.")
+                  error("[${debug ? `${title} (DEV)` : title}] Execution failed, check for syntax errors.")
                 end)
               end
             end
@@ -290,7 +295,7 @@ async function injectAutoExec() {
     end
   `;
 
-  await writeFile("autoexec/__krampui", text.replace(/(--.*$|\/\*[\s\S]*?\*\/)/gm, "").replace(/\s+/g, " ").trim());
+  await writeFile(`autoexec/__${title?.toLowerCase()}`, text.replace(/(--.*$|\/\*[\s\S]*?\*\/)/gm, "").replace(/\s+/g, " ").trim());
 }
 
 function randomString(length) {
@@ -1461,7 +1466,7 @@ async function inject(autoInject) {
     const errors = ["error:", "redownload", "create a ticket", "make a ticket", "cannot find user", "mismatch", "out of date", "failed to", "no active subscription"];
 
     if (errors.some((s) => text.toLowerCase().includes(s)) && !text.toLowerCase().endsWith(":")) {
-      alert(`[Ro-Exec] ${text}`);
+      alert(text, "Ro-Exec Loader");
       done();
     } else {
       exploitInject.classList.add("disabled");
@@ -1633,19 +1638,18 @@ function setupEditor(editorFontSize) {
         { token: "string", foreground: "adf195" }
       ],
       colors: {
-        "editor.background": "#191c29",
-        "editor.foreground": "#c6cff3",
-        "list.hoverBackground": "#2f354e",
-        "editor.selectionBackground": "#282d42",
-        "editorSuggestWidget.background": "#282d42",
-        "editorSuggestWidget.selectedBackground": "#2f354e",
-        "editorSuggestWidget.highlightForeground": "#c6cff3",
-        "editorSuggestWidget.border": "#2f354e",
-        "editorOverviewRuler.border": "#2f354e",
-        "editor.lineHighlightBackground": "#1d2130",
-        "editorCursor.foreground": "#c6cff3",
-        "editor.selectionHighlightBorder": "#282d42",
-        "editorGutter.background": "#171a26"
+        "editor.background": "#191a1e",
+        "editor.foreground": "#aaabad",
+        "list.hoverBackground": "#2a2c32",
+        "editor.selectionBackground": "#35373b",
+        "editorSuggestWidget.background": "#35373b",
+        "editorSuggestWidget.selectedBackground": "#2a2c32",
+        "editorSuggestWidget.highlightForeground": "#aaabad",
+        "editorSuggestWidget.border": "#2a2c32",
+        "editorOverviewRuler.border": "#2a2c32",
+        "editor.lineHighlightBackground": "#1d1e23",
+        "editorCursor.foreground": "#aaabad",
+        "editorGutter.background": "#17181c"
       }
     });
 
@@ -1874,7 +1878,7 @@ function setupEditor(editorFontSize) {
     }
 
     function resetZoom() {
-      editorFontSize = 12;
+      editorFontSize = 14;
       setEditorFontSize(editorFontSize);
       setZoom();
     }
@@ -1909,7 +1913,7 @@ async function checkRobloxActive() {
   }
 }
 
-window.addEventListener("DOMContentLoaded", async function () {
+async function main() {
   // Prevent Events
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", function(e) {
@@ -1924,6 +1928,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Set-up
+  title = await getName();
   version = await getVersion();
   dataDirectory = await getData();
   unsavedTabData = await getUnsavedTabData();
@@ -1932,7 +1937,6 @@ window.addEventListener("DOMContentLoaded", async function () {
   await createDirectory(dataDirectory);
   await createDirectory("scripts");
   await createDirectory("autoexec");
-  setupEditor(settings.editorFontSize);
 
   // Window Dimensions
   let windowDimensions = await getWindowDimensions();
@@ -1953,8 +1957,10 @@ window.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Version
-  const versionElem = document.querySelector(".kr-titlebar .version");
+  const titleElem = document.querySelector(".kr-titlebar .brand .text");
+  const versionElem = document.querySelector(".kr-titlebar .brand .version");
   if (version && versionElem) versionElem.textContent = `(${version})`; 
+  if (title && titleElem) titleElem.textContent = debug ? `${title} [DEV]` : title;
 
   // Events
   event.listen("update", function (e) {
@@ -2026,6 +2032,9 @@ window.addEventListener("DOMContentLoaded", async function () {
   await setupTabs();
   populateTabs(true);
   document.querySelector(".kr-add-tab").addEventListener("click", addNewTab);
+
+  // Editor
+  setupEditor(settings.editorFontSize);
 
   // Buttons
   exploitInject = document.querySelector(".kr-inject");
@@ -2122,7 +2131,7 @@ window.addEventListener("DOMContentLoaded", async function () {
       if (foundDropdownContent.classList.contains("active")) {
         const dropdownWidth = foundDropdownContent.clientWidth;
         const dropdownHeight = foundDropdownContent.clientHeight;
-        const offset = 10;
+        const offset = 15;
         const offsetX = (e.clientX + dropdownWidth + offset > window.innerWidth) ? window.innerWidth - (dropdownWidth + offset) : e.clientX;
         const offsetY = (e.clientY + dropdownHeight + offset > window.innerHeight) ? window.innerHeight - (dropdownHeight + offset) : e.clientY + offset;
 
@@ -2137,4 +2146,11 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   // Show
   show();
-});
+}
+
+function error(e) {
+  alert(e.message);
+}
+
+if (debug) window.addEventListener("error", error);
+window.addEventListener("DOMContentLoaded", main);
