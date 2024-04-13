@@ -1946,7 +1946,7 @@ window.addEventListener("DOMContentLoaded", async function () {
     if (width < 400) width = 400;
     if (height < 200) height = 200;
 
-    if (width !== windowDimensions.width || height !== windowDimensions.height) {
+    if ((width !== windowDimensions.width || height !== windowDimensions.height) && !await isMaximized()) {
       windowDimensions = { width, height };
       await setWindowDimensions(windowDimensions);
     }
