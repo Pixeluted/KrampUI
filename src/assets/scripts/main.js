@@ -1535,10 +1535,9 @@ async function kill() {
   if (await isRobloxRunning()) await killRoblox();
 }
 
-async function openFolder(subDir) {
+async function openFolder() {
   try {
-    const appDir = await appDirectory();
-    await open(subDir ? await path.join(appDir, subDir) : appDir);
+    await open(await appDirectory());
     return true;
   } catch {
     return false;
@@ -1899,7 +1898,6 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitEditor = document.querySelector(".exploit .main .container .editor");
   exploitScripts = document.querySelector(".exploit .main .container-2 .scripts");
   exploitScriptsSearch = document.querySelector(".exploit .main .container-2 .kr-input.search");
-  exploitScriptsFolder = document.querySelector(".kr-scripts-folder");
 
   exploitTabs.addEventListener("wheel", function (e) {
     e.preventDefault();
@@ -1932,8 +1930,7 @@ window.addEventListener("DOMContentLoaded", async function () {
   exploitExport.addEventListener("click", _export);
   exploitClear.addEventListener("click", clear);
   exploitKill.addEventListener("click", kill);
-  exploitFolder.addEventListener("click", () => openFolder());
-  exploitScriptsFolder.addEventListener("click", () => openFolder("scripts"));
+  exploitFolder.addEventListener("click", openFolder);
 
   // Inject
   exploitInject.addEventListener("click", () => inject());
