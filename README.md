@@ -24,7 +24,7 @@ Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=VXCyulSe
 It's located at ``%appdata%/KrampUI``, or just press the folder icon on the UI and navigate one folder up.
 
 ### Ro-Exec updated, how do I select a new loader?
-Right click the inject button and press "Select Loader".
+Right click the inject button (even if its disabled!) and press "Select Loader".
 
 ### I don't see the UI, how do I fix it?
 Perhaps your computer doesn't have Microsoft Edge Webview installed.</br>
