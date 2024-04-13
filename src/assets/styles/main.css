@@ -262,10 +262,6 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     gap: 0.35rem;
 }
 
-.exploit .bar .buttons .kr-dropdown {
-    width: 100%;
-}
-
 .exploit .bar .buttons .kr-button {
     margin-left: -1px;
     border: 0.25px solid var(--lighter);
@@ -278,6 +274,10 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     padding: 0.35rem 0.5rem;
     gap: 0.5rem;
     width: 100%;
+}
+
+.exploit .bar .buttons > * {
+    width: calc((100% - 1rem) / 7) !important;
 }
 
 .exploit .bar .buttons .kr-button:hover {
@@ -510,7 +510,7 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     background-color: var(--lighter);
 }
 
-.exploit > .main > .container-2 > .scripts .script-container:has(.folder-scripts.expanded) .script.folder {
+.exploit > .main > .container-2 > .scripts:not(.searching) .script-container:has(.folder-scripts.expanded) .script.folder {
     background-color: var(--lightest);
 }
 

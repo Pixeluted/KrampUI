@@ -193,6 +193,16 @@ fn init_websocket(window: Window, port: u16) {
                 return Server { window: cloned_window };
             }).ok();
         });
+
+        thread::spawn(move || {
+            loop {
+                if let Some(websocket) = WEBSOCKET.lock().unwrap().clone() {
+                    websocket.send("kr-ping").unwrap();
+                }
+
+                sleep(Duration::from_millis(250));
+            };
+        });
     }
 }
 

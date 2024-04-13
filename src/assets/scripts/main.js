@@ -217,22 +217,42 @@ async function setKeyToggle(bool) {
 
 async function injectAutoExec() {
   const text = `
-      while not getgenv().KR_READY and task.wait(1) do
-        pcall(function()
-            getgenv().KR_WEBSOCKET = websocket.connect("ws://127.0.0.1:${wsPort}")
-            getgenv().KR_WEBSOCKET:Send("connect")
-            getgenv().KR_READY = true
+      while task.wait(0.25) do
+        if getgenv().KR_READY then
+          return
+        end
 
-            getgenv().KR_WEBSOCKET.OnMessage:Connect(function(message)
-                local codeToRun = loadstring(message)
-                if codeToRun ~= nil then
-                    task.spawn(codeToRun)
-                else 
-                    task.spawn(function()
-                        error("Failed to compile the code, please check for syntax errors")
-                    end)
-                end
-            end)
+        pcall(function()
+          getgenv().KR_WEBSOCKET = websocket.connect("ws://127.0.0.1:${wsPort}")
+          getgenv().KR_WEBSOCKET:Send("connect")
+          getgenv().KR_READY = true
+          local lastAlive = nil
+
+          getgenv().KR_WEBSOCKET.OnMessage:Connect(function(message)
+            if message == "kr-ping" then
+              lastAlive = os.time()
+            else
+              local codeToRun = loadstring(message)
+
+              if codeToRun ~= nil then
+                task.spawn(codeToRun)
+              else 
+                task.spawn(function()
+                  error("[KrampUI] Execution failed, check for syntax errors.")
+                end)
+              end
+            end
+          end)
+
+          while getgenv().KR_READY and task.wait(0.1) do
+            if lastAlive and os.time() - lastAlive > 1 then
+              pcall(function ()
+                getgenv().KR_WEBSOCKET:Close()
+              end)
+
+              getgenv().KR_READY = false
+            end
+          end
         end)
     end
   `;
@@ -388,9 +408,16 @@ function changeContentEditableText(elem, text) {
 }
 
 let expandedFolders = new Map();
+let searching = false;
 
 function isSearching() {
-  return (exploitScriptsSearch.value && exploitScriptsSearch.value !== "");
+  const newSearching = (exploitScriptsSearch.value && exploitScriptsSearch.value !== "");
+  
+  if (newSearching !== searching) {
+    exploitScripts.classList.toggle("searching", newSearching);
+  }
+
+  return newSearching;
 }
 
 function getExpanded(name) {
@@ -2023,7 +2050,6 @@ window.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Roblox Checks
-  checkRobloxActive();
   setInterval(checkRobloxActive, 1000);
 
   // Show
