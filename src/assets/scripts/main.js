@@ -496,6 +496,10 @@ async function addFolder({ name, path, scripts }, autoExec) {
     await deleteDirectory(path, true);
     removeExpanded(name);
     loadScripts();
+
+    tabs
+      .filter((t) => t.path && getDirectory(t.path) === path)
+      .forEach(async (tab) => await deleteTab(tab.id));
   });
 
   container.append(folder);
