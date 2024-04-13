@@ -1,6 +1,6 @@
 const { invoke } = window.__TAURI__.tauri;
 const { open, Command } = window.__TAURI__.shell;
-const { appWindow } = window.__TAURI__.window;
+const { appWindow, LogicalSize } = window.__TAURI__.window;
 const { getVersion } = window.__TAURI__.app;
 const process = window.__TAURI__.process;
 const dialog = window.__TAURI__.dialog;
@@ -13,7 +13,7 @@ require.config({ paths: { "vs": "./assets/external/monaco" }});
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitFolder;
-let connected, prevActive, editorReady, editorFontSize = 12, tabs, unsavedTabData, injecting, dataDirectory;
+let connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
 let settings, version, wsPort;
 
 async function log(message, type = "info") {
@@ -161,18 +161,20 @@ async function getSettings() {
   
   let json;
   try { json = JSON.parse(text); }
-  catch { return false; };
+  catch { json = null; };
 
   if (json) return {
     autoInject: json.autoInject,
     topMost: json.topMost,
-    keyToggle: json.keyToggle
+    keyToggle: json.keyToggle,
+    editorFontSize: json.editorFontSize || 12
   };
   else {
     const settings = {
       autoInject: false,
       topMost: true,
-      keyToggle: false
+      keyToggle: false,
+      editorFontSize: 12
     };
 
     await setSettings(settings);
@@ -182,6 +184,32 @@ async function getSettings() {
 
 async function setSettings(data) {
   await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
+}
+
+async function getWindowDimensions() {
+  const text = await readFile(`${dataDirectory}/window-dimensions`);
+  
+  let json;
+  try { json = JSON.parse(text); }
+  catch { json = null; };
+
+  if (json) return {
+    width: json.width,
+    height: json.height
+  };
+  else {
+    const windowDimensions = {
+      width: 650,
+      height: 375
+    };
+
+    await setWindowDimensions(windowDimensions);
+    return windowDimensions;
+  }
+}
+
+async function setWindowDimensions(data) {
+  await writeFile(`${dataDirectory}/window-dimensions`, JSON.stringify(data));
 }
 
 async function getUnsavedTabData() {
@@ -212,6 +240,11 @@ async function setTopMost(bool) {
 
 async function setKeyToggle(bool) {
   settings.keyToggle = bool;
+  await setSettings();
+}
+
+async function setEditorFontSize(number) {
+  settings.editorFontSize = number;
   await setSettings();
 }
 
@@ -1571,7 +1604,7 @@ async function openFolder() {
   }
 }
 
-function setupEditor() {
+function setupEditor(editorFontSize) {
   if (editorReady) return;
   editorReady = true;
 
@@ -1823,17 +1856,26 @@ function setupEditor() {
     }
 
     function zoomIn() {
-      if (editorFontSize < 30) editorFontSize++;
+      if (editorFontSize < 30) {
+        editorFontSize++;
+        setEditorFontSize(editorFontSize);
+      }
+      
       setZoom();
     }
 
     function zoomOut() {
-      if (editorFontSize > 1) editorFontSize--;
+      if (editorFontSize > 1) {
+        editorFontSize--;
+        setEditorFontSize(editorFontSize);
+      }
+
       setZoom();
     }
 
     function resetZoom() {
       editorFontSize = 12;
+      setEditorFontSize(editorFontSize);
       setZoom();
     }
 
@@ -1885,11 +1927,30 @@ window.addEventListener("DOMContentLoaded", async function () {
   version = await getVersion();
   dataDirectory = await getData();
   unsavedTabData = await getUnsavedTabData();
+  settings = await getSettings();
   await createDirectory("");
   await createDirectory(dataDirectory);
   await createDirectory("scripts");
   await createDirectory("autoexec");
-  setupEditor();
+  setupEditor(settings.editorFontSize);
+
+  // Window Dimensions
+  let windowDimensions = await getWindowDimensions();
+  appWindow.setSize(new LogicalSize(windowDimensions.width, windowDimensions.height));
+  appWindow.center();
+
+  window.addEventListener("resize", async function () {
+    let width = window.outerWidth;
+    let height = window.outerHeight;
+
+    if (width < 400) width = 400;
+    if (height < 200) height = 200;
+
+    if (width !== windowDimensions.width || height !== windowDimensions.height) {
+      windowDimensions = { width, height };
+      await setWindowDimensions(windowDimensions);
+    }
+  });
 
   // Version
   const versionElem = document.querySelector(".kr-titlebar .version");
@@ -1940,9 +2001,6 @@ window.addEventListener("DOMContentLoaded", async function () {
 
   checkMaximized();
   window.addEventListener("resize", checkMaximized);
-
-  // Settings
-  settings = await getSettings();
 
   // Exploit
   exploitIndicator = document.querySelector(".kr-titlebar .brand .text");
