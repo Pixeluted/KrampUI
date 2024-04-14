@@ -1438,7 +1438,7 @@ async function inject(autoInject) {
   exploitIndicator.style.color = "var(--yellow)";
 
   if (autoInject) await new Promise(function (resolve) {
-    setTimeout(() => resolve(), 5000);
+    setTimeout(() => resolve(), 10000);
   });
 
   const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.name], { cwd: await appDirectory() });
