@@ -270,14 +270,12 @@ async function injectAutoExec() {
             if message == "kr-ping" then
               lastAlive = os.time()
             else
-              local codeToRun = loadstring(message)
+              local func, err = loadstring(message)
 
-              if codeToRun ~= nil then
-                task.spawn(codeToRun)
-              else 
-                task.spawn(function()
-                  error("[${debug ? `${title} (DEV)` : title}] Execution failed, check for syntax errors.")
-                end)
+              if not func then
+                error(err)
+              else if func then
+                task.spawn(func)
               end
             end
           end)
