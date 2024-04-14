@@ -20,6 +20,11 @@ Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=VXCyulSe
 
 ## Q&A
 
+### Why is some random named exe is flagged by my antivirus in %appdata%/KrampUI?
+
+The exe is krampus loader you choosed whne you were asked, it was just moved and renamed. The reason why it gets flagged, is because all executors are flagged as viruses bc they inject code into another process.
+To suppres this, exclude the KrampUI folder bc the name is changing everytime you select new loader.
+
 ### Where is the scripts and autoexec folder?
 It's located at ``%appdata%/KrampUI``, or just press the folder icon on the UI and navigate one folder up.
 
