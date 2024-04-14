@@ -719,6 +719,7 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
 
       const result = await renameFile(_path, newPath);
       if (!isScripts) setExpanded(selectedFolder.innerText, true);
+      if ((folder?.element?.children?.length || 1) - 1 == 0) setExpanded(folder.name, false);
 
       if (result !== false) {
         tabs = tabs.map(function (t) {
@@ -729,7 +730,7 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
         await setTabs();
       }
 
-      loadScripts(result === false);
+      loadScripts(result !== false);
     }
 
     if (selected) unselect();
