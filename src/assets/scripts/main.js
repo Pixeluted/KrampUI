@@ -274,7 +274,7 @@ async function injectAutoExec() {
 
               if not func then
                 error(err)
-              else if func then
+              else
                 task.spawn(func)
               end
             end
