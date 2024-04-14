@@ -44,7 +44,7 @@
       "publisher": "BitdancerStudios",
       "category": "Utility",
       "copyright": "Copyright @ 2024 BitdancerStudios",
-      "shortDescription": "Simple and lightweight frontend for Ro-Exec.",
+      "longDescription": "Simple and lightweight frontend for Ro-Exec.",
       "icon": ["./icons/icon.ico"]
     },
     "systemTray": {
