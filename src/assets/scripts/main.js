@@ -1614,9 +1614,10 @@ function setupEditor(editorFontSize) {
 
   require(["vs/editor/editor.main"], async function() {
     let editorProposals = [];
+    let dynamicEditorProposals = [];
 
     function getDependencyProposals() {
-      return editorProposals;
+      return [...editorProposals, ...dynamicEditorProposals];
     }
 
     monaco.languages.registerCompletionItemProvider("lua", {
@@ -1815,7 +1816,27 @@ function setupEditor(editorFontSize) {
       editorAddIntellisense(key, "Property", "Property for Drawing Library", key);
     }
 
+    function updateIntelliSense() {
+      dynamicEditorProposals = [];
+      const editorContent = editor.getValue();
+
+      let functionMatch;
+      let variableMatch;
+
+      const functionRegex = /(?:\blocal\s+)?function\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+      const variableRegex = /(?:\blocal\s+)([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g;
+
+      while ((functionMatch = functionRegex.exec(editorContent)) !== null) {
+        dynamicEditorProposals.push({ label: functionMatch[1], kind: monaco.languages.CompletionItemKind.Function, detail: "Function", insertText: functionMatch[1] });
+      }
+
+      while ((variableMatch = variableRegex.exec(editorContent)) !== null) {
+        dynamicEditorProposals.push({ label: variableMatch[1], kind: monaco.languages.CompletionItemKind.Variable, detail: "Variable", insertText: variableMatch[1] });
+      }
+    }
+
     editor.onDidChangeModelContent(function () {
+      updateIntelliSense();
       setActiveTabContent(editorGetText());
     });
 
@@ -1868,6 +1889,7 @@ function setupEditor(editorFontSize) {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, resetZoom);
 
     editor.addCommand(monaco.KeyCode.Home, () => null);
+    updateIntelliSense();
   });
 }
 
