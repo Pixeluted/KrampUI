@@ -154,26 +154,27 @@ lazy_static! {
 fn init_key_events(window: Window) {
     let mut key_events_initialized = KEY_EVENTS_INITIALIZED.lock().unwrap();
 
-    if !*key_events_initialized {
-        *key_events_initialized = true;
-
-        thread::spawn(move || {
-            let callback = move |event: Event| {
-                if let EventType::KeyRelease(key) = event.event_type {
-                    window
-                        .emit(
-                            "key-press",
-                            Payload {
-                                message: format!("{:?}", key),
-                            },
-                        )
-                        .unwrap();
-                }
-            };
-
-            listen(callback).unwrap();
-        });
+    if *key_events_initialized {
+        return;
     }
+    *key_events_initialized = true;
+
+    thread::spawn(move || {
+        let callback = move |event: Event| {
+            if let EventType::KeyRelease(key) = event.event_type {
+                window
+                    .emit(
+                        "key-press",
+                        Payload {
+                            message: format!("{:?}", key),
+                        },
+                    )
+                    .unwrap();
+            }
+        };
+
+        listen(callback).unwrap();
+    });
 }
 
 #[command]
