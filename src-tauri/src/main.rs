@@ -125,34 +125,22 @@ async fn get_latest_release() -> Option<(String, String)> {
 
 #[command]
 async fn create_directory(path: String) -> bool {
-    return match fs::create_dir_all(&path).await {
-        Ok(_) => true,
-        Err(_) => false,
-    };
+    fs::create_dir_all(&path).await.is_ok()
 }
 
 #[command]
 async fn write_file(path: String, data: String) -> bool {
-    return match fs::write(&path, &data).await {
-        Ok(_) => true,
-        Err(_) => false,
-    };
+    fs::write(&path, &data).await.is_ok()
 }
 
 #[command]
 async fn delete_directory(path: String) -> bool {
-    return match fs::remove_dir_all(&path).await {
-        Ok(_) => true,
-        Err(_) => false,
-    };
+    fs::remove_dir_all(&path).await.is_ok()
 }
 
 #[command]
 async fn delete_file(path: String) -> bool {
-    return match fs::remove_file(&path).await {
-        Ok(_) => true,
-        Err(_) => false,
-    };
+    fs::remove_file(&path).await.is_ok()
 }
 
 lazy_static! {
