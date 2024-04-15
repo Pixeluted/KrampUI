@@ -1661,7 +1661,9 @@ function setupEditor(editorFontSize) {
     });
 
     window.onresize = function() {
-      editor.layout();
+      if (document.querySelector(".exploit").classList.contains("active")) {
+        editor.layout();
+      }
     };
 
     editorGetText = function() {
@@ -2062,7 +2064,7 @@ async function main() {
     if (isSettingsOpen) {
       settingsWindow.classList.remove("active");
       exploitWindow.classList.add("active");
-      setupEditor();
+      editor.layout();
     } else {
       settingsWindow.classList.add("active");
       exploitWindow.classList.remove("active");
