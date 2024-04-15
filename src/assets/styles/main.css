@@ -599,3 +599,10 @@ input[type=number]::-webkit-outer-spin-button {
     width: fit-content;
     padding: 0.25rem;
 }
+
+.settings .setting > .kr-button {
+    width: 11.7rem;
+    padding: 0.25rem;
+    background-color: var(--light);
+    border: 1px solid var(--lighter);
+}

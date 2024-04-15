@@ -2055,42 +2055,8 @@ async function main() {
   document.querySelector(".kr-dropdown-select-loader").addEventListener("click", () => askForExecutable(true));
   document.querySelector(".kr-dropdown-delete-loader").addEventListener("click", clearExecutables);
 
-  // Auto Inject
-  function checkAutoInject() {
-    document.querySelector(".kr-dropdown-auto-inject .fa-solid").className = `fa-solid fa-${settings.autoInject ? "check" : "times"}`;
-  }
-
-  checkAutoInject();
-  document.querySelector(".kr-dropdown-auto-inject").addEventListener("click", async function () {
-    await setAutoInject(!settings.autoInject);
-    checkAutoInject();
-  });
-
-  // Top Most
-  async function checkTopMost() {
-    document.querySelector(".kr-dropdown-top-most .fa-solid").className = `fa-solid fa-${settings.topMost ? "check" : "times"}`;
-    await appWindow.setAlwaysOnTop(settings.topMost);
-  }
-
-  await checkTopMost();
-  document.querySelector(".kr-dropdown-top-most").addEventListener("click", async function () {
-    await setTopMost(!settings.topMost);
-    await checkTopMost();
-  });
-
-  // Key Toggle
-  function checkKeyToggle() {
-    document.querySelector(".kr-dropdown-key-toggle .fa-solid").className = `fa-solid fa-${settings.keyToggle ? "check" : "times"}`;
-  }
-
   await invoke("init_key_events", { window: appWindow });
-  await checkKeyToggle();
-  
-  document.querySelector(".kr-dropdown-key-toggle").addEventListener("click", async function () {
-    await setKeyToggle(!settings.keyToggle);
-    await checkKeyToggle();
-  });
-  
+
   event.listen("key-press", function (e) {
     const key = (e?.payload?.message || "")?.toLowerCase();
     if (key === "home") toggle();
@@ -2100,6 +2066,27 @@ async function main() {
     const key = (e?.key || "")?.toLowerCase();
     if (key === "home") toggle();
   });
+
+  // Settings Toggle
+
+  const settingsToggle = document.querySelector(".settings-toggle");
+  const exploitWindow = document.querySelector(".exploit");
+  const settingsWindow = document.querySelector(".settings");
+  
+  let isSettingsOpen = false;
+
+  settingsToggle.addEventListener("click", () => {
+    if (isSettingsOpen) {
+      settingsWindow.classList.remove("active");
+      exploitWindow.classList.add("active");
+      setupEditor();
+    } else {
+      settingsWindow.classList.add("active");
+      exploitWindow.classList.remove("active");
+    }
+
+    isSettingsOpen = !isSettingsOpen;
+  })
 
   // Dropdowns
   function findDropdown(e) {
