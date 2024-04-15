@@ -172,14 +172,16 @@ async function getSettings() {
     autoInject: json.autoInject,
     topMost: json.topMost,
     keyToggle: json.keyToggle,
-    editorFontSize: json.editorFontSize || 14
+    editorFontSize: json.editorFontSize || 14,
+    injectionDelay: json.injectionDelay || 3
   };
   else {
     const settings = {
       autoInject: false,
       topMost: true,
       keyToggle: false,
-      editorFontSize: 14
+      editorFontSize: 14,
+      injectionDelay: 3
     };
 
     await setSettings(settings);
@@ -187,7 +189,7 @@ async function getSettings() {
   }
 }
 
-async function setSettings(data) {
+async function saveSettings(data) {
   await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
 }
 
@@ -233,25 +235,6 @@ async function setUnsavedTabData() {
   await writeFile(`${dataDirectory}/unsaved-tab-data`, text);
 }
 
-async function setAutoInject(bool) {
-  settings.autoInject = bool;
-  await setSettings();
-}
-
-async function setTopMost(bool) {
-  settings.topMost = bool;
-  await setSettings();
-}
-
-async function setKeyToggle(bool) {
-  settings.keyToggle = bool;
-  await setSettings();
-}
-
-async function setEditorFontSize(number) {
-  settings.editorFontSize = number;
-  await setSettings();
-}
 
 async function injectAutoExec() {
   const text = `
@@ -1437,7 +1420,7 @@ async function inject(autoInject) {
   exploitIndicator.style.color = "var(--yellow)";
 
   if (autoInject) await new Promise(function (resolve) {
-    setTimeout(() => resolve(), 10000);
+    setTimeout(() => resolve(), settings.injectionDelay);
   });
 
   const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.name], { cwd: await appDirectory() });
@@ -1855,30 +1838,30 @@ function setupEditor(editorFontSize) {
     });
 
     function setZoom() {
-      editor.updateOptions({ fontSize: editorFontSize });
+      editor.updateOptions({ fontSize: settings.editorFontSize });
     }
 
     function zoomIn() {
-      if (editorFontSize < 30) {
-        editorFontSize++;
-        setEditorFontSize(editorFontSize);
+      if (settings.editorFontSize < 30) {
+        settings.editorFontSize++;
+        saveSettings();
       }
       
       setZoom();
     }
 
     function zoomOut() {
-      if (editorFontSize > 1) {
-        editorFontSize--;
-        setEditorFontSize(editorFontSize);
+      if (settings.editorFontSize > 1) {
+        settings.editorFontSize--;
+        saveSettings();
       }
 
       setZoom();
     }
 
     function resetZoom() {
-      editorFontSize = 14;
-      setEditorFontSize(editorFontSize);
+      settings.editorFontSize = 14;
+      saveSettings();
       setZoom();
     }
 
@@ -2088,6 +2071,66 @@ async function main() {
     isSettingsOpen = !isSettingsOpen;
   })
 
+  // Settings Handler
+
+  const autoInjectButton = document.querySelector(".auto-inject");
+  const topMostButton = document.querySelector(".top-most")
+  const homeToggleButton = document.querySelector(".home-toggle");
+  const fontSizeValue = document.querySelector(".font-size");
+  const autoInjectDelayValue = document.querySelector(".auto-inject-delay");
+
+  function updateSettingsUI() {
+    autoInjectButton.innerText = settings.autoInject ? "Enabled" : "Disabled"
+    topMostButton.innerText = settings.topMost ? "Enabled" : "Disabled"
+    homeToggleButton.innerText = settings.keyToggle ? "Enabled" : "Disabled"
+    fontSizeValue.value = settings.editorFontSize
+    autoInjectDelayValue.value = settings.injectionDelay
+  }
+
+  updateSettingsUI();
+
+  autoInjectButton.addEventListener("click", () => {
+    settings.autoInject = !settings.autoInject;
+    saveSettings();
+    updateSettingsUI();
+  })
+
+  topMostButton.addEventListener("click", () => {
+    settings.topMost = !settings.topMost;
+    appWindow.setAlwaysOnTop(settings.topMost);
+    saveSettings();
+    updateSettingsUI();
+  })
+
+  homeToggleButton.addEventListener("click", () => {
+    settings.keyToggle = !settings.keyToggle;
+    saveSettings();
+    updateSettingsUI();
+  })
+
+  fontSizeValue.addEventListener('keydown', function(event) {
+      if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
+          event.preventDefault(); 
+      }
+  });
+
+  fontSizeValue.addEventListener("input", (e) => {
+    settings.editorFontSize = fontSizeValue.value;
+    saveSettings();
+    editor.updateOptions({ fontSize: settings.editorFontSize });
+  })
+
+  autoInjectDelayValue.addEventListener('keydown', function(event) {
+      if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
+          event.preventDefault(); 
+      }
+  });
+
+  autoInjectDelayValue.addEventListener("input", (e) => {
+    settings.injectionDelay = autoInjectDelayValue.value;
+    saveSettings();
+  })
+
   // Dropdowns
   function findDropdown(e) {
     if (e.classList.contains("kr-dropdown")) return e;
@@ -2126,6 +2169,8 @@ async function main() {
       }
     }
   });
+
+  appWindow.setAlwaysOnTop(settings.topMost);
 
   // Roblox Checks
   setInterval(checkRobloxActive, 1000);
