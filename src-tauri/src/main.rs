@@ -31,6 +31,43 @@ struct Payload2 {
   cwd: String,
 }
 
+struct Server {
+    window: Window
+}
+
+impl ws::Handler for Server {
+    fn on_message(&mut self, data: ws::Message) -> ws::Result<()> {
+        let mut connected = CONNECTED.lock().unwrap();
+        
+        if *connected {
+            return Ok(());
+        }
+
+        let data_string = data.to_string();
+        let mut parts = data_string.split(",");
+        let type_value = match parts.next() {
+            Some(val) => val.trim(),
+            None => return Ok(())
+        };
+
+        if type_value == "connect" {
+            self.window.emit("update", PayloadUpdate { message: true }).unwrap();
+            *connected = true;
+        }
+
+        return Ok(());
+    }
+
+    fn on_close(&mut self, _code: ws::CloseCode, _reason: &str) {
+        let mut connected = CONNECTED.lock().unwrap();
+
+        if *connected {
+            self.window.emit("update", PayloadUpdate { message: false }).unwrap();
+            *connected = false;
+        }
+    }
+}
+
 #[command]
 fn kill_roblox() -> bool {
     return match System::new_all().processes_by_name("RobloxPlayerBeta.exe").next() {
@@ -149,42 +186,7 @@ fn init_websocket(window: Window, port: u16) {
     if !*websocket_initialized {
         *websocket_initialized = true;
 
-        struct Server {
-            window: Window
-        }
-
-        impl ws::Handler for Server {
-            fn on_message(&mut self, data: ws::Message) -> ws::Result<()> {
-                let mut connected = CONNECTED.lock().unwrap();
-                
-                if *connected {
-                    return Ok(());
-                }
-
-                let data_string = data.to_string();
-                let mut parts = data_string.split(",");
-                let type_value = match parts.next() {
-                    Some(val) => val.trim(),
-                    None => return Ok(())
-                };
-
-                if type_value == "connect" {
-                    self.window.emit("update", PayloadUpdate { message: true }).unwrap();
-                    *connected = true;
-                }
-
-                return Ok(());
-            }
-
-            fn on_close(&mut self, _code: ws::CloseCode, _reason: &str) {
-                let mut connected = CONNECTED.lock().unwrap();
-
-                if *connected {
-                    self.window.emit("update", PayloadUpdate { message: false }).unwrap();
-                    *connected = false;
-                }
-            }
-        }
+        
 
         thread::spawn(move || {
             ws::listen(format!("127.0.0.1:{}", port), move | out: ws::Sender | { 
