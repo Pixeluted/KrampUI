@@ -552,3 +552,52 @@ body > .container > *:not(.active):not(.kr-titlebar) {
     cursor: pointer;
     background-color: var(--lighter);
 }
+
+.settings {
+    overflow: auto;
+}
+
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    overflow: auto;
+}
+
+.setting {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.setting > .setting-info > .setting-name {
+    text-wrap: nowrap;
+    font-weight: bold;
+}
+
+.setting > .setting-info > .setting-description {
+    font-size: 0.9rem;
+    opacity: 75%;
+}
+
+@media only screen and (max-width: 470px) {
+    .setting > .setting-info > .setting-description {
+        display: none;
+    }
+}
+
+.setting > input {
+    text-decoration: none;
+    text-align: center;
+    width: fit-content;
+    padding: 0.25rem;
+}
+
+
+input[type=number].no-spinner::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+-webkit-appearance: none; 
+ margin: 0; 
+}
