@@ -157,8 +157,8 @@ fn init_key_events(window: Window) {
     if *key_events_initialized {
         return;
     }
-    *key_events_initialized = true;
 
+    *key_events_initialized = true;
     thread::spawn(move || {
         let callback = move |event: Event| {
             if let EventType::KeyRelease(key) = event.event_type {
@@ -181,28 +181,30 @@ fn init_key_events(window: Window) {
 fn init_websocket(window: Window, port: u16) {
     let mut websocket_initialized = WEBSOCKET_INITIALIZED.lock().unwrap();
 
-    if !*websocket_initialized {
-        *websocket_initialized = true;
-
-        thread::spawn(move || {
-            ws::listen(format!("127.0.0.1:{}", port), move |out: ws::Sender| {
-                let cloned_window = window.clone();
-                *WEBSOCKET.lock().unwrap() = Some(out.clone());
-                return Server {
-                    window: cloned_window,
-                };
-            })
-            .ok();
-        });
-
-        thread::spawn(move || loop {
-            if let Some(websocket) = WEBSOCKET.lock().unwrap().clone() {
-                websocket.send("kr-ping").unwrap();
-            }
-
-            sleep(Duration::from_millis(250));
-        });
+    if *websocket_initialized {
+        return;
     }
+
+    *websocket_initialized = true;
+
+    thread::spawn(move || {
+        ws::listen(format!("127.0.0.1:{}", port), move |out: ws::Sender| {
+            let cloned_window = window.clone();
+            *WEBSOCKET.lock().unwrap() = Some(out.clone());
+            return Server {
+                window: cloned_window,
+            };
+        })
+        .ok();
+    });
+
+    thread::spawn(move || loop {
+        if let Some(websocket) = WEBSOCKET.lock().unwrap().clone() {
+            websocket.send("kr-ping").unwrap();
+        }
+
+        sleep(Duration::from_millis(250));
+    });
 }
 
 #[command]
