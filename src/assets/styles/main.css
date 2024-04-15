@@ -575,6 +575,7 @@ input[type=number]::-webkit-outer-spin-button {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
 }
 
 .settings .setting > .setting-info > .setting-name {
@@ -589,19 +590,21 @@ input[type=number]::-webkit-outer-spin-button {
 
 @media only screen and (max-width: 500px) {
     .settings .setting > .setting-info > .setting-description {
-        display: none;
+        font-size: 0.75rem;
     }
 }
 
 .settings .setting > .kr-input {
     text-decoration: none;
     text-align: center;
-    width: fit-content;
     padding: 0.25rem;
+    min-width: 10rem;
+    width: 10rem;
 }
 
 .settings .setting > .kr-button {
-    width: 11.7rem;
+    min-width: 10rem;
+    width: 10rem;
     padding: 0.25rem;
     background-color: var(--light);
     border: 1px solid var(--lighter);

@@ -1839,40 +1839,6 @@ function setupEditor(editorFontSize) {
       if (activeTab) revertTabContent(activeTab);
     });
 
-    function setZoom() {
-      editor.updateOptions({ fontSize: settings.editorFontSize });
-    }
-
-    function zoomIn() {
-      if (settings.editorFontSize < 30) {
-        settings.editorFontSize++;
-        saveSettings();
-      }
-      
-      setZoom();
-    }
-
-    function zoomOut() {
-      if (settings.editorFontSize > 1) {
-        settings.editorFontSize--;
-        saveSettings();
-      }
-
-      setZoom();
-    }
-
-    function resetZoom() {
-      settings.editorFontSize = 14;
-      saveSettings();
-      setZoom();
-    }
-
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, zoomIn);
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_ADD, zoomIn);
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, zoomOut);
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_SUBTRACT, zoomOut);
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, resetZoom);
-
     editor.addCommand(monaco.KeyCode.Home, () => null);
     updateIntelliSense();
   });
