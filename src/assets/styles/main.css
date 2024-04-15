@@ -606,3 +606,7 @@ input[type=number]::-webkit-outer-spin-button {
     background-color: var(--light);
     border: 1px solid var(--lighter);
 }
+
+.exit:hover {
+    background-color: #dd353d !important;
+}
