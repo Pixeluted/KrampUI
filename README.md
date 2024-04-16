@@ -19,17 +19,11 @@ Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=VXCyulSe
 4. Access the executable at `src-tauri/target/release` or `src-tauri/target/debug`.
 
 ## Q&A
-
-### Why is some random named exe is flagged by my antivirus in %appdata%/KrampUI?
-
-The exe is krampus loader you choosed when you were asked, it was just moved and renamed. The reason why it gets flagged, is because all executors are flagged as viruses bc they inject code into another process.
-To suppres this, exclude the KrampUI folder bc the name is changing everytime you select new loader.
-
 ### Where is the scripts and autoexec folder?
 It's located at ``%appdata%/KrampUI``, or just press the folder icon on the UI and navigate one folder up.
 
 ### Ro-Exec updated, how do I select a new loader?
-Right click the inject button (even if its disabled!) and press "Select Loader".
+Click the settings menu, and then press "Update Loader" in order to select a new loader.
 
 ### I don't see the UI, how do I fix it?
 Perhaps your computer doesn't have Microsoft Edge Webview installed.</br>
@@ -40,6 +34,9 @@ You're probably in the Roblox menu, for the UI to recognize it's connected, join
 
 ### How to fix it injecting but not executing scripts?
 It's probably a issue with Ro-Exec. It's advised to wait until you load into game before injecting.
+
+### What is the randomized executable stored in %appdata%/KrampUI?
+That's the loader you've selected. You may delete it or replace it, but it's advised to use the Settings menu instead.
 
 ## Found a bug?
 Feel free to let us know, contact one of our team members:
