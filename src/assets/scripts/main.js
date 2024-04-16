@@ -2108,7 +2108,7 @@ async function main() {
 
   fontSizeValue.addEventListener("input", function () {
     const val = fontSizeValue?.value;
-    if (isNaN(val) || val === "" || !val) return;
+    if (isNaN(val) || val === "") return;
 
     settings.editorFontSize = val;
     saveSettings();
@@ -2117,7 +2117,7 @@ async function main() {
 
   autoInjectDelayValue.addEventListener("input", function () {
     const val = autoInjectDelayValue?.value;
-    if (isNaN(val) || val === "" || !val) return;
+    if (isNaN(val) || val === "") return;
     
     settings.injectionDelay = val;
     saveSettings();
