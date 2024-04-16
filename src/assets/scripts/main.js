@@ -184,7 +184,7 @@ async function getSettings() {
       injectionDelay: 3
     };
 
-    await setSettings(settings);
+    await saveSettings(settings);
     return settings;
   }
 }

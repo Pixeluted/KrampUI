@@ -110,8 +110,6 @@ async fn get_latest_release() -> Option<(String, String)> {
         .await
         .ok()?;
 
-    // Converted match into Option try's Some(value)? => value None? => returns none
-
     if !response.status().is_success() {
         return None;
     }
