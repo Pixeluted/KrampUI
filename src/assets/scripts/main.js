@@ -173,7 +173,7 @@ async function getSettings() {
     topMost: json.topMost,
     keyToggle: json.keyToggle,
     editorFontSize: json.editorFontSize || 14,
-    injectionDelay: json.injectionDelay || 3
+    injectionDelay: json.injectionDelay || 10
   };
   else {
     const settings = {
@@ -181,7 +181,7 @@ async function getSettings() {
       topMost: true,
       keyToggle: false,
       editorFontSize: 14,
-      injectionDelay: 3
+      injectionDelay: 10
     };
 
     await saveSettings(settings);
