@@ -5,7 +5,7 @@
     --light: #191a1e;
     --lighter: #35373b;
     --lightest: #2a2c32;
-    --primary: #214ee2;
+    --primary: rgb(57, 99, 235);
     --text: #aaabad;
     --text-dimmed: #8a8a8b;
     --green: #93e685;
@@ -246,7 +246,7 @@ input[type=number]::-webkit-outer-spin-button {
     transition: background-color 0.2s;
 }
 
-.kr-titlebar .tb-button:hover {
+.kr-titlebar .tb-button:hover, .kr-titlebar .settings-toggle.toggled {
     background-color: var(--light);
     cursor: pointer;
 }
@@ -565,9 +565,9 @@ input[type=number]::-webkit-outer-spin-button {
     flex-direction: column;
     gap: 0.75rem;
     margin: 0.25rem;
-    padding-inline: 0.5rem;
+    padding: 0.5rem;
     overflow: auto;
-    max-height: calc(100vh - 24px - 0.5rem);
+    max-height: calc(100vh - 24px - 1.5rem);
 }
 
 .settings .setting {
@@ -576,6 +576,24 @@ input[type=number]::-webkit-outer-spin-button {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+}
+
+.settings .setting.buttons {
+    justify-content: start;
+    gap: 0.5rem !important;
+}
+
+.settings .setting.buttons > .kr-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.5rem;
+    gap: 0.5rem;
+    background-color: var(--primary);
+}
+
+.settings .setting.buttons > .kr-button > * {
+    color: white;
 }
 
 .settings .setting > .setting-info > .setting-name {
@@ -602,7 +620,7 @@ input[type=number]::-webkit-outer-spin-button {
     width: 10rem;
 }
 
-.settings .setting > .kr-button {
+.settings .setting:not(.buttons) > .kr-button {
     min-width: 10rem;
     width: 10rem;
     padding: 0.25rem;
@@ -612,4 +630,8 @@ input[type=number]::-webkit-outer-spin-button {
 
 .exit:hover {
     background-color: #dd353d !important;
+}
+
+.exit:hover > * {
+    color: white !important;
 }

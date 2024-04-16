@@ -30,13 +30,7 @@
       <div class="exploit active">
         <div class="bar">
           <div class="buttons">
-            <div class="kr-dropdown">
-              <div class="kr-button kr-inject disabled"><i class="fa-solid fa-syringe"></i><span class="text">Inject</span></div>
-              <div class="kr-dropdown-content">
-                <div class="kr-dropdown-select-loader">Select Loader <i class="fa-solid fa-file"></i></div>
-                <div class="kr-dropdown-delete-loader">Delete Loader <i class="fa-solid fa-delete-left"></i></div>
-              </div>
-            </div>
+            <button class="kr-button kr-inject disabled"><i class="fa-solid fa-syringe"></i><span class="text">Inject</span></button>
             <button class="kr-button kr-kill before-seperator disabled"><i class="fa-solid fa-ban"></i> <span class="text">Kill</span></button>
             <div class="seperator"></div>
             <button class="kr-button kr-execute after-seperator disabled"><i class="fa-solid fa-scroll"></i> <span class="text">Execute</span></button>
@@ -70,6 +64,10 @@
         </div>
       </div>
       <div class="settings">
+        <div class="setting buttons">
+          <div class="kr-button kr-select-loader"><i class="fa-solid fa-upload"></i><span class="text">Select Loader</span></div>
+          <div class="kr-button kr-delete-loader"><i class="fa-solid fa-delete-left"></i><span class="text">Delete Loader</span></div>
+        </div>
         <div class="setting">
           <div class="setting-info">
             <p class="setting-name">Auto Inject</p>
@@ -82,7 +80,7 @@
             <p class="setting-name">Auto Inject Delay</p>
             <p class="setting-description">Delay in seconds to prevent automatic injection from crashing</p>
           </div>
-          <input class="kr-input no-spinner auto-inject-delay" type="number" value="22">
+          <input class="kr-input no-spinner auto-inject-delay" type="number">
         </div>
         <div class="setting">
           <div class="setting-info">
@@ -103,7 +101,7 @@
             <p class="setting-name">Font Size</p>
             <p class="setting-description">Controls the editors font size</p>
           </div>
-          <input class="kr-input no-spinner font-size" type="number" value="22">
+          <input class="kr-input no-spinner font-size" type="number">
         </div>
       </div>
     </div>

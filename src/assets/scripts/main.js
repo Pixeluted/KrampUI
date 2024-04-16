@@ -1660,10 +1660,14 @@ function setupEditor(editorFontSize) {
       lineNumbersMinChars: 2
     });
 
-    window.onresize = function() {
+    function layout() {
       if (document.querySelector(".exploit").classList.contains("active")) {
         editor.layout();
       }
+    }
+
+    window.onresize = function() {
+      layout();
     };
 
     editorGetText = function() {
@@ -1840,6 +1844,8 @@ function setupEditor(editorFontSize) {
     });
 
     editor.addCommand(monaco.KeyCode.Home, () => null);
+
+    layout();
     updateIntelliSense();
   });
 }
@@ -1938,6 +1944,18 @@ async function main() {
     await toggle(true);
   });
 
+  event.listen("key-press", function (e) {
+    const key = (e?.payload?.message || "")?.toLowerCase();
+    if (key === "home") toggle();
+  });
+
+  window.addEventListener("keyup", function (e) {
+    const key = (e?.key || "")?.toLowerCase();
+    if (key === "home") toggle();
+  });
+
+  await invoke("init_key_events", { window: appWindow });
+
   // Set-up Websocket
   wsPort = 54349;
 
@@ -2002,24 +2020,12 @@ async function main() {
   exploitFolder.addEventListener("click", openFolder);
 
   // Inject
-  exploitInject.addEventListener("click", () => inject());
-  document.querySelector(".kr-dropdown-select-loader").addEventListener("click", () => askForExecutable(true));
-  document.querySelector(".kr-dropdown-delete-loader").addEventListener("click", clearExecutables);
-
-  await invoke("init_key_events", { window: appWindow });
-
-  event.listen("key-press", function (e) {
-    const key = (e?.payload?.message || "")?.toLowerCase();
-    if (key === "home") toggle();
-  });
-
-  window.addEventListener("keyup", function (e) {
-    const key = (e?.key || "")?.toLowerCase();
-    if (key === "home") toggle();
+  exploitInject.addEventListener("click", async function () {
+    if (await findExecutable()) inject();
+    else alert("Select the loader in settings first.");
   });
 
   // Settings Toggle
-
   const settingsToggle = document.querySelector(".settings-toggle");
   const exploitWindow = document.querySelector(".exploit");
   const settingsWindow = document.querySelector(".settings");
@@ -2027,6 +2033,8 @@ async function main() {
   let isSettingsOpen = false;
 
   settingsToggle.addEventListener("click", () => {
+    settingsToggle.classList.toggle("toggled", !isSettingsOpen);
+
     if (isSettingsOpen) {
       settingsWindow.classList.remove("active");
       exploitWindow.classList.add("active");
@@ -2039,65 +2047,90 @@ async function main() {
     isSettingsOpen = !isSettingsOpen;
   })
 
-  // Settings Handler
-
+  // Settings
   const autoInjectButton = document.querySelector(".auto-inject");
   const topMostButton = document.querySelector(".top-most")
   const homeToggleButton = document.querySelector(".home-toggle");
   const fontSizeValue = document.querySelector(".font-size");
   const autoInjectDelayValue = document.querySelector(".auto-inject-delay");
+  const selectLoaderButton = document.querySelector(".kr-select-loader");
+  const deleteLoaderButton = document.querySelector(".kr-delete-loader");
 
-  function updateSettingsUI() {
-    autoInjectButton.innerText = settings.autoInject ? "Enabled" : "Disabled"
-    topMostButton.innerText = settings.topMost ? "Enabled" : "Disabled"
-    homeToggleButton.innerText = settings.keyToggle ? "Enabled" : "Disabled"
-    fontSizeValue.value = settings.editorFontSize
-    autoInjectDelayValue.value = settings.injectionDelay
+  async function updateSettingsUI() {
+    autoInjectButton.innerText = settings.autoInject ? "Enabled" : "Disabled";
+    topMostButton.innerText = settings.topMost ? "Enabled" : "Disabled";
+    homeToggleButton.innerText = settings.keyToggle ? "Enabled" : "Disabled";
+    fontSizeValue.value = settings.editorFontSize;
+    autoInjectDelayValue.value = settings.injectionDelay;
+    
+    const isExecutable = await findExecutable() ? true : false;
+    deleteLoaderButton.classList.toggle("disabled", !isExecutable);
+    selectLoaderButton.querySelector(".text").textContent = isExecutable ? "Update Loader" : "Select Loader";
+    selectLoaderButton.querySelector("i").className = isExecutable ? "fa-solid fa-sync" : "fa-solid fa-upload";
   }
 
   updateSettingsUI();
 
-  autoInjectButton.addEventListener("click", () => {
+  autoInjectButton.addEventListener("click", function () {
     settings.autoInject = !settings.autoInject;
     saveSettings();
     updateSettingsUI();
-  })
+  });
 
-  topMostButton.addEventListener("click", () => {
+  topMostButton.addEventListener("click", function () {
     settings.topMost = !settings.topMost;
     appWindow.setAlwaysOnTop(settings.topMost);
     saveSettings();
     updateSettingsUI();
-  })
+  });
 
-  homeToggleButton.addEventListener("click", () => {
+  homeToggleButton.addEventListener("click", function () {
     settings.keyToggle = !settings.keyToggle;
     saveSettings();
     updateSettingsUI();
-  })
-
-  fontSizeValue.addEventListener('keydown', function(event) {
-      if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
-          event.preventDefault(); 
-      }
   });
 
-  fontSizeValue.addEventListener("input", (e) => {
-    settings.editorFontSize = fontSizeValue.value;
+  fontSizeValue.addEventListener("keydown", function (event) {
+    if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
+      event.preventDefault(); 
+    }
+  });
+
+  autoInjectDelayValue.addEventListener("keydown", function (event) {
+    if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
+      event.preventDefault(); 
+    }
+  });
+
+  fontSizeValue.addEventListener("input", function () {
+    const val = fontSizeValue?.value;
+    if (isNaN(val) || val === "" || !val) return;
+
+    settings.editorFontSize = val;
     saveSettings();
     editor.updateOptions({ fontSize: settings.editorFontSize });
-  })
-
-  autoInjectDelayValue.addEventListener('keydown', function(event) {
-      if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
-          event.preventDefault(); 
-      }
   });
 
-  autoInjectDelayValue.addEventListener("input", (e) => {
-    settings.injectionDelay = autoInjectDelayValue.value;
+  autoInjectDelayValue.addEventListener("input", function () {
+    const val = autoInjectDelayValue?.value;
+    if (isNaN(val) || val === "" || !val) return;
+    
+    settings.injectionDelay = val;
     saveSettings();
-  })
+  });
+
+  selectLoaderButton.addEventListener("click", async function () {
+    selectLoaderButton.classList.add("disabled");
+    await askForExecutable(true);
+    selectLoaderButton.classList.remove("disabled");
+    updateSettingsUI();
+  });
+
+  deleteLoaderButton.addEventListener("click", async function () {
+    deleteLoaderButton.classList.add("disabled");
+    await clearExecutables();
+    updateSettingsUI();
+  });
 
   // Dropdowns
   function findDropdown(e) {
