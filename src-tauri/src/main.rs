@@ -233,44 +233,41 @@ fn log(message: String, _type: Option<String>) {
 }
 
 #[command]
-async fn validate_executable(executable_path: String) -> (bool, String) {
-    let mut file = match File::open(executable_path).await {
-        Ok(file) => file,
-        Err(_) => return (false, "Failed to open file!".to_string()),
+async fn validate_executable(executable_path: String) -> Result<(), &'static str> {
+    let Ok(mut file) = File::open(executable_path).await else {
+        return Err("Failed to open file!");
     };
 
     let mut buffer = Vec::new();
 
-    match file.read_to_end(&mut buffer).await {
-        Ok(_) => {}
-        Err(_) => return (false, "Failed to read executable".to_string()),
+    if file.read_to_end(&mut buffer).await.is_err() {
+        return Err("Failed to read executable");
     };
 
-    let min_length = 4;
     let mut current_string = Vec::new();
-    let mut strings_found: Vec<String> = Vec::new();
-
     for &byte in &buffer {
         if byte.is_ascii_graphic() || byte == b' ' {
             current_string.push(byte);
-        } else {
-            if current_string.len() >= min_length {
-                if let Ok(string) = String::from_utf8(current_string.clone()) {
-                    strings_found.push(string);
-                }
-            }
-
-            current_string.clear();
         }
+      
+        if current_string.len() != 25 {
+            continue;
+        }
+
+        let length = current_string
+            .iter()
+            .zip(b"Authentication failed: %d")
+            .filter(|&(found, known)| found == known)
+            .count();
+
+        if length == current_string.len() {
+            return Ok(());
+        }
+
+        current_string.clear()
     }
 
-    let string_to_check_for = "Authentication failed: %d".to_string();
-
-    if strings_found.contains(&string_to_check_for) {
-        (true, "".to_string())
-    } else {
-        (false, "This isn't the Ro-Exec Loader, download it from acedia.".to_string())
-    }
+    Err("This isn't the Ro-Exec Loader, download it from acedia.")
 }
 
 #[tokio::main]
