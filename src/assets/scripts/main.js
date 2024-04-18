@@ -134,6 +134,20 @@ async function renameFile(file, newFile) {
   }
 }
 
+// Special function for moving files because sometimes user select file on another drive, where fs.renameFile doesnt work.
+async function moveFile(sourcePath, destinationPath) {
+    try {
+      const fileData = await fs.readBinaryFile(sourcePath);
+
+      await fs.writeBinaryFile(destinationPath, fileData, { dir: fs.BaseDirectory.AppConfig });
+      await fs.removeFile(sourcePath);
+
+      return true;
+    } catch {
+      return false;
+    }
+}
+
 async function deleteDirectory(directory, absolute) {
   const _path = absolute ? directory : await path.join(await appDirectory(), directory);
   return await invoke("delete_directory", { path: _path });
@@ -342,8 +356,9 @@ async function askForExecutable(select) {
     const [isKrampusLoader, errorMessage] = await invoke("validate_executable", { executablePath: selected });
 
     if (isKrampusLoader) {
+      console.log("moving")
       await clearExecutables();
-      await renameFile(selected, await getExecutable());
+      await moveFile(selected, await getExecutable());
     } else {
       alert(errorMessage);
     }
