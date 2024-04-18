@@ -356,7 +356,6 @@ async function askForExecutable(select) {
     const [isKrampusLoader, errorMessage] = await invoke("validate_executable", { executablePath: selected });
 
     if (isKrampusLoader) {
-      console.log("moving")
       await clearExecutables();
       await moveFile(selected, await getExecutable());
     } else {
