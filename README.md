@@ -10,7 +10,7 @@ Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=VXCyulSe
 
 ## Getting KrampUI
 
-### [Download the binary](https://github.com/BitdancerStudios/KrampUI/releases/latest),
+### [Download the binary](https://github.com/Pixeluted/KrampUI/releases/latest),
 
 ### or... compile it yourself!
 1. Ensure you have `cargo` (`rustup`), `node`, and `npm` installed.
