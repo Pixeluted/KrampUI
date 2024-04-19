@@ -117,9 +117,22 @@ async function writeFile(file, contents, absolute) {
   return await invoke("write_file", { path: _path, data: contents });
 }
 
+async function writeBinaryFile(file, contents, absolute) {
+  const _path = absolute ? file : await path.join(await appDirectory(), file);
+  return await invoke("write_binary_file", { path: _path, data: contents });
+}
+
 async function readFile(file) {
   try {
     return await fs.readTextFile(file, { dir: fs.BaseDirectory.AppConfig });
+  } catch {
+    return null;
+  }
+}
+
+async function readBinaryFile(file) {
+  try {
+    return await fs.readBinaryFile(file, { dir: fs.BaseDirectory.AppConfig });
   } catch {
     return null;
   }
@@ -134,18 +147,15 @@ async function renameFile(file, newFile) {
   }
 }
 
-// Special function for moving files because sometimes user select file on another drive, where fs.renameFile doesnt work.
-async function moveFile(sourcePath, destinationPath) {
-    try {
-      const fileData = await fs.readBinaryFile(sourcePath);
+async function moveFile(file, newFile) {
+  const contents = await readBinaryFile(file);
+  if (!contents) return false;
 
-      await fs.writeBinaryFile(destinationPath, fileData, { dir: fs.BaseDirectory.AppConfig });
-      await fs.removeFile(sourcePath);
+  const written = await writeBinaryFile(newFile, Array.from(new Uint8Array(contents)));
+  if (!written) return false;
 
-      return true;
-    } catch {
-      return false;
-    }
+  await deleteFile(file, true); // Don't care about it failing
+  return true;
 }
 
 async function deleteDirectory(directory, absolute) {

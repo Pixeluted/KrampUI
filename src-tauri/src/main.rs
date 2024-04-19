@@ -132,6 +132,11 @@ async fn write_file(path: String, data: String) -> bool {
 }
 
 #[command]
+async fn write_binary_file(path: String, data: Vec<u8>) -> bool {
+    fs::write(&path, &data).await.is_ok()
+}
+
+#[command]
 async fn delete_directory(path: String) -> bool {
     fs::remove_dir_all(&path).await.is_ok()
 }
@@ -357,6 +362,7 @@ async fn main() {
             log,
             create_directory,
             write_file,
+            write_binary_file,
             delete_directory,
             delete_file,
             validate_executable
