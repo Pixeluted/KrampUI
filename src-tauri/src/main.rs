@@ -103,7 +103,7 @@ fn is_roblox_running() -> bool {
 async fn get_latest_release() -> Option<(String, String)> {
     let client = Client::new();
     let response = client
-        .get("https://api.github.com/repos/BitdancerStudios/KrampUI/releases/latest")
+        .get("https://api.github.com/repos/Pixeluted/KrampUI/releases/latest")
         .header("User-Agent", "KrampUI")
         .timeout(Duration::from_secs(5))
         .send()
