@@ -147,7 +147,7 @@ async function renameFile(file, newFile) {
   }
 }
 
-async function moveFile(file, newFile) {
+async function moveBinaryFile(file, newFile) {
   const contents = await readBinaryFile(file);
   if (!contents) return false;
 
@@ -367,7 +367,7 @@ async function askForExecutable(select) {
 
     if (isKrampusLoader) {
       await clearExecutables();
-      await moveFile(selected, await getExecutable());
+      await moveBinaryFile(selected, await getExecutable());
     } else {
       alert(errorMessage);
     }
