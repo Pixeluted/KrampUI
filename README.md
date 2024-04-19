@@ -40,5 +40,5 @@ That's the loader you've selected. You may delete it or replace it, but it's adv
 
 ## Found a bug?
 Feel free to let us know, contact one of our team members:
-- [Snipcola](https://discord.com/users/126870350507147264)
+- Snipcola - Dipped, original owner
 - [Pixeluted](https://discord.com/users/1057760003701882890)
