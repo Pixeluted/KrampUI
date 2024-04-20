@@ -6,7 +6,8 @@ use serde::Serialize;
 struct WebsocketConnection {
     ws_sender: ws::Sender,
     ws_id: usize,
-    window: tauri::Window
+    window: tauri::Window,
+    account_name: String
 }
 
 #[derive(Clone, Serialize)]
@@ -14,6 +15,19 @@ struct WebsocketCountUpdate {
     websocket_count_update: bool,
     new_count: usize
 }
+
+#[derive(Clone, Serialize)]
+struct AccountAdded {
+    account_added: bool,
+    account_name: String
+}
+
+#[derive(Clone, Serialize)]
+struct AccountRemoved {
+    account_removed: bool,
+    account_name: String
+}
+
 
 lazy_static! {
     static ref WEBSOCKET_CONNECTIONS: Arc<Mutex<HashMap<usize, ws::Sender>>> = Arc::new(Mutex::new(HashMap::new()));
@@ -37,7 +51,8 @@ impl ws::Handler for WebsocketConnection {
     fn on_message(&mut self, msg: ws::Message) -> ws::Result<()> {
         let data_string = msg.to_string();
 
-        println!("Received message from websocket {}: {}", self.ws_id, data_string);
+        self.window.emit("websocket-update", AccountAdded { account_added: true, account_name: data_string.clone() }).ok();
+        self.account_name = data_string;
 
         Ok(())
     }
@@ -49,6 +64,7 @@ impl ws::Handler for WebsocketConnection {
         println!("Connection {} closed: {:?} {}", self.ws_id, code, reason);
 
         self.window.emit("websocket-update", WebsocketCountUpdate { websocket_count_update: true, new_count: connections.len() }).ok();
+        self.window.emit("websocket-update", AccountRemoved { account_removed: true, account_name: self.account_name.clone() }).ok();
     }
 }
 
@@ -70,7 +86,8 @@ pub async fn initialize_websocket(port: u16, window: tauri::Window) {
             WebsocketConnection {
                 ws_sender: out,
                 ws_id: 0,
-                window: window.clone()
+                window: window.clone(),
+                account_name: "".to_string()
             }
         }).ok();
     });

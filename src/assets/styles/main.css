@@ -331,7 +331,7 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 .exploit > .main > * {
-    height: calc(100vh - 28px - 22px - 27px);
+    height: calc(100vh - 28px - 22px - 27px - 39px);
     border: 1px solid var(--lighter);
     border-radius: 2.5px;
     box-sizing: border-box;
@@ -343,7 +343,7 @@ input[type=number]::-webkit-outer-spin-button {
     }
 
     .exploit > .main > * {
-        height: calc(100vh - 25px - 22px - 27px) !important;
+        height: calc(100vh - 25px - 22px - 27px - 39px) !important;
     }
 }
 
@@ -634,4 +634,42 @@ input[type=number]::-webkit-outer-spin-button {
 
 .exit:hover > * {
     color: white !important;
+}
+
+.accounts-container {
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    overflow: auto;
+    padding-bottom: 1px;
+}
+
+.account {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    padding: 3px;
+    gap: 0.2rem;
+    width: auto;
+    background-color: var(--light);
+    border: 1px solid var(--lighter);
+    border-radius: 3px;
+    transition: background-color 0.3s;
+    cursor: pointer;
+}
+
+.account:hover {
+    background-color: var(--lighter);
+}
+
+.account .account-name {
+    color: var(--text);
+    font-size: small;
+    text-align: center;
+}
+
+.account .account-color {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 180px;
 }

@@ -16,6 +16,7 @@ let editor, editorGetText, editorSetText, editorSetScroll;
 let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitFolder;
 let connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
 let settings, title, version, wsPort;
+let accountsContainer;
 
 function alert(message, title) {
   dialog.message(message, title || (debug ? `${title} [DEV]` : title));
@@ -269,7 +270,7 @@ async function injectAutoExec() {
 
         pcall(function()
           getgenv().KR_WEBSOCKET = websocket.connect("ws://127.0.0.1:${wsPort}")
-          getgenv().KR_WEBSOCKET:Send("connect")
+          getgenv().KR_WEBSOCKET:Send(game.Players.LocalPlayer.Name)
           getgenv().KR_READY = true
           local lastAlive = nil
 
@@ -1894,6 +1895,41 @@ async function checkRobloxActive() {
   }
 }
 
+function getRandomColor() {
+  const red = Math.floor(Math.random() * 256);
+  const green = Math.floor(Math.random() * 256);
+  const blue = Math.floor(Math.random() * 256);
+  return `rgb(${red}, ${green}, ${blue})`;
+}
+
+
+async function addAccount(accountName) {
+  const accountContainer = document.createElement("div");
+  const accountColor = document.createElement("div");
+  const accountNameElem = document.createElement("p");
+
+  accountContainer.classList = "account";
+  accountColor.classList = "account-color";
+  accountNameElem.classList = "account-name";
+
+  accountColor.style["background-color"] = getRandomColor();
+  accountNameElem.innerText = accountName;
+
+  accountContainer.append(accountColor);
+  accountContainer.append(accountNameElem);
+  accountsContainer.append(accountContainer);
+}
+
+async function removeAccount(accountName) {
+  Array.from(accountsContainer.children).forEach((account) => {
+    const accountNameText = account.children[1].innerText;
+
+    if (accountNameText == accountName) {
+      account.remove();
+    }
+  })
+}
+
 async function main() {
   // Prevent Events
   document.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -1958,6 +1994,10 @@ async function main() {
         exploitExecute.classList.add("disabled");
         exploitIndicator.style.color = "var(--text)"
       }
+    } else if (payloadData.account_added === true) {
+      addAccount(payloadData.account_name);
+    } else if (payloadData.account_removed === true) {
+      removeAccount(payloadData.account_name);
     }
   })
 
@@ -2073,6 +2113,22 @@ async function main() {
 
     isSettingsOpen = !isSettingsOpen;
   })
+
+  // Accounts Container
+
+  accountsContainer = document.querySelector(".accounts-container")
+
+  accountsContainer.addEventListener('wheel', function(event) {
+      if (event.deltaY == 0) return;
+      event.preventDefault();
+      const amount = event.deltaY > 0 ? 50 : -50;
+
+      this.scrollTo({
+        top: 0,
+        left: this.scrollLeft + amount,
+        behavior: 'auto'
+      });
+  });
 
   // Settings
   const autoInjectButton = document.querySelector(".auto-inject");
