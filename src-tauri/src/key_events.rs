@@ -1,11 +1,14 @@
-use std::{sync::{Arc, Mutex}, thread};
 use lazy_static::lazy_static;
 use rdev::{listen, Event, EventType};
 use serde::Serialize;
+use std::{
+    sync::{Arc, Mutex},
+    thread,
+};
 
 #[derive(Clone, Serialize)]
 struct KeyPressPayload {
-    message: String
+    message: String,
 }
 
 lazy_static! {

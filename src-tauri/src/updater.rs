@@ -1,9 +1,8 @@
-use std::{ffi::OsString, time::Duration};
 use reqwest::Client;
 use serde_json::Value;
-use win_msgbox::{w, YesNo};
 use std::os::windows::ffi::OsStrExt;
-
+use std::{ffi::OsString, time::Duration};
+use win_msgbox::{w, YesNo};
 
 async fn get_latest_release() -> Option<(String, String)> {
     let client = Client::new();

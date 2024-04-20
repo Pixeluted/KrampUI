@@ -2,18 +2,15 @@
 
 use colored::{control, ColoredString, Colorize};
 use serde::Serialize;
-use std::{
-    thread::sleep,
-    time::Duration,
-};
+use std::{thread::sleep, time::Duration};
 use tauri::{
     command, generate_context, generate_handler, Builder, CustomMenuItem, Manager, SystemTray,
     SystemTrayEvent, SystemTrayMenu, WindowEvent,
 };
 
 mod websocket_handler;
-use crate::websocket_handler::initialize_websocket;
 use crate::websocket_handler::execute_script;
+use crate::websocket_handler::initialize_websocket;
 
 mod fs_handler;
 use crate::fs_handler::create_directory;
@@ -45,7 +42,6 @@ struct SingleInstancePayload {
     args: Vec<String>,
     cwd: String,
 }
-
 
 #[command]
 fn log(message: String, _type: Option<String>) {

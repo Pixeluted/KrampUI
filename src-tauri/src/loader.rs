@@ -1,6 +1,5 @@
 use tokio::{fs::File, io::AsyncReadExt};
 
-
 #[tauri::command]
 pub async fn validate_executable(executable_path: String) -> (bool, String) {
     let mut file = match File::open(executable_path).await {
@@ -31,6 +30,9 @@ pub async fn validate_executable(executable_path: String) -> (bool, String) {
     if strings_found.contains(&string_to_check_for) {
         (true, "".to_string())
     } else {
-        (false, "This isn't the Ro-Exec Loader, download it from acedia.".to_string())
+        (
+            false,
+            "This isn't the Ro-Exec Loader, download it from acedia.".to_string(),
+        )
     }
 }

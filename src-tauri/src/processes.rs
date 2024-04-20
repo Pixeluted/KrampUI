@@ -1,6 +1,5 @@
 use sysinfo::System;
 
-
 #[tauri::command]
 pub fn kill_roblox() -> bool {
     return match System::new_all()
