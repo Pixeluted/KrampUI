@@ -64,7 +64,7 @@ pub async fn execute_script(script: String) {
 }
 
 #[tauri::command]
-pub async fn initialize_websocket(port: u16, window: tauri::Window) {
+pub async fn initialize_websocket(port: i32, window: tauri::Window) {
     thread::spawn(move || {
         ws::listen(format!("127.0.0.1:{}", port), move |out: ws::Sender| {
             WebsocketConnection {

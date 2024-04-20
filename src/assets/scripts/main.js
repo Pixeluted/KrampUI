@@ -1982,7 +1982,9 @@ async function main() {
   await invoke("init_key_events", { window: appWindow });
 
   // Set-up Websocket
-  wsPort = 54349;
+
+  wsPort = Math.floor(Math.random() * 90000) + 10000;
+  log("Websocket Port is: " + wsPort)
 
   await injectAutoExec();
   await invoke("initialize_websocket", { window: appWindow, port: wsPort });
