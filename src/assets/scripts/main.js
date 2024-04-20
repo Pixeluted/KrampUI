@@ -8,7 +8,7 @@ const event = window.__TAURI__.event;
 const path = window.__TAURI__.path;
 const fs = window.__TAURI__.fs;
 
-require.config({ paths: { "vs": "./assets/external/monaco" }});
+require.config({ paths: { "vs": "./assets/external/monaco" } });
 
 let debug = false;
 let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
@@ -187,7 +187,7 @@ async function getData() {
 
 async function getSettings() {
   const text = await readFile(`${dataDirectory}/settings`);
-  
+
   let json;
   try { json = JSON.parse(text); }
   catch { json = null; };
@@ -219,7 +219,7 @@ async function saveSettings(data) {
 
 async function getWindowDimensions() {
   const text = await readFile(`${dataDirectory}/window-dimensions`);
-  
+
   let json;
   try { json = JSON.parse(text); }
   catch { json = null; };
@@ -396,11 +396,11 @@ async function emptyFolders() {
 function onClick(element, cb) {
   let down = false;
 
-  element.addEventListener("mousedown", function() {
+  element.addEventListener("mousedown", function () {
     down = true;
   });
 
-  element.addEventListener("mouseup", function(e) {
+  element.addEventListener("mouseup", function (e) {
     if (down && !element?.classList?.contains("disabled")) {
       if (e.button === 0) cb("left", e);
       else if (e.button === 1) cb("middle", e);
@@ -434,7 +434,7 @@ function getSelection(elem) {
 function setSelection(elem, startOffset, endOffset) {
   const selection = window.getSelection();
   const range = document.createRange();
-  
+
   startOffset = Math.min(startOffset, elem.textContent.length);
   endOffset = Math.min(endOffset, elem.textContent.length);
   endOffset = Math.max(endOffset, startOffset);
@@ -456,7 +456,7 @@ let searching = false;
 
 function isSearching() {
   const newSearching = (exploitScriptsSearch.value && exploitScriptsSearch.value !== "");
-  
+
   if (newSearching !== searching) {
     exploitScripts.classList.toggle("searching", newSearching);
   }
@@ -621,7 +621,8 @@ async function newFolder() {
   loadScripts();
 }
 
-async function addScript({ name, path: _path }, folder, autoExec) {  const container = document.createElement("div");
+async function addScript({ name, path: _path }, folder, autoExec) {
+  const container = document.createElement("div");
   const script = document.createElement("div");
   const icon = document.createElement("i");
 
@@ -732,7 +733,7 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
           if (t.path === _path) t.path = newPath;
           return t;
         });
-        
+
         await setTabs();
       }
 
@@ -786,7 +787,7 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
 
       script.append(icon);
       const result = await renameFile(_path, autoExec ? `autoexec/${script.innerText}` : folder ? `scripts/${folder.name}/${script.innerText}` : `scripts/${script.innerText}`);
-      
+
       if (result !== false) {
         const tab = tabs.find((t) => t.path === _path);
         if (tab) renameTab(tab.id, script.innerText, true);
@@ -872,7 +873,7 @@ async function addAutoExecFolder(force) {
   if (!autoExecPath) autoExecPath = await path.join(await appDirectory(), "autoexec");
   const files = await readDirectory("autoexec");
   const folder = parseFolders([{ path: autoExecPath, name: "Auto-Exec", children: files }], true).pop();
-  
+
   if (files && folder) {
     const { name, path, children } = folder;
     const names = children.map((c) => c.name).join(",");
@@ -971,7 +972,7 @@ function getActiveTabName() {
 
 async function setActiveTabContent(content) {
   const tab = tabs.find((t) => t.active === true);
-  
+
   if (tab) {
     const tabContent = await getTabContent(tab, true);
     const unsavedTab = unsavedTabData.get(tab.id);
@@ -988,7 +989,7 @@ async function setActiveTabContent(content) {
 async function setActiveTabScroll(_scroll) {
   const tab = tabs.find((t) => t.active === true);
   const scroll = roundToTen(_scroll);
-  
+
   if (tab) {
     const unsavedTab = unsavedTabData.get(tab.id);
 
@@ -1003,7 +1004,7 @@ async function setActiveTabScroll(_scroll) {
 
 async function saveTabContent(tab) {
   const unsavedTab = unsavedTabData.get(tab.id);
-  
+
   if (unsavedTab) {
     if (unsavedTab.content !== null) await setTabContent(tab, unsavedTab.content);
     await setTabScroll(tab, unsavedTab.scroll);
@@ -1057,13 +1058,13 @@ async function addTab(data, dontLoad) {
 async function deleteTab(id, onlyFiles) {
   if (tabs.length === 1) return;
   let order = 0;
-  
+
   const tab = tabs.find((t) => t.id === id);
   if (!tab) return;
 
   const unsavedTab = unsavedTabData.get(tab.id);
   if (unsavedTab) unsavedTabData.delete(tab.id);
-  
+
   const tabIndex = tabs.indexOf(tab);
   const newTab = tabs[tabIndex - 1] || tabs[tabIndex + 1];
 
@@ -1126,7 +1127,7 @@ async function renameTab(id, newName, force) {
 async function changeTabOrder(id, newOrder) {
   const tabToChange = tabs.find((t) => t.id === id);
   const oldOrder = tabToChange.order;
-  
+
   tabs.forEach((t) => {
     if (t.id !== id) {
       if (t.order >= newOrder && t.order < oldOrder) {
@@ -1337,7 +1338,7 @@ function addTabElem(info) {
   async function enter(e) {
     if (tab.contentEditable === "true") {
       if (e) e.preventDefault();
-      
+
       dropdown.classList.remove("disabled");
       tab.contentEditable = false;
       tab.innerText = tab.innerText.trim();
@@ -1620,7 +1621,7 @@ function setupEditor(editorFontSize) {
   if (editorReady) return;
   editorReady = true;
 
-  require(["vs/editor/editor.main"], async function() {
+  require(["vs/editor/editor.main"], async function () {
     let editorProposals = [];
     let dynamicEditorProposals = [];
 
@@ -1629,7 +1630,7 @@ function setupEditor(editorFontSize) {
     }
 
     monaco.languages.registerCompletionItemProvider("lua", {
-      provideCompletionItems: function() {
+      provideCompletionItems: function () {
         return getDependencyProposals();
       }
     });
@@ -1672,7 +1673,7 @@ function setupEditor(editorFontSize) {
       folding: true,
       autoIndent: true,
       scrollBeyondLastLine: false,
-      wordBasedSuggestions : true,
+      wordBasedSuggestions: true,
       scrollbar: {
         verticalHasArrows: true,
       },
@@ -1691,15 +1692,15 @@ function setupEditor(editorFontSize) {
       }
     }
 
-    window.onresize = function() {
+    window.onresize = function () {
       layout();
     };
 
-    editorGetText = function() {
+    editorGetText = function () {
       return editor.getValue();
     }
-    
-    editorSetText = function(x, preserveUndo) {
+
+    editorSetText = function (x, preserveUndo) {
       const model = editor.getModel();
       const range = model.getFullModelRange();
 
@@ -1711,7 +1712,7 @@ function setupEditor(editorFontSize) {
       editor.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 });
     }
 
-    editorSetScroll = function(top) {
+    editorSetScroll = function (top) {
       try { editor.setScrollTop(top); }
       catch { };
     }
@@ -1721,8 +1722,8 @@ function setupEditor(editorFontSize) {
 
     function editorAddIntellisense(l, k, d, i) {
       let t;
-        
-      switch(k) {
+
+      switch (k) {
         case "Class":
           t = monaco.languages.CompletionItemKind.Class;
           break;
@@ -1781,7 +1782,7 @@ function setupEditor(editorFontSize) {
           t = monaco.languages.CompletionItemKind.Variable;
           break;
       };
-        
+
       editorProposals.push({
         label: l,
         kind: t,
@@ -1877,10 +1878,10 @@ function setupEditor(editorFontSize) {
 
 async function checkRobloxActive() {
   const newActive = await isRobloxRunning();
-  
+
   if (prevActive !== newActive) {
     prevActive = newActive;
-    
+
     if (newActive) {
       if (!connected && injecting !== true) {
         if (settings.autoInject && await findExecutable()) inject(true);
@@ -1897,7 +1898,7 @@ async function checkRobloxActive() {
 async function main() {
   // Prevent Events
   document.addEventListener("contextmenu", (e) => e.preventDefault());
-  document.addEventListener("keydown", function(e) {
+  document.addEventListener("keydown", function (e) {
     if (
       e.key === "F5" || (e.ctrlKey && e.key === "r") || (e.metaKey && e.key === "r") ||
       e.key === "F3" || (e.ctrlKey && e.key === "f") || (e.metaKey && e.key === "f") ||
@@ -1940,7 +1941,7 @@ async function main() {
   // Version
   const titleElem = document.querySelector(".kr-titlebar .brand .text");
   const versionElem = document.querySelector(".kr-titlebar .brand .version");
-  if (version && versionElem) versionElem.textContent = `(${version})`; 
+  if (version && versionElem) versionElem.textContent = `(${version})`;
   if (title && titleElem) titleElem.textContent = debug ? `${title} [DEV]` : title;
 
   // Events
@@ -1983,7 +1984,7 @@ async function main() {
 
   // Set-up Websocket
 
-  wsPort = Math.floor(Math.random() * 90000) + 10000;
+  wsPort = Math.floor(Math.random() * 48128) + 1024;
   log("Websocket Port is: " + wsPort)
 
   await injectAutoExec();
@@ -2056,7 +2057,7 @@ async function main() {
   const settingsToggle = document.querySelector(".settings-toggle");
   const exploitWindow = document.querySelector(".exploit");
   const settingsWindow = document.querySelector(".settings");
-  
+
   let isSettingsOpen = false;
 
   settingsToggle.addEventListener("click", () => {
@@ -2089,7 +2090,7 @@ async function main() {
     homeToggleButton.innerText = settings.keyToggle ? "Enabled" : "Disabled";
     fontSizeValue.value = settings.editorFontSize;
     autoInjectDelayValue.value = settings.injectionDelay;
-    
+
     const isExecutable = await findExecutable() ? true : false;
     deleteLoaderButton.classList.toggle("disabled", !isExecutable);
     selectLoaderButton.querySelector(".text").textContent = isExecutable ? "Update Loader" : "Select Loader";
@@ -2119,13 +2120,13 @@ async function main() {
 
   fontSizeValue.addEventListener("keydown", function (event) {
     if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
-      event.preventDefault(); 
+      event.preventDefault();
     }
   });
 
   autoInjectDelayValue.addEventListener("keydown", function (event) {
     if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
-      event.preventDefault(); 
+      event.preventDefault();
     }
   });
 
@@ -2141,7 +2142,7 @@ async function main() {
   autoInjectDelayValue.addEventListener("input", function () {
     const val = autoInjectDelayValue?.value;
     if (isNaN(val) || val === "") return;
-    
+
     settings.injectionDelay = val;
     saveSettings();
   });
@@ -2165,7 +2166,7 @@ async function main() {
     return e.parentElement && findDropdown(e.parentElement);
   }
 
-  onClick(window, async function(button, e) {
+  onClick(window, async function (button, e) {
     const foundDropdown = findDropdown(e.target);
     const foundDropdownContent = foundDropdown && Array.from(foundDropdown?.querySelectorAll(".kr-dropdown-content")).find((d) => d.parentElement === foundDropdown);
     const dropdowns = Array.from(document.querySelectorAll(".kr-dropdown"));
