@@ -1502,7 +1502,7 @@ async function execute(customText) {
     const text = typeof customText === "string" ? customText : editorGetText();
 
     if (text && connected) {
-      await invoke("execute_script", { text });
+      await invoke("execute_script", { script: text });
     }
 
     return true;
@@ -1944,22 +1944,22 @@ async function main() {
   if (title && titleElem) titleElem.textContent = debug ? `${title} [DEV]` : title;
 
   // Events
-  event.listen("update", function (e) {
-    const _connected = e.payload?.message || false;
-    
-    if (connected === _connected) return;
-    else connected = _connected;
+  event.listen("websocket-update", async (e) => {
+    const payloadData = e.payload;
 
-    exploitIndicator.style.color = `var(--${connected ? "green" : "text"})`;
-
-    if (connected) {
-      exploitExecute.classList.remove("disabled");
-      exploitInject.classList.add("disabled");
-    } else {
-      if (!prevActive) exploitInject.classList.remove("disabled");
-      exploitExecute.classList.add("disabled");
+    if (payloadData.websocket_count_update === true) {
+      if (payloadData.new_count > 0) {
+        connected = true;
+        exploitIndicator.style.color = "var(--green)"
+        exploitExecute.classList.remove("disabled");
+        exploitInject.classList.add("disabled");
+      } else {
+        if (!prevActive) exploitInject.classList.remove("disabled");
+        exploitExecute.classList.add("disabled");
+        exploitIndicator.style.color = "var(--text)"
+      }
     }
-  });
+  })
 
   event.listen("exit", async function () {
     await exit();
@@ -1985,7 +1985,7 @@ async function main() {
   wsPort = 54349;
 
   await injectAutoExec();
-  await invoke("init_websocket", { port: wsPort });
+  await invoke("initialize_websocket", { window: appWindow, port: wsPort });
 
   // Titlebar
   document.querySelector(".tb-button.minimize").addEventListener("click", minimize);

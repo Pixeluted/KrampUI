@@ -1,5 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod websocket_handler;
+use crate::websocket_handler::initialize_websocket;
+use crate::websocket_handler::execute_script;
+
 use colored::{control, ColoredString, Colorize};
 use lazy_static::lazy_static;
 use rdev::{listen, Event, EventType};
@@ -38,47 +42,6 @@ struct PayloadUpdate {
 struct Payload2 {
     args: Vec<String>,
     cwd: String,
-}
-
-struct Server {
-    window: Window,
-}
-
-impl ws::Handler for Server {
-    fn on_message(&mut self, data: ws::Message) -> ws::Result<()> {
-        let mut connected = CONNECTED.lock().unwrap();
-
-        if *connected {
-            return Ok(());
-        }
-
-        let data_string = data.to_string();
-        let mut parts = data_string.split(",");
-        let type_value = match parts.next() {
-            Some(val) => val.trim(),
-            None => return Ok(()),
-        };
-
-        if type_value == "connect" {
-            self.window
-                .emit("update", PayloadUpdate { message: true })
-                .unwrap();
-            *connected = true;
-        }
-
-        return Ok(());
-    }
-
-    fn on_close(&mut self, _code: ws::CloseCode, _reason: &str) {
-        let mut connected = CONNECTED.lock().unwrap();
-
-        if *connected {
-            self.window
-                .emit("update", PayloadUpdate { message: false })
-                .unwrap();
-            *connected = false;
-        }
-    }
 }
 
 #[command]
@@ -147,10 +110,7 @@ async fn delete_file(path: String) -> bool {
 }
 
 lazy_static! {
-    static ref CONNECTED: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
     static ref KEY_EVENTS_INITIALIZED: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
-    static ref WEBSOCKET_INITIALIZED: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
-    static ref WEBSOCKET: Arc<Mutex<Option<ws::Sender>>> = Arc::new(Mutex::new(None));
 }
 
 #[command]
@@ -178,43 +138,6 @@ fn init_key_events(window: Window) {
 
         listen(callback).unwrap();
     });
-}
-
-#[command]
-fn init_websocket(window: Window, port: u16) {
-    let mut websocket_initialized = WEBSOCKET_INITIALIZED.lock().unwrap();
-
-    if *websocket_initialized {
-        return;
-    }
-
-    *websocket_initialized = true;
-
-    thread::spawn(move || {
-        ws::listen(format!("127.0.0.1:{}", port), move |out: ws::Sender| {
-            let cloned_window = window.clone();
-            *WEBSOCKET.lock().unwrap() = Some(out.clone());
-            return Server {
-                window: cloned_window,
-            };
-        })
-        .ok();
-    });
-
-    thread::spawn(move || loop {
-        if let Some(websocket) = WEBSOCKET.lock().unwrap().clone() {
-            websocket.send("kr-ping").unwrap();
-        }
-
-        sleep(Duration::from_millis(250));
-    });
-}
-
-#[command]
-fn execute_script(text: &str) {
-    if let Some(websocket) = WEBSOCKET.lock().unwrap().clone() {
-        websocket.send(text).unwrap();
-    }
 }
 
 #[command]
@@ -354,9 +277,9 @@ async fn main() {
                 .unwrap();
         }))
         .invoke_handler(generate_handler![
-            init_websocket,
-            init_key_events,
+            initialize_websocket,
             execute_script,
+            init_key_events,
             is_roblox_running,
             kill_roblox,
             log,
