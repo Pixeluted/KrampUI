@@ -1983,7 +1983,7 @@ async function main() {
 
   // Set-up Websocket
 
-  wsPort = Math.floor(Math.random() * 90000) + 10000;
+  wsPort = Math.floor(Math.random() * 48128) + 1024;
   log("Websocket Port is: " + wsPort)
 
   await injectAutoExec();
