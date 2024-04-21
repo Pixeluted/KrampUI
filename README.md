@@ -18,6 +18,8 @@ Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=VXCyulSe
 3. Run `npm run start` or `npm run build` depending on what you need.
 4. Access the executable at `src-tauri/target/release` or `src-tauri/target/debug`.
 
+Source for the KrampUI-updater.exe here: https://github.com/Pixeluted/KrampUI-Updater
+
 ## Q&A
 ### Where is the scripts and autoexec folder?
 It's located at ``%appdata%/KrampUI``, or just press the folder icon on the UI and navigate one folder up.
