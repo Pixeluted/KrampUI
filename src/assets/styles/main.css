@@ -141,6 +141,32 @@ input[type=number]::-webkit-outer-spin-button {
     user-select: none;
     -webkit-user-drag: none;
     transition: background-color 0.2s;
+    overflow: hidden;
+    position: relative;
+}
+
+.kr-button > .ripple {
+    position: absolute;
+    width: 0;
+    height: 0;
+    background: var(--lighter);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: ripples 0.6s linear forwards;
+}
+
+@keyframes ripples {
+    0% {
+        width: 0px;
+        height: 0px;
+        opacity: 0.5;
+    }
+    100% {
+        width: 500px;
+        height: 500px;
+        opacity: 0;
+    }
 }
 
 /* Dropdown */

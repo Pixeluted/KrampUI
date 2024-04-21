@@ -1931,6 +1931,30 @@ async function removeAccount(accountName) {
 }
 
 async function main() {
+  // Ripples effect
+  function setupRippleEffect() {
+    const allButtons = document.querySelectorAll(".kr-button");
+    allButtons.forEach((button) => {
+      button.onclick = function(e) {
+        const buttonRect = this.getBoundingClientRect();
+        const x = e.clientX - buttonRect.left;
+        const y = e.clientY - buttonRect.top;
+
+        const ripple = document.createElement("span");
+        ripple.style.left = `${x}px`;
+        ripple.style.top = `${y}px`;
+        ripple.classList.add("ripple");
+        this.appendChild(ripple);
+
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+      }
+    })
+  }
+
+  setupRippleEffect();
+
   // Prevent Events
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", function(e) {
@@ -2111,6 +2135,7 @@ async function main() {
       exploitWindow.classList.remove("active");
     }
 
+    setupRippleEffect();
     isSettingsOpen = !isSettingsOpen;
   })
 
