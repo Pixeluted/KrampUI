@@ -71,9 +71,18 @@ async function hide(onlyAnimation) {
   else toggleLock = false;
 }
 
-async function toggle(force) {
-  if (await isVisible() && (force || settings.keyToggle)) await hide();
-  else await show();
+async function toggle(ignoreKeyToggle) {
+  let isWindowVisible = await isVisible();
+  let isKeyToggleEnabled = settings.keyToggle;
+  let actionCanBeTaken = (ignoreKeyToggle === true || isKeyToggleEnabled === true)
+
+  if (actionCanBeTaken === false) return;
+
+  if (isWindowVisible) {
+    await hide()
+  } else {
+    await show()
+  }
 }
 
 async function exit() {
