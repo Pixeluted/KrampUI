@@ -198,7 +198,7 @@ async function getSettings() {
     keyToggle: json.keyToggle,
     editorFontSize: json.editorFontSize || 14,
     injectionDelay: json.injectionDelay || 10,
-    autoUpdate: json.autoUpdate || true
+    autoUpdate: json.autoUpdate === undefined ? true : json.autoUpdate
   };
   else {
     const settings = {
@@ -216,7 +216,7 @@ async function getSettings() {
 }
 
 async function saveSettings(data) {
-  await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
+  await writeFile(`${dataDirectory}/settings`, JSON.stringify(settings));
 }
 
 async function getWindowDimensions() {
@@ -2239,7 +2239,6 @@ async function main() {
   // Show
   show();
 
-  console.log(settings.autoUpdate)
   invoke("check_for_updates", { autoUpdateEnabled: settings.autoUpdate });
 }
 
