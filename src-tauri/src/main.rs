@@ -6,8 +6,10 @@ use rdev::{listen, Event, EventType};
 use reqwest::Client;
 use serde::Serialize;
 use serde_json::Value;
+use tokio::io::AsyncWriteExt;
 use std::ffi::OsString;
 use std::os::windows::ffi::OsStrExt;
+use std::process::{exit, Command};
 use std::sync::{Arc, Mutex};
 use std::{
     thread::{self, sleep},
@@ -22,7 +24,7 @@ use tokio::{
     fs::{self, File},
     io::AsyncReadExt,
 };
-use win_msgbox::{w, YesNo};
+use win_msgbox::{w, Okay, YesNo};
 
 #[derive(Clone, Serialize)]
 struct Payload {
@@ -271,11 +273,9 @@ async fn validate_executable(executable_path: String) -> (bool, String) {
     }
 }
 
-#[tokio::main]
-async fn main() {
-    control::set_virtual_terminal(true).ok();
-
-    if let Some((latest_version, link)) = get_latest_release().await {
+#[command]
+async fn check_for_updates(auto_update_enabled: bool) {
+    if let Some((latest_version, _link)) = get_latest_release().await {
         let current_version = env!("CARGO_PKG_VERSION");
 
         let latest_version_number = match latest_version.replace(".", "").parse::<i32>() {
@@ -292,6 +292,11 @@ async fn main() {
             && current_version_number.is_some()
             && latest_version_number.unwrap() > current_version_number.unwrap()
         {
+            if auto_update_enabled == true {
+                start_updater().await;
+                return;
+            }
+
             let message = format!(
                 "Would you like to update?\nYou are on v{}, the latest is v{}.",
                 current_version, latest_version
@@ -306,11 +311,72 @@ async fn main() {
                 .unwrap();
 
             if response == YesNo::Yes {
-                open::that(link).unwrap();
+                start_updater().await;
                 return;
             }
         }
     }
+}
+
+async fn start_updater() {
+    let krampui_updater_exe: &[u8] = include_bytes!("../binaries/krampui-updater.exe");
+    let executable_directory = std::env::current_dir().unwrap();
+    let target_updater_path = executable_directory.join("krampui-updater.exe");
+    
+    let mut file = match File::create(&target_updater_path).await {
+        Ok(file) => file,
+        Err(err) => { println!("Error when trying to open the file for updater: {}", err.to_string()); return; }
+    };
+
+    match file.write_all(krampui_updater_exe).await {
+        Ok(_) => {},
+        Err(err) => { println!("Error when trying to write the updater: {}", err.to_string()); return; }
+    }
+
+    match file.flush().await {
+        Ok(_) => {},
+        Err(err) => { println!("Error when trying to flush the updater: {}", err.to_string()); return; }
+    }
+
+    drop(file);
+    while !target_updater_path.exists() {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+
+    match Command::new(&target_updater_path).spawn() {
+        Ok(child) => child,
+        Err(err) => { println!("Failed to start the updater: {}", err); return; }
+    };
+    exit(0);
+}
+
+async fn check_for_pending_update() {
+    let updater_path = std::env::current_dir().unwrap().join("krampui-updater.exe");
+
+    match fs::try_exists(&updater_path).await {
+        Ok(exists) => {
+            if exists == true {
+                fs::remove_file(updater_path).await.ok();
+                let message = "Sucessfully updated!";
+                let wide_message: Vec<u16> = OsString::from(&message)
+                    .encode_wide()
+                    .chain(Some(0))
+                    .collect();
+                win_msgbox::information::<Okay>(wide_message.as_ptr())
+                    .title(w!("KrampUI"))
+                    .show()
+                    .ok();
+            }   
+        },
+        Err(_) => {}
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    control::set_virtual_terminal(true).ok();
+
+    check_for_pending_update().await;
 
     let toggle = CustomMenuItem::new("toggle".to_string(), "Toggle");
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
@@ -365,7 +431,8 @@ async fn main() {
             write_binary_file,
             delete_directory,
             delete_file,
-            validate_executable
+            validate_executable,
+            check_for_updates
         ])
         .run(generate_context!())
         .expect("Failed to launch application.");

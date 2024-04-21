@@ -15,7 +15,9 @@
       },
       "shell": {
         "open": ".*",
-        "scope": [{ "name": "cmd", "cmd": "cmd", "args": true }]
+        "scope": [
+          { "name": "cmd", "cmd": "cmd", "args": true }
+        ]
       }
     },
     "windows": [

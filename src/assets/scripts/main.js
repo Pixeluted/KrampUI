@@ -197,7 +197,8 @@ async function getSettings() {
     topMost: json.topMost,
     keyToggle: json.keyToggle,
     editorFontSize: json.editorFontSize || 14,
-    injectionDelay: json.injectionDelay || 10
+    injectionDelay: json.injectionDelay || 10,
+    autoUpdate: json.autoUpdate || true
   };
   else {
     const settings = {
@@ -205,7 +206,8 @@ async function getSettings() {
       topMost: true,
       keyToggle: false,
       editorFontSize: 14,
-      injectionDelay: 10
+      injectionDelay: 10,
+      autoUpdate: true
     };
 
     await saveSettings(settings);
@@ -2103,6 +2105,7 @@ async function main() {
   const homeToggleButton = document.querySelector(".home-toggle");
   const fontSizeValue = document.querySelector(".font-size");
   const autoInjectDelayValue = document.querySelector(".auto-inject-delay");
+  const autoUpdateButton = document.querySelector(".auto-update");
   const selectLoaderButton = document.querySelector(".kr-select-loader");
   const deleteLoaderButton = document.querySelector(".kr-delete-loader");
 
@@ -2110,6 +2113,7 @@ async function main() {
     autoInjectButton.innerText = settings.autoInject ? "Enabled" : "Disabled";
     topMostButton.innerText = settings.topMost ? "Enabled" : "Disabled";
     homeToggleButton.innerText = settings.keyToggle ? "Enabled" : "Disabled";
+    autoUpdateButton.innerText = settings.autoUpdate ? "Enabled" : "Disabled";
     fontSizeValue.value = settings.editorFontSize;
     autoInjectDelayValue.value = settings.injectionDelay;
     
@@ -2139,6 +2143,12 @@ async function main() {
     saveSettings();
     updateSettingsUI();
   });
+
+  autoUpdateButton.addEventListener("click", function () {
+    settings.autoUpdate = !settings.autoUpdate;
+    saveSettings();
+    updateSettingsUI();
+  })
 
   fontSizeValue.addEventListener("keydown", function (event) {
     if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
@@ -2228,6 +2238,9 @@ async function main() {
 
   // Show
   show();
+
+  console.log(settings.autoUpdate)
+  invoke("check_for_updates", { autoUpdateEnabled: settings.autoUpdate });
 }
 
 function error(e) {
