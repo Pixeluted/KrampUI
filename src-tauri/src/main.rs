@@ -33,7 +33,8 @@ mod loader;
 use crate::loader::validate_executable;
 
 mod updater;
-use crate::updater::check_for_update;
+use crate::updater::check_for_pending_update;
+use crate::updater::check_for_updates;
 
 #[derive(Clone, Serialize)]
 struct WindowUpdate {
@@ -71,7 +72,7 @@ fn log(message: String, _type: Option<String>) {
 async fn main() {
     control::set_virtual_terminal(true).ok();
 
-    check_for_update().await;
+    check_for_pending_update().await;
 
     let toggle = CustomMenuItem::new("toggle".to_string(), "Toggle");
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
@@ -126,7 +127,8 @@ async fn main() {
             write_binary_file,
             delete_directory,
             delete_file,
-            validate_executable
+            validate_executable,
+            check_for_updates
         ])
         .run(generate_context!())
         .expect("Failed to launch application.");
