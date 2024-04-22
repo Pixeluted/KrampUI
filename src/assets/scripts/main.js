@@ -210,7 +210,7 @@ async function getSettings() {
     injectionDelay: json.injectionDelay || 10
   };
   else {
-    const settings = {
+    const defaultSettings = {
       autoInject: false,
       topMost: true,
       keyToggle: false,
@@ -218,13 +218,13 @@ async function getSettings() {
       injectionDelay: 10
     };
 
-    await saveSettings(settings);
-    return settings;
+    await saveSettings(defaultSettings);
+    return defaultSettings;
   }
 }
 
 async function saveSettings(data) {
-  await writeFile(`${dataDirectory}/settings`, JSON.stringify(data || settings));
+  await writeFile(`${dataDirectory}/settings`, JSON.stringify(data));
 }
 
 async function getWindowDimensions() {
