@@ -225,7 +225,9 @@ async function getSettings() {
 }
 
 async function saveSettings(data) {
-  await writeFile(`${dataDirectory}/settings`, JSON.stringify(data));
+  const dataToSave = data === undefined ? settings : data
+
+  await writeFile(`${dataDirectory}/settings`, JSON.stringify(dataToSave));
 }
 
 async function getWindowDimensions() {
