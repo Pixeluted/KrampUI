@@ -210,7 +210,7 @@ async function getSettings() {
     autoUpdate: json.autoUpdate === undefined ? true : json.autoUpdate
   };
   else {
-    const settings = {
+    const defaultSettings = {
       autoInject: false,
       topMost: true,
       keyToggle: false,
@@ -219,13 +219,13 @@ async function getSettings() {
       autoUpdate: true
     };
 
-    await saveSettings(settings);
-    return settings;
+    await saveSettings(defaultSettings);
+    return defaultSettings;
   }
 }
 
 async function saveSettings(data) {
-  await writeFile(`${dataDirectory}/settings`, JSON.stringify(settings));
+  await writeFile(`${dataDirectory}/settings`, JSON.stringify(data));
 }
 
 async function getWindowDimensions() {
