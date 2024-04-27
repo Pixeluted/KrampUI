@@ -1,0 +1,64 @@
+:root {
+  --darker: #0e0f11;
+  --dark: #131417;
+  --light: #191a1e;
+  --lighter: #35373b;
+  --lightest: #2a2c32;
+  --primary: rgb(57, 99, 235);
+  --text: #aaabad;
+  --text-dimmed: #8a8a8b;
+  --green: #93e685;
+  --yellow: #eecd3d;
+  --red: #e64040;
+}
+
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--light);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 2.5px;
+  background: var(--lighter);
+  transition: background-color 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--lightest);
+}
+
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+input[type=number].no-spinner::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+-webkit-appearance: none; 
+ margin: 0; 
+}
+
+* {
+ margin: 0;
+ padding: 0;
+ color: var(--text);
+ font-family: "Source Sans 3", sans-serif;
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  src: url(./fonts/normal.ttf) format("truetype");
+  font-weight: 350;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Fira Code";
+  src: url(./fonts/code.ttf) format("truetype");
+  font-weight: 350;
+  font-style: normal;
+}

@@ -1,0 +1,22 @@
+[package]
+name = "krampui-rewrite"
+version = "0.0.0"
+authors = ["Pixeluted"]
+license = "MIT"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }
+
+[dependencies]
+tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+tauri = { version = "1", features = [ "system-tray", "api-all"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
+sysinfo = "0.30.7"
+lazy_static = "1.4.0"
+rdev = "0.5.3"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
