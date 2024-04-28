@@ -584,9 +584,18 @@ export default class EditorManager {
       EditorManager.editor?.layout();
     }, 50);
 
+    let contentChangeDebaunce = false;
     this.editor.onDidChangeModelContent(async function () {
       EditorManager.updateIntelliSense();
-      TabsManager.updateActiveTabContent(EditorManager.getEditorText());
+
+      if (contentChangeDebaunce) return;
+      contentChangeDebaunce = true;
+
+      TabsManager.contentChangedOnActiveTab(EditorManager.getEditorText());
+
+      setTimeout(() => {
+        contentChangeDebaunce = false;
+      }, 100);
     });
 
     let scrollChangeDebaunce = false;
@@ -601,14 +610,8 @@ export default class EditorManager {
       }, 100);
     });
 
-    this.editor.addCommand(
-      monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
-      () => {} //TabsManager.saveActiveTab()
-    );
-
-    this.editor.addCommand(
-      monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR,
-      () => {} //TabsManager.revertActiveTab()
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () =>
+      TabsManager.saveActiveTab()
     );
 
     this.editor.addCommand(monaco.KeyCode.Home, () => null);

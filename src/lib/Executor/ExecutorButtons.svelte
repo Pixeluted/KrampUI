@@ -4,6 +4,7 @@
     import type { WindowState } from "../../managers/WindowManager";
     import WindowManager from "../../managers/WindowManager";
     import Button from "../Button.svelte";
+  import { TabsManager } from "../../managers/TabsManager";
     
     let injectButtonDisabled = false;
     let killButtonDisabled = false;
@@ -51,11 +52,11 @@
         </Button>
     </div>
     <div class="section">
-        <Button buttonType="Secondary" className="left-button">
+        <Button buttonType="Secondary" className="left-button" buttonCallback={TabsManager.promptImportTab}>
             <i class="fa-solid fa-upload"></i>
             <span>Import</span>
         </Button>
-        <Button buttonType="Secondary" className="right-button">
+        <Button buttonType="Secondary" className="right-button" buttonCallback={TabsManager.promptExportTab}>
             <i class="fa-solid fa-floppy-disk"></i>
             <span>Export</span>
         </Button>

@@ -2,6 +2,8 @@ import { get, writable } from "svelte/store";
 import { FileSystemService } from "../services/FilesystemService";
 import EditorManager from "./EditorManager";
 import WindowManager from "./WindowManager";
+import { dialog } from "@tauri-apps/api";
+import Tab from "../lib/Executor/Tab.svelte";
 
 export type TabType = "File" | "Ephemeral";
 export type TabData = {
@@ -56,6 +58,7 @@ export class TabsManager {
       "settings/tabs.json",
       JSON.stringify(tabs, null, 2)
     );
+
     if (!results.success) {
       WindowManager.showFatalErrorPopup(
         `Failed to save tabs. Error: ${results.error}`
@@ -122,13 +125,74 @@ export class TabsManager {
     this.saveTabs();
   }
 
+  public static async promptImportTab() {
+    const dialogResults = await dialog.open({
+      title: "Import Script",
+      filters: [
+        {
+          name: "Scripts",
+          extensions: ["lua", "luau", "txt"],
+        },
+      ],
+      multiple: false,
+    });
+
+    if (!dialogResults) {
+      return;
+    }
+
+    const filePath = dialogResults as string;
+    TabsManager.addTab(true, filePath);
+  }
+
+  public static async promptExportTab() {
+    const dialogResults = await dialog.save({
+      title: "Export Script",
+      filters: [
+        {
+          name: "Lua Script",
+          extensions: ["lua", "luau"],
+        },
+        {
+          name: "Text File",
+          extensions: ["txt"],
+        },
+      ],
+    });
+
+    if (!dialogResults) {
+      return;
+    }
+
+    const filePath = dialogResults as string;
+    const content = TabsManager.getActiveTabContent();
+    const results = await FileSystemService.writeFile(filePath, content, true);
+
+    if (!results.success) {
+      WindowManager.showWarningPopup(
+        `Failed to export script. Error: ${results.error}`
+      );
+    } else {
+      TabsManager.currentTabs.update((tabs) => {
+        tabs.forEach((tab) => {
+          if (tab.isActive) {
+            tab.title = FileSystemService.getFileNameFromPath(filePath);
+            tab.type = "File";
+            tab.filePath = filePath;
+          }
+        });
+        return tabs;
+      });
+    }
+  }
+
   public static async addTab(isFile: boolean, filePath?: string) {
     const newTabId = this.generateUniqueID();
     let newTabContent = this.defaultTabContent;
 
     if (isFile) {
-      let results = await FileSystemService.readFile(filePath as string);
-      newTabContent = results || "";
+      let content = await FileSystemService.readFile(filePath as string, true);
+      newTabContent = content || "";
     }
 
     this.currentTabs.update((tabs) => {
@@ -142,7 +206,9 @@ export class TabsManager {
         filePath: filePath,
         tabOrder: tabs.length,
         tabScroll: 0,
-        title: isFile ? (filePath as string) : "Script",
+        title: isFile
+          ? FileSystemService.getFileNameFromPath(filePath as string)
+          : "Script",
         content: newTabContent,
         isModified: false,
         isActive: true,
@@ -182,6 +248,54 @@ export class TabsManager {
     return activeTab ? activeTab.id : tabs[0].id;
   }
 
+  public static async saveActiveTab() {
+    if (this.activeTab === undefined) return;
+
+    const currentTab = this.activeTab;
+    if (currentTab.type == "File" && currentTab.isModified) {
+      const saveResults = await FileSystemService.writeFile(
+        currentTab.filePath as string,
+        currentTab.content,
+        true
+      );
+
+      if (!saveResults.success) {
+        WindowManager.showWarningPopup(
+          `Failed to save script. Error: ${saveResults.error}`
+        );
+      } else {
+        this.currentTabs.update((tabs) => {
+          tabs.forEach((tab) => {
+            if (tab.isActive) {
+              tab.isModified = false;
+            }
+          });
+          return tabs;
+        });
+      }
+    }
+  }
+
+  public static contentChangedOnActiveTab(newContent: string) {
+    if (this.activeTab === undefined) return;
+
+    const currentTab = this.activeTab;
+    if (currentTab.type == "File" && !currentTab.isModified) {
+      if (newContent == currentTab.content) return;
+
+      this.currentTabs.update((tabs) => {
+        tabs.forEach((tab) => {
+          if (tab.isActive) {
+            tab.isModified = true;
+          }
+        });
+        return tabs;
+      });
+    }
+
+    TabsManager.updateActiveTabContent(newContent);
+  }
+
   public static async initialize() {
     if (!(await FileSystemService.exists("settings/tabs.json"))) {
       const results = await FileSystemService.writeFile(
@@ -189,7 +303,7 @@ export class TabsManager {
         JSON.stringify(this.defaultTabs, null, 2)
       );
       if (!results.success) {
-        alert(
+        WindowManager.showFatalErrorPopup(
           `Failed to create default tabs settings file. Error: ${results.error}`
         );
       }
@@ -198,7 +312,9 @@ export class TabsManager {
       if (content) {
         this.currentTabs.set(JSON.parse(content));
       } else {
-        alert("Failed to read tabs file. Using default tabs.");
+        WindowManager.showWarningPopup(
+          "Failed to read tabs file. Using default tabs."
+        );
       }
     }
 

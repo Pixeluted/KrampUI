@@ -12,6 +12,10 @@ export class FileSystemService {
     return await path.appDataDir();
   }
 
+  public static getFileNameFromPath(path: string): string {
+    return path.split("\\").pop() || "";
+  }
+
   public static async createDirectory(
     path: string
   ): Promise<FilesystemCallResult> {
@@ -24,9 +28,16 @@ export class FileSystemService {
 
   public static async writeFile(
     path: string,
-    content: string
+    content: string,
+    absolutePath: boolean = false
   ): Promise<FilesystemCallResult> {
-    const fullPath = `${await this.getAppDataPath()}\\${path}`;
+    let fullPath: string;
+    if (absolutePath) {
+      fullPath = path;
+    } else {
+      fullPath = `${await this.getAppDataPath()}\\${path}`;
+    }
+
     const [success, error]: RawResult = await invoke("write_file", {
       path: fullPath,
       data: content,
@@ -64,8 +75,17 @@ export class FileSystemService {
     return { success, error };
   }
 
-  public static async readFile(path: string): Promise<string | null> {
-    const fullPath = `${await this.getAppDataPath()}\\${path}`;
+  public static async readFile(
+    path: string,
+    absolutePath: boolean = false
+  ): Promise<string | null> {
+    let fullPath: string;
+    if (absolutePath) {
+      fullPath = path;
+    } else {
+      fullPath = `${await this.getAppDataPath()}\\${path}`;
+    }
+
     const [success, error]: RawResult = await invoke("read_file", {
       path: fullPath,
     });
