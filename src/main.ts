@@ -11,13 +11,13 @@ const app = new App({
 
 // Prevent context menu
 document.addEventListener("contextmenu", (e) => {
-  e.preventDefault()
+  e.preventDefault();
   return false;
-})
+});
 
 invoke("init_key_events");
 invoke("start_roblox_check_loop");
-WindowManager.setup()
+WindowManager.setup();
 DataManager.initialize();
 
 export default app;

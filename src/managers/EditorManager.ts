@@ -10,7 +10,10 @@ export default class EditorManager {
   private static editorProposals: any[] = [];
   private static dynamicEditorProposals: any[] = [];
 
-  static getDependencyProposals(model: monaco.editor.ITextModel, position: monaco.Position): any {
+  static getDependencyProposals(
+    model: monaco.editor.ITextModel,
+    position: monaco.Position
+  ): any {
     let editorProposals: any[] = this.editorProposals;
     let dynamicProposals: any[] = this.dynamicEditorProposals;
     const fullArray: { [key: string]: any }[] = [];
@@ -20,20 +23,20 @@ export default class EditorManager {
       startLineNumber: position.lineNumber,
       startColumn: word.startColumn,
       endLineNumber: position.lineNumber,
-      endColumn: word.endColumn
+      endColumn: word.endColumn,
     };
 
     for (const proposal of editorProposals) {
       fullArray.push({
         ...proposal,
-        range: range
+        range: range,
       });
     }
 
     for (const proposal of dynamicProposals) {
       fullArray.push({
         ...proposal,
-        range: range
+        range: range,
       });
     }
 
@@ -137,25 +140,25 @@ export default class EditorManager {
       label: l,
       kind: t,
       detail: d,
-      insertText: i
+      insertText: i,
     });
   }
 
   static async setupEditor(editorContainer: HTMLElement) {
     let currentWindowState: WindowState;
-    WindowManager.currentState.subscribe(newValue => {
-        currentWindowState = newValue
+    WindowManager.currentState.subscribe((newValue) => {
+      currentWindowState = newValue;
     });
 
     if (this.alreadyCreated === false) {
       monaco.languages.registerCompletionItemProvider("lua", {
-        provideCompletionItems: function(model, position) {
+        provideCompletionItems: function (model, position) {
           return {
-            suggestions: EditorManager.getDependencyProposals(model, position)
-          }
-        }
+            suggestions: EditorManager.getDependencyProposals(model, position),
+          };
+        },
       });
-  
+
       monaco.editor.defineTheme("dark", {
         base: "vs-dark",
         inherit: true,
@@ -178,13 +181,13 @@ export default class EditorManager {
           "editorOverviewRuler.border": "#2a2c32",
           "editor.lineHighlightBackground": "#1d1e23",
           "editorCursor.foreground": "#aaabad",
-          "editorGutter.background": "#17181c"
+          "editorGutter.background": "#17181c",
         },
       });
-  
+
       let globalWords: string[] = [];
       let keyWords: string[] = [];
-  
+
       for (const key of [
         "_G",
         "_VERSION",
@@ -207,7 +210,7 @@ export default class EditorManager {
         this.editorAddIntellisense(key, "Variable", key, key);
         globalWords.push(key);
       }
-  
+
       for (const key of [
         "and",
         "break",
@@ -230,12 +233,12 @@ export default class EditorManager {
         "true",
         "until",
         "while",
-        "continue"
+        "continue",
       ]) {
         this.editorAddIntellisense(key, "Keyword", key, key);
         keyWords.push(key);
       }
-  
+
       for (const key of [
         "math.abs",
         "math.acos",
@@ -363,12 +366,12 @@ export default class EditorManager {
         "iscached",
         "replace",
         "compareinstances",
-        "task.wait"
+        "task.wait",
       ]) {
         this.editorAddIntellisense(key, "Method", key, key);
         globalWords.push(key);
       }
-  
+
       for (const key of [
         "Drawing",
         "debug",
@@ -403,7 +406,7 @@ export default class EditorManager {
         this.editorAddIntellisense(key, "Class", key, key);
         globalWords.push(key);
       }
-  
+
       for (const key of [
         "print",
         "warn",
@@ -479,9 +482,9 @@ export default class EditorManager {
           key,
           key.includes(":") ? key.substring(1, key.length) : key
         );
-        globalWords.push(key)
+        globalWords.push(key);
       }
-  
+
       for (const key of [
         "Visible",
         "Color",
@@ -514,24 +517,30 @@ export default class EditorManager {
           key
         );
       }
-  
+
       monaco.languages.setMonarchTokensProvider("lua", {
         tokenizer: {
           root: [
-            [new RegExp(`\\b(${globalWords.join("|")})\\b(?!\\s*=)`, "g"), "global"],
-            [new RegExp(`\\b(${keyWords.join("|")})\\b(?!\\s*=)`, "g"), "keyword"],
+            [
+              new RegExp(`\\b(${globalWords.join("|")})\\b(?!\\s*=)`, "g"),
+              "global",
+            ],
+            [
+              new RegExp(`\\b(${keyWords.join("|")})\\b(?!\\s*=)`, "g"),
+              "keyword",
+            ],
             [/"(?:\\.|[^\\"])*"|'(?:\\.|[^\\'])*'/gm, "string"],
-            [/-?\b\d+(\.\d+)?(e[+-]?\d+)?\b/gi, "number"]
-          ]
-        }
+            [/-?\b\d+(\.\d+)?(e[+-]?\d+)?\b/gi, "number"],
+          ],
+        },
       });
 
-      SettingsManager.currentSettings.subscribe(newSettings => {
+      SettingsManager.currentSettings.subscribe((newSettings) => {
         if (this.editor === null) return;
         this.editor.updateOptions({
-          fontSize: newSettings.editorFontSize
+          fontSize: newSettings.editorFontSize,
         });
-      })
+      });
 
       this.alreadyCreated = true;
     }
@@ -560,8 +569,8 @@ export default class EditorManager {
       contextmenu: false,
       lineNumbersMinChars: 2,
       stickyScroll: {
-        enabled: false
-      }
+        enabled: false,
+      },
     });
 
     this.setEditorScroll(TabsManager.getActiveTabScroll());
@@ -572,8 +581,8 @@ export default class EditorManager {
     };
 
     setTimeout(() => {
-        EditorManager.editor?.layout();
-    }, 50)
+      EditorManager.editor?.layout();
+    }, 50);
 
     this.editor.onDidChangeModelContent(async function () {
       EditorManager.updateIntelliSense();
