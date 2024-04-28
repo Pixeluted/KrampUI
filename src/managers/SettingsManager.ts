@@ -81,7 +81,7 @@ export default class SettingsManager {
             if (settings) {
                 this.currentSettings.set(JSON.parse(settings) as Settings);
             } else {
-                WindowManager.showFatalErrorPopup("Failed to read settings file. Using default settings.");
+                WindowManager.showWarningPopup("Failed to read settings file. Using default settings.");
             }
         }
     }

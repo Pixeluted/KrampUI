@@ -68,6 +68,19 @@ export default class WindowManager {
         })
     }
 
+    public static showWarningPopup(error: string) {
+        PopupManager.showPopup({
+            title: "Warning",
+            message: error,
+            buttons: [
+                {
+                    text: "Close",
+                    isCloseButton: true
+                }
+            ]
+        })
+    }
+
     static toggleWindow() {
         if (get(SettingsManager.currentSettings).homeToggleEnabled === false) return;
 
