@@ -2,7 +2,7 @@ import { get, writable } from "svelte/store";
 import { FileSystemService } from "../services/FilesystemService";
 import EditorManager from "./EditorManager";
 import WindowManager from "./WindowManager";
-import { dialog } from "@tauri-apps/api";
+import { dialog, invoke } from "@tauri-apps/api";
 import { filePaths } from "../dir-config";
 
 export type TabType = "File" | "Ephemeral";
@@ -294,6 +294,10 @@ export class TabsManager {
     }
 
     TabsManager.updateActiveTabContent(newContent);
+  }
+
+  public static executeActiveTab() {
+    invoke("execute_script", { script: TabsManager.getActiveTabContent() });
   }
 
   public static async initialize() {

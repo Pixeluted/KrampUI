@@ -5,6 +5,7 @@ import SettingsManager from "./SettingsManager";
 import { event } from "@tauri-apps/api";
 import { PopupManager } from "./PopupManager";
 import { TabsManager } from "./TabsManager";
+import LoaderManager from "./LoaderManager";
 
 export type InjectionStatus = "Idle" | "Injecting" | "Attached";
 export type WindowOpen = "Executor" | "Settings";
@@ -45,9 +46,18 @@ export default class WindowManager {
 
     appWindow.listen("instances-update", (event: any) => {
       const currentInstances = event.payload.instances;
+      let isRobloxPresentNew = currentInstances.length > 0;
+
+      if (isRobloxPresentNew === false) {
+        WindowManager.updateInjectionStatus("Idle");
+      } else {
+        if (get(SettingsManager.currentSettings).autoInject === true) {
+          LoaderManager.handleInjectionProcess(true);
+        }
+      }
 
       WindowManager.currentState.update((state) => {
-        return { ...state, isRobloxPresent: currentInstances.length > 0 };
+        return { ...state, isRobloxPresent: isRobloxPresentNew };
       });
     });
 

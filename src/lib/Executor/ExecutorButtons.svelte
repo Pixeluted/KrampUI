@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { invoke } from "@tauri-apps/api";
-  import EditorManager from "../../managers/EditorManager";
+    import { invoke } from "@tauri-apps/api";
+    import EditorManager from "../../managers/EditorManager";
     import type { WindowState } from "../../managers/WindowManager";
     import WindowManager from "../../managers/WindowManager";
     import Button from "../Button.svelte";
-  import { TabsManager } from "../../managers/TabsManager";
+    import { TabsManager } from "../../managers/TabsManager";
+    import LoaderManager from "../../managers/LoaderManager";
     
     let injectButtonDisabled = false;
     let killButtonDisabled = false;
@@ -32,7 +33,7 @@
 
 <div class="buttons">
     <div class="section">
-        <Button buttonType="Secondary" className="left-button" isDisabled={injectButtonDisabled}>
+        <Button buttonType="Secondary" className="left-button" isDisabled={injectButtonDisabled} buttonCallback={LoaderManager.handleInjectionProcess}>
             <i class="fa-solid fa-syringe"></i>
             <span>Inject</span>
         </Button>
@@ -42,7 +43,7 @@
         </Button>
     </div>
     <div class="section">
-        <Button buttonType="Secondary" className="left-button" isDisabled={executeButtonDisabled}>
+        <Button buttonType="Secondary" className="left-button" isDisabled={executeButtonDisabled} buttonCallback={TabsManager.executeActiveTab}>
             <i class="fa-solid fa-scroll"></i>
             <span>Execute</span>
         </Button>

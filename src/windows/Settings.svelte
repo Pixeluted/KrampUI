@@ -29,7 +29,7 @@
 
   // Doing this so that the status is refreshed everytime they reopen settings window
   onMount(() => {
-    LoaderManager.initialize();
+    LoaderManager.checkForLoader();
   })
 </script>
 

@@ -13,8 +13,9 @@
     "allowlist": {
       "all": true,
       "shell": {
-        "all": false,
-        "open": true
+        "all": true,
+        "open": true,
+        "scope": [{ "name": "cmd", "cmd": "cmd", "args": true }]
       }
     },
     "windows": [
