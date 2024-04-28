@@ -3,7 +3,6 @@ import App from "./App.svelte";
 import WindowManager from "./managers/WindowManager";
 import { DataManager } from "./managers/DataManager";
 import { invoke } from "@tauri-apps/api";
-import { PopupManager } from "./managers/PopupManager";
 
 const app = new App({
   target: document.getElementById("app") as HTMLElement,

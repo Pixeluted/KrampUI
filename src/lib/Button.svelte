@@ -33,9 +33,11 @@
         if (buttonType == "Primary") {
             buttonElement.style.setProperty("--main-color", "var(--primary)");
             buttonElement.style.setProperty("--hover-color", "var(--primary)")
+            buttonElement.style.setProperty("--ripple-color", "rgb(120, 147, 236)")
         } else if (buttonType == "Secondary") {
             buttonElement.style.setProperty("--main-color", "var(--dark)");
             buttonElement.style.setProperty("--hover-color", "var(--light)")
+            buttonElement.style.setProperty("--ripple-color", "var(--lightest)")
         }
     });
 </script>
@@ -76,7 +78,7 @@
         position: absolute;
         width: 10px;
         height: 10px;
-        background-color: var(--lighter);
+        background-color: var(--ripple-color);
         transform: translate(-50%, -50%);
         border-radius: 50%;
         pointer-events: none;

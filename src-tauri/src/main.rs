@@ -7,6 +7,9 @@ use std::{thread::sleep, time::Duration};
 mod key_events;
 use crate::key_events::init_key_events;
 
+mod loader;
+use crate::loader::validate_loader;
+
 mod processes;
 use crate::processes::kill_roblox;
 use crate::processes::start_roblox_check_loop;
@@ -18,6 +21,7 @@ use crate::fs_handler::delete_file;
 use crate::fs_handler::write_binary_file;
 use crate::fs_handler::write_file;
 use crate::fs_handler::read_file;
+use crate::fs_handler::read_binary_file;
 use crate::fs_handler::exists;
 
 #[derive(Clone, Serialize)]
@@ -66,10 +70,12 @@ async fn main() {
             write_binary_file,
             write_file,
             read_file,
+            read_binary_file,
             exists,
             kill_roblox,
             start_roblox_check_loop,
-            init_key_events
+            init_key_events,
+            validate_loader
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

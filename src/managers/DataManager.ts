@@ -1,4 +1,6 @@
+import { dirPaths } from "../dir-config";
 import { FileSystemService } from "../services/FilesystemService";
+import LoaderManager from "./LoaderManager";
 import SettingsManager from "./SettingsManager";
 import { TabsManager } from "./TabsManager";
 import WindowManager from "./WindowManager";
@@ -14,8 +16,10 @@ export class DataManager {
       }
     }
 
-    if (!(await FileSystemService.exists("settings"))) {
-      const results = await FileSystemService.createDirectory("settings");
+    if (!(await FileSystemService.exists(dirPaths.settingsDir))) {
+      const results = await FileSystemService.createDirectory(
+        dirPaths.settingsDir
+      );
       if (!results.success) {
         WindowManager.showFatalErrorPopup(
           `Failed to create settings directory. Error: ${results.error}`
@@ -25,5 +29,6 @@ export class DataManager {
 
     await SettingsManager.initialize();
     await TabsManager.initialize();
+    await LoaderManager.initialize();
   }
 }

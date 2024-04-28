@@ -25,6 +25,14 @@ pub async fn write_binary_file(path: String, data: Vec<u8>) -> (bool, Option<Str
 }
 
 #[tauri::command]
+pub async fn read_binary_file(path: String) -> Option<Result<Vec<u8>, String>> {
+    match fs::read(&path).await {
+        Ok(data) => Some(Ok(data)),
+        Err(err) => Some(Err(err.to_string())),
+    }
+}
+
+#[tauri::command]
 pub async fn delete_directory(path: String) -> (bool, Option<String>) {
     match fs::remove_dir_all(&path).await {
         Ok(_) => (true, None),

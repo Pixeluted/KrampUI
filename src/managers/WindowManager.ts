@@ -54,6 +54,19 @@ export default class WindowManager {
     appWindow.listen("quit", WindowManager.exit);
   }
 
+  public static showGenericError(title: string, message: string) {
+    PopupManager.showPopup({
+      title,
+      message,
+      buttons: [
+        {
+          text: "Okay",
+          isCloseButton: true,
+        },
+      ],
+    });
+  }
+
   public static showFatalErrorPopup(error: string) {
     PopupManager.showPopup({
       title: "Fatal error",

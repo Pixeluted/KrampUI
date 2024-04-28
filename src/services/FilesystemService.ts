@@ -1,4 +1,4 @@
-import { invoke, path } from "@tauri-apps/api";
+import { fs, invoke, path } from "@tauri-apps/api";
 
 export type FilesystemCallResult = {
   success: boolean;
@@ -67,8 +67,17 @@ export class FileSystemService {
     return { success, error };
   }
 
-  public static async deleteFile(path: string): Promise<FilesystemCallResult> {
-    const fullPath = `${await this.getAppDataPath()}\\${path}`;
+  public static async deleteFile(
+    path: string,
+    absolutePath: boolean = false
+  ): Promise<FilesystemCallResult> {
+    let fullPath: string;
+    if (absolutePath) {
+      fullPath = path;
+    } else {
+      fullPath = `${await this.getAppDataPath()}\\${path}`;
+    }
+
     const [success, error]: RawResult = await invoke("delete_file", {
       path: fullPath,
     });
@@ -91,6 +100,28 @@ export class FileSystemService {
     });
     if (success) {
       return error;
+    } else {
+      return null;
+    }
+  }
+
+  public static async readBinaryFile(
+    path: string,
+    absolutePath: boolean = false
+  ): Promise<Uint8Array | null> {
+    let fullPath: string;
+    if (absolutePath) {
+      fullPath = path;
+    } else {
+      fullPath = `${await this.getAppDataPath()}\\${path}`;
+    }
+
+    const results: any = await invoke("read_binary_file", {
+      path: fullPath,
+    });
+
+    if (results.Ok) {
+      return results.Ok;
     } else {
       return null;
     }

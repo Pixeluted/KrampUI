@@ -1,6 +1,8 @@
 import { get, writable, type Writable } from "svelte/store";
 import { FileSystemService } from "../services/FilesystemService";
 import WindowManager from "./WindowManager";
+import { DataManager } from "./DataManager";
+import { filePaths } from "../dir-config";
 
 export type Settings = {
   autoInject: boolean;
@@ -21,9 +23,11 @@ export default class SettingsManager {
     injectionDelay: 3,
     autoUpdate: true,
   };
+
   public static currentSettings: Writable<Settings> = writable(
     this.defaultSettings
   );
+
   public static settingsDetails = {
     autoInject: {
       name: "Auto Inject",
@@ -62,7 +66,7 @@ export default class SettingsManager {
   public static async saveSettings() {
     const settings = get(this.currentSettings);
     const results = await FileSystemService.writeFile(
-      "settings/settings.json",
+      filePaths.settings,
       JSON.stringify(settings, null, 2)
     );
     if (!results.success) {
@@ -80,9 +84,9 @@ export default class SettingsManager {
   }
 
   public static async initialize() {
-    if (!(await FileSystemService.exists("settings/settings.json"))) {
+    if (!(await FileSystemService.exists(filePaths.settings))) {
       const results = await FileSystemService.writeFile(
-        "settings/settings.json",
+        filePaths.settings,
         JSON.stringify(this.defaultSettings, null, 2)
       );
       if (!results.success) {
@@ -91,9 +95,7 @@ export default class SettingsManager {
         );
       }
     } else {
-      const settings = await FileSystemService.readFile(
-        "settings/settings.json"
-      );
+      const settings = await FileSystemService.readFile(filePaths.settings);
       if (settings) {
         this.currentSettings.set(JSON.parse(settings) as Settings);
       } else {

@@ -3,7 +3,7 @@ import { FileSystemService } from "../services/FilesystemService";
 import EditorManager from "./EditorManager";
 import WindowManager from "./WindowManager";
 import { dialog } from "@tauri-apps/api";
-import Tab from "../lib/Executor/Tab.svelte";
+import { filePaths } from "../dir-config";
 
 export type TabType = "File" | "Ephemeral";
 export type TabData = {
@@ -55,7 +55,7 @@ export class TabsManager {
   public static async saveTabs() {
     const tabs = get(this.currentTabs);
     const results = await FileSystemService.writeFile(
-      "settings/tabs.json",
+      filePaths.tabs,
       JSON.stringify(tabs, null, 2)
     );
 
@@ -297,9 +297,9 @@ export class TabsManager {
   }
 
   public static async initialize() {
-    if (!(await FileSystemService.exists("settings/tabs.json"))) {
+    if (!(await FileSystemService.exists(filePaths.tabs))) {
       const results = await FileSystemService.writeFile(
-        "settings/tabs.json",
+        filePaths.tabs,
         JSON.stringify(this.defaultTabs, null, 2)
       );
       if (!results.success) {
@@ -308,7 +308,7 @@ export class TabsManager {
         );
       }
     } else {
-      const content = await FileSystemService.readFile("settings/tabs.json");
+      const content = await FileSystemService.readFile(filePaths.tabs);
       if (content) {
         this.currentTabs.set(JSON.parse(content));
       } else {

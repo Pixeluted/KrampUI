@@ -1,12 +1,19 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Button from "../lib/Button.svelte";
   import Input from "../lib/Input.svelte";
+  import LoaderManager from "../managers/LoaderManager";
   import type { Settings } from "../managers/SettingsManager";
   import SettingsManager from "../managers/SettingsManager";
 
   let currentSettings: Settings;
   SettingsManager.currentSettings.subscribe(newValue => {
     currentSettings = newValue;
+  })
+
+  let isLoaderPresent: boolean;
+  LoaderManager.isLoaderPresent.subscribe(newValue => {
+    isLoaderPresent = newValue;
   })
 
   function handleSettingClick(key: string) {
@@ -19,6 +26,11 @@
     finalValue = Number.isNaN(finalValue) ? 0 : finalValue;
     SettingsManager.setSetting(key, finalValue);
   }
+
+  // Doing this so that the status is refreshed everytime they reopen settings window
+  onMount(() => {
+    LoaderManager.initialize();
+  })
 </script>
 
 <main>
@@ -40,6 +52,19 @@
                 {/if}
             </div>
         {/each}
+
+        <div class="loader-section">
+            <h1>Loader</h1>
+            <span>Loader Status: <b style="color: var(--{isLoaderPresent ? "green" : "red"});">{isLoaderPresent ? "Present" : "Not Present"}</b></span>
+            <span>Only update the loader if you get error saying your loader is out of version, or your loader is not present!</span>
+            <div class="loader-content">
+                <div class="buttons">
+                    <Button buttonType="Secondary" buttonCallback={LoaderManager.updateLoader}>
+                        <span>Update loader</span>
+                    </Button>
+                </div>
+            </div>
+        </div>
     </div>
 </main>
 
@@ -99,10 +124,29 @@
         user-select: none;
     }
 
-
     @media only screen and (max-width: 500px) {
         .settings .setting > .setting-info > .setting-description {
             font-size: 0.75rem;
         }
     }
+
+    .loader-section {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .loader-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .loader-content .buttons :global(button) {
+        margin-top: 0.3rem;
+    }
+
+    .loader-content span {
+        text-wrap: nowrap;
+    }
+
 </style>

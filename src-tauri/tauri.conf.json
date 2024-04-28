@@ -40,9 +40,7 @@
       "active": true,
       "targets": "all",
       "identifier": "KrampUI-Rewrite",
-      "icon": [
-        "icons/icon.ico"
-      ]
+      "icon": ["icons/icon.ico"]
     },
     "systemTray": {
       "iconPath": "icons/icon.png",
