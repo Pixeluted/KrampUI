@@ -21,3 +21,10 @@ ws = "0.9.2"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+opt-level = 3
+debug = false
+strip = "debuginfo"
+lto = true
+panic = 'unwind'

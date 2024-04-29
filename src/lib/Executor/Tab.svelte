@@ -50,7 +50,7 @@
                 if (isMouseDown === false) return;
 
                 startDragging();
-            }, 100);
+            }, 30);
         }
     })
 
@@ -59,14 +59,16 @@
             tabClone.style.left = `${moveEvent.clientX - tabClone.offsetWidth / 2}px`;
             tabClone.style.top = `${moveEvent.clientY - tabClone.offsetHeight / 2}px`;
 
-            let finalTab;
+            let finalTab: HTMLElement | null = null;
 
             const target = moveEvent.target as HTMLElement;
             if (!target) return;
 
-            if (target !== currentlyHighlightedElement) {
-                if (currentlyHighlightedElement !== null) {
-                    (currentlyHighlightedElement as HTMLElement).style.backgroundColor = "";
+            const higlightedItem = currentlyHighlightedElement as HTMLElement
+
+            if (target !== higlightedItem) {
+                if (higlightedItem !== null) {
+                    higlightedItem.style.backgroundColor = "";
                     currentlyHighlightedElement = null;
                 }
             }
@@ -86,26 +88,26 @@
 
             if (finalTab === tabElement) return;
 
-            if (currentlyHighlightedElement !== null) {
-                (currentlyHighlightedElement as HTMLElement).style.backgroundColor = "";
+            if (higlightedItem !== null) {
+                higlightedItem.style.backgroundColor = "";
                 currentlyHighlightedElement = null;
             }
 
             currentlyHighlightedElement = finalTab;
-            (finalTab as HTMLElement).style.backgroundColor = "var(--primary)";
+            currentlyHighlightedElement.style.backgroundColor = "var(--primary)";
         }
     })
 
     window.addEventListener("mouseup", (e) => {
         isMouseDown = false;
-        console.log(e.target)
 
         if (isDragging === true) {
             stopDragging();
+            const higlightedItem = currentlyHighlightedElement as HTMLElement
 
-            if (currentlyHighlightedElement !== null) {
-                (currentlyHighlightedElement as HTMLElement).style.backgroundColor = "";
-                const finalTabId = (currentlyHighlightedElement as HTMLElement).dataset.tabId;
+            if (higlightedItem !== null) {
+                higlightedItem.style.backgroundColor = "";
+                const finalTabId = higlightedItem.dataset.tabId;
                 if (!finalTabId) return;
 
                 TabsManager.moveTab(tabId, finalTabId);

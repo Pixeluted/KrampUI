@@ -1,8 +1,8 @@
 import { get, writable, type Writable } from "svelte/store";
 import { FileSystemService } from "../services/FilesystemService";
 import WindowManager from "./WindowManager";
-import { DataManager } from "./DataManager";
 import { filePaths } from "../dir-config";
+import { appWindow } from "@tauri-apps/api/window";
 
 export type Settings = {
   autoInject: boolean;
@@ -77,6 +77,8 @@ export default class SettingsManager {
   }
 
   public static async setSetting(setting: keyof Settings, value: any) {
+    if (setting === "topMost") appWindow.setAlwaysOnTop(value);
+
     this.currentSettings.update((settings) => {
       return { ...settings, [setting]: value };
     });
@@ -104,5 +106,7 @@ export default class SettingsManager {
         );
       }
     }
+
+    appWindow.setAlwaysOnTop(get(this.currentSettings).topMost);
   }
 }

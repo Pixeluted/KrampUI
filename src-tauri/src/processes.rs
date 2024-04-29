@@ -33,7 +33,7 @@ pub fn start_roblox_check_loop(window: tauri::Window) {
                 previous_roblox_instances = current_roblox_instances.clone();
             }
 
-            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+            tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
         }
     });
 }
