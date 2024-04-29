@@ -133,20 +133,24 @@
     .loader-section {
         display: flex;
         flex-direction: column;
+        user-select: none;
     }
 
     .loader-content {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        user-select: none;
     }
 
     .loader-content .buttons :global(button) {
         margin-top: 0.3rem;
+        user-select: none;
     }
 
     .loader-content span {
         text-wrap: nowrap;
+        user-select: none;
     }
 
 </style>

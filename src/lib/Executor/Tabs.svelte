@@ -10,6 +10,8 @@
     currentTabs = newValue;
   })
 
+  $: sortedTabs = currentTabs.slice().sort((a, b) => a.tabOrder - b.tabOrder);
+
   afterUpdate(() => {
     EditorManager.editor?.layout();
   })
@@ -17,7 +19,7 @@
 
 <div class="tabs">
     <div class="list">
-        {#each currentTabs as tab}
+        {#each sortedTabs as tab}
             <Tab scriptName={tab.title} tabId={tab.id} isSelected={tab.isActive} isFile={tab.type === "File"} isUnsaved={tab.isModified} />
         {/each}
     </div>

@@ -43,15 +43,6 @@ export class TabsManager {
     );
   }
 
-  private static updateTabOrder() {
-    this.currentTabs.update((tabs) => {
-      tabs.forEach((tab, index) => {
-        tab.tabOrder = index;
-      });
-      return tabs;
-    });
-  }
-
   public static async saveTabs() {
     const tabs = get(this.currentTabs);
     const results = await FileSystemService.writeFile(
@@ -218,7 +209,6 @@ export class TabsManager {
     });
 
     this.setActiveTab(newTabId);
-    this.updateTabOrder();
     this.saveTabs();
   }
 
@@ -238,7 +228,33 @@ export class TabsManager {
       return tabs;
     });
 
-    this.updateTabOrder();
+    this.saveTabs();
+  }
+
+  public static moveTab(originTabId: string, targetTabId: string) {
+    this.currentTabs.update((tabs) => {
+      const originTabOrder = tabs.find(
+        (tab) => tab.id === originTabId
+      )?.tabOrder;
+      const targetTabOrder = tabs.find(
+        (tab) => tab.id === targetTabId
+      )?.tabOrder;
+
+      if (originTabOrder === undefined || targetTabOrder === undefined) {
+        return tabs;
+      }
+
+      tabs.forEach((tab) => {
+        if (tab.id === originTabId) {
+          tab.tabOrder = targetTabOrder;
+        } else if (tab.id === targetTabId) {
+          tab.tabOrder = originTabOrder;
+        }
+      });
+
+      return tabs;
+    });
+
     this.saveTabs();
   }
 
