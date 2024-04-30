@@ -28,6 +28,7 @@ use crate::fs_handler::read_file;
 use crate::fs_handler::read_binary_file;
 use crate::fs_handler::rename_file;
 use crate::fs_handler::exists;
+use crate::fs_handler::open_file_explorer;
 
 #[derive(Clone, Serialize)]
 struct SingleInstancePayload {
@@ -77,6 +78,7 @@ async fn main() {
             rename_file,
             read_file,
             read_binary_file,
+            open_file_explorer,
             exists,
             kill_roblox,
             start_roblox_check_loop,

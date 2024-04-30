@@ -56,11 +56,11 @@ export default class SettingsManager {
       description: "Controls the editors font size",
       type: "number",
     },
-    autoUpdate: {
-      name: "Auto Update",
-      description: "Automatically updates to latest version on startup",
-      type: "boolean",
-    },
+    //autoUpdate: {
+    //  name: "Auto Update",
+    //  description: "Automatically updates to latest version on startup",
+    //  type: "boolean",
+    //},
   };
 
   public static async saveSettings() {

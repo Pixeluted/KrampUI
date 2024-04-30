@@ -6,6 +6,7 @@
     export let isFile = false;
     export let isSelected = false;
     export let isUnsaved = false;
+    export let isLocked = false;
     export let scriptName = "Script";
     export let tabId = "";
 
@@ -61,7 +62,7 @@
                 if (isMouseDown === false) return;
 
                 startDragging(mouseEvent);
-            }, 50);
+            }, 80);
         }
     })
 
@@ -195,12 +196,17 @@
     {#if isUnsaved}
         <i class="fa-solid fa-pencil"></i>
     {/if}
+    {#if isLocked}
+        <i class="fa-solid fa-lock"></i>
+    {/if}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <i class="fa-solid fa-x" on:click={() => { TabsManager.deleteTab(tabId) }}></i>
     <Dropdown buttonCallbacks={[
         () => { invoke("execute_script", { script: TabsManager.getTabContent(tabId) }) },
-        () => { startRenaming() }
+        () => { startRenaming() },
+        () => { TabsManager.revealFileInExplorer(tabId) },
+        () => { TabsManager.toggleLockTab(tabId) }
     ]}>
         <button data-index="1">
             <i class="fa-solid fa-scroll"></i>
@@ -210,6 +216,16 @@
             <i class="fa-solid fa-font"></i>
             <span>Rename</span>
         </button>
+        {#if isFile}
+            <button data-index="3">
+                <i class="fa-solid fa-file"></i>
+                <span>Reveal in explorer</span>
+            </button>
+            <button data-index="4">
+                <i class="fa-solid fa-{isLocked ? "lock-open" : "lock"}"></i>
+                <span>{isLocked ? "Unlock" : "Lock"}</span>
+            </button>
+        {/if}
     </Dropdown>
 </button>
 

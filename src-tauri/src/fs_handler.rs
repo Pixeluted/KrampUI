@@ -1,4 +1,5 @@
 use tokio::fs;
+use std::path::PathBuf;
 
 #[tauri::command]
 pub async fn create_directory(path: String) -> (bool, Option<String>) {
@@ -62,6 +63,20 @@ pub async fn rename_file(old_path: String, new_path: String) -> (bool, Option<St
         Ok(_) => (true, None),
         Err(err) => (false, Some(err.to_string())),
     }
+}
+
+#[tauri::command]
+pub async fn open_file_explorer(path: String) {
+    let path_arg = if PathBuf::from(&path).is_dir() {
+        path
+    } else {
+        format!("/select,{}", path.replace("/", "\\"))
+    };
+
+    std::process::Command::new("explorer")
+        .arg(path_arg)
+        .spawn()
+        .expect("Failed to open file explorer");
 }
 
 #[tauri::command]

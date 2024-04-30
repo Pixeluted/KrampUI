@@ -20,7 +20,7 @@
 <div class="tabs">
     <div class="list">
         {#each sortedTabs as tab}
-            <Tab scriptName={tab.title} tabId={tab.id} isSelected={tab.isActive} isFile={tab.type === "File"} isUnsaved={tab.isModified} />
+            <Tab scriptName={tab.title} isLocked={tab.isLocked} tabId={tab.id} isSelected={tab.isActive} isFile={tab.type === "File"} isUnsaved={tab.isModified} />
         {/each}
     </div>
     <Button buttonType="Secondary" buttonCallback={() => { TabsManager.addTab(false) }}>

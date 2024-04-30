@@ -4,7 +4,6 @@ import EditorManager from "./EditorManager";
 import WindowManager from "./WindowManager";
 import { dialog, invoke, path } from "@tauri-apps/api";
 import { filePaths } from "../dir-config";
-import { dirname } from "@tauri-apps/api/path";
 
 export type TabType = "File" | "Ephemeral";
 export type TabData = {
@@ -17,6 +16,7 @@ export type TabData = {
   content: string;
   isModified: boolean;
   isActive: boolean;
+  isLocked: boolean;
 };
 
 export class TabsManager {
@@ -31,6 +31,7 @@ export class TabsManager {
       content: this.defaultTabContent,
       isModified: false,
       isActive: true,
+      isLocked: false,
     },
   ];
 
@@ -214,6 +215,13 @@ export class TabsManager {
     }
   }
 
+  public static async revealFileInExplorer(tabId: string) {
+    const tab = get(this.currentTabs).find((tab) => tab.id === tabId);
+    if (tab === undefined || tab.type !== "File") return;
+
+    await invoke("open_file_explorer", { path: tab.filePath });
+  }
+
   public static async addTab(isFile: boolean, filePath?: string) {
     const newTabId = this.generateUniqueID();
     let newTabContent = this.defaultTabContent;
@@ -232,7 +240,7 @@ export class TabsManager {
         id: newTabId,
         type: isFile ? "File" : "Ephemeral",
         filePath: filePath,
-        tabOrder: tabs.length,
+        tabOrder: Math.max(...tabs.map((tab) => tab.tabOrder)) + 1,
         tabScroll: 0,
         title: isFile
           ? FileSystemService.getFileNameFromPath(filePath as string)
@@ -240,12 +248,26 @@ export class TabsManager {
         content: newTabContent,
         isModified: false,
         isActive: true,
+        isLocked: false,
       });
 
       return tabs;
     });
 
     this.setActiveTab(newTabId);
+    this.saveTabs();
+  }
+
+  public static toggleLockTab(tabId: string) {
+    this.currentTabs.update((tabs) => {
+      tabs.forEach((tab) => {
+        if (tab.id === tabId) {
+          tab.isLocked = !tab.isLocked;
+        }
+      });
+      return tabs;
+    });
+
     this.saveTabs();
   }
 
@@ -256,10 +278,12 @@ export class TabsManager {
 
     this.currentTabs.update((tabs) => {
       const index = tabs.findIndex((tab) => tab.id === tabId);
-      if (tabs[index - 1] !== undefined) {
-        this.setActiveTab(tabs[index - 1].id);
-      } else {
-        this.setActiveTab(tabs[index + 1].id);
+      if (tabId === this.activeTab.id) {
+        if (tabs[index - 1] !== undefined) {
+          this.setActiveTab(tabs[index - 1].id);
+        } else {
+          this.setActiveTab(tabs[index + 1].id);
+        }
       }
       tabs.splice(index, 1);
       return tabs;
@@ -307,6 +331,7 @@ export class TabsManager {
 
   public static async saveActiveTab() {
     if (this.activeTab === undefined) return;
+    if (this.activeTab.isLocked) return;
 
     const currentTab = this.activeTab;
     if (currentTab.type == "File" && currentTab.isModified) {
