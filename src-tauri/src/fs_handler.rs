@@ -57,6 +57,14 @@ pub async fn read_file(path: String) -> (bool, Option<String>) {
 }
 
 #[tauri::command]
+pub async fn rename_file(old_path: String, new_path: String) -> (bool, Option<String>) {
+    match fs::rename(&old_path, &new_path).await {
+        Ok(_) => (true, None),
+        Err(err) => (false, Some(err.to_string())),
+    }
+}
+
+#[tauri::command]
 pub async fn exists(path: String) -> bool {
     fs::metadata(&path).await.is_ok()
 }

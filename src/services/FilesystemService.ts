@@ -127,6 +127,29 @@ export class FileSystemService {
     }
   }
 
+  public static async renameFile(
+    oldPath: string,
+    newPath: string,
+    absolutePath: boolean = false
+  ) {
+    let finalOldPath: string;
+    let finalNewPath: string;
+
+    if (absolutePath) {
+      finalOldPath = oldPath;
+      finalNewPath = newPath;
+    } else {
+      finalOldPath = `${await this.getAppDataPath()}\\${oldPath}`;
+      finalNewPath = `${await this.getAppDataPath()}\\${newPath}`;
+    }
+
+    const [success, error]: RawResult = await invoke("rename_file", {
+      oldPath: finalOldPath,
+      newPath: finalNewPath,
+    });
+    return { success, error };
+  }
+
   public static async exists(path: string): Promise<boolean> {
     const fullPath = `${await this.getAppDataPath()}\\${path}`;
     const success: boolean = await invoke("exists", { path: fullPath });

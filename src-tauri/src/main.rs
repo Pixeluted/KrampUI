@@ -26,6 +26,7 @@ use crate::fs_handler::write_binary_file;
 use crate::fs_handler::write_file;
 use crate::fs_handler::read_file;
 use crate::fs_handler::read_binary_file;
+use crate::fs_handler::rename_file;
 use crate::fs_handler::exists;
 
 #[derive(Clone, Serialize)]
@@ -73,6 +74,7 @@ async fn main() {
             delete_file,
             write_binary_file,
             write_file,
+            rename_file,
             read_file,
             read_binary_file,
             exists,

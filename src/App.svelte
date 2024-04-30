@@ -28,9 +28,8 @@
 
   <Popup />
 
-  <div class="dragging-container">
-
-  </div>
+  <div class="dragging-container"></div>
+  <div class="dropdown-container"></div>
 </main>
 
 
@@ -40,7 +39,7 @@
     overflow: hidden;
   }
 
-  .dragging-container {
+  .dragging-container, .dropdown-container {
     position: absolute;
     top: 0;
     left: 0;

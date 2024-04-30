@@ -2,8 +2,9 @@ import { get, writable } from "svelte/store";
 import { FileSystemService } from "../services/FilesystemService";
 import EditorManager from "./EditorManager";
 import WindowManager from "./WindowManager";
-import { dialog, invoke } from "@tauri-apps/api";
+import { dialog, invoke, path } from "@tauri-apps/api";
 import { filePaths } from "../dir-config";
+import { dirname } from "@tauri-apps/api/path";
 
 export type TabType = "File" | "Ephemeral";
 export type TabData = {
@@ -55,6 +56,42 @@ export class TabsManager {
         `Failed to save tabs. Error: ${results.error}`
       );
     }
+  }
+
+  public static async renameTab(tabId: string, newTitle: string) {
+    const tabs = get(this.currentTabs);
+
+    for (let i = 0; i < tabs.length; i++) {
+      const tab = tabs[i];
+      if (tab.id === tabId) {
+        tab.title = newTitle;
+
+        if (tab.type === "File") {
+          let originalPath = tab.filePath as string;
+          let newPath = await path.join(
+            await path.dirname(originalPath),
+            newTitle
+          );
+
+          const results = await FileSystemService.renameFile(
+            originalPath as string,
+            newPath as string,
+            true
+          );
+
+          if (!results.success) {
+            WindowManager.showWarningPopup(
+              `Failed to rename file. Error: ${results.error}`
+            );
+          } else {
+            tab.filePath = newPath;
+          }
+        }
+      }
+    }
+
+    this.currentTabs.set(tabs);
+    this.saveTabs();
   }
 
   public static getActiveTabContent(): string {
@@ -229,6 +266,10 @@ export class TabsManager {
     });
 
     this.saveTabs();
+  }
+
+  public static getTabContent(tabId: string): string {
+    return get(this.currentTabs).find((tab) => tab.id === tabId)?.content || "";
   }
 
   public static moveTab(originTabId: string, targetTabId: string) {
