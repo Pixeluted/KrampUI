@@ -58,7 +58,7 @@
     }
 
     .search-file-explorer-container :global(input) {
-        padding: 0.8rem 0.3rem;
+        padding: 0.7rem 0.3rem;
         height: 15px;
         width: 100%;
         font-size: smaller;

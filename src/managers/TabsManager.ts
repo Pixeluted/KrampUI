@@ -4,6 +4,7 @@ import EditorManager from "./EditorManager";
 import WindowManager from "./WindowManager";
 import { dialog, invoke, path } from "@tauri-apps/api";
 import { filePaths } from "../dir-config";
+import FileExplorerManager from "./FileExplorerManager";
 
 export type TabType = "File" | "Ephemeral";
 export type TabData = {
@@ -93,6 +94,7 @@ export class TabsManager {
 
     this.currentTabs.set(tabs);
     this.saveTabs();
+    FileExplorerManager.updateFiles();
   }
 
   public static getActiveTabContent(): string {

@@ -265,5 +265,6 @@
     .tab span {
         all: unset;
         font-size: smaller;
+        text-wrap: nowrap;
     }
 </style>

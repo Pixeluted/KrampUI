@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import DropdownManager from "../managers/DropdownManager";
+  import { cli } from "@tauri-apps/api";
 
     export let buttonCallbacks: Array<() => void> = [];
 
@@ -24,9 +25,19 @@
     onMount(() => {
         const dropdownParent = ourDropdown.parentElement as HTMLElement;
 
+        function isElementInOurDrodpownParent(element: HTMLElement, maxRecursion = 1) {
+            if (element === dropdownParent) return true;
+            if (element.parentElement === null) return false;
+            if (maxRecursion <= 0) return false;
+            return isElementInOurDrodpownParent(element.parentElement, maxRecursion - 1);
+        }
+
         dropdownParent.addEventListener("mousedown", (clickEvent) => {
             if (ourDropdown === null) return;
             if (clickEvent.button !== 2) return;
+            if (clickEvent.target === null) return;
+            if (!isElementInOurDrodpownParent(clickEvent.target as HTMLElement)) return;
+            
 
             if (DropdownManager.currentOpenDropdown !== null) {
                 DropdownManager.currentOpenDropdown.closeDropdownFunc();
@@ -116,6 +127,10 @@
         justify-content: flex-start;
         align-items: center;
         gap: 0.2rem;
+    }
+
+    .dropdown-content-container :global(button > span) {
+        text-wrap: nowrap;
     }
 
     .dropdown-content-container :global(button:hover) {

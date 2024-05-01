@@ -150,6 +150,22 @@ export class FileSystemService {
     return { success, error };
   }
 
+  public static async readDir(
+    path: string,
+    absolutePath: boolean = false
+  ): Promise<fs.FileEntry[]> {
+    let fullPath: string;
+    if (absolutePath) {
+      fullPath = path;
+    } else {
+      fullPath = `${await this.getAppDataPath()}${path}`;
+    }
+
+    const dirFiles = await fs.readDir(fullPath);
+
+    return dirFiles;
+  }
+
   public static async exists(path: string): Promise<boolean> {
     const fullPath = `${await this.getAppDataPath()}\\${path}`;
     const success: boolean = await invoke("exists", { path: fullPath });

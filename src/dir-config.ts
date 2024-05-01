@@ -1,6 +1,7 @@
 const dirPaths = {
   settingsDir: "settings",
   autoExecDir: "autoexec",
+  scriptsDir: "scripts",
 };
 
 const filePaths = {
