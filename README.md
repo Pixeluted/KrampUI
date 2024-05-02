@@ -8,6 +8,8 @@
 ## Tutorial + Showcase
 Watch a tutorial on how to use it here: https://www.youtube.com/watch?v=VXCyulSeDS0
 
+Or you can get support at our discord server: https://discord.gg/QeFybUYzPE
+
 ## Getting KrampUI
 
 ### [Download the binary](https://github.com/Pixeluted/KrampUI/releases/latest),
