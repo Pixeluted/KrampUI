@@ -30,6 +30,9 @@ use crate::fs_handler::rename_file;
 use crate::fs_handler::exists;
 use crate::fs_handler::open_file_explorer;
 
+mod updates;
+use crate::updates::check_for_updates;
+
 #[derive(Clone, Serialize)]
 struct SingleInstancePayload {
     args: Vec<String>,
@@ -85,7 +88,8 @@ async fn main() {
             init_key_events,
             validate_loader,
             initialize_websocket,
-            execute_script
+            execute_script,
+            check_for_updates
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

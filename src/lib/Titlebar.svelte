@@ -1,6 +1,12 @@
 <script lang="ts">
     import { appWindow } from "@tauri-apps/api/window";
     import WindowManager, { type WindowState } from "../managers/WindowManager";
+    import { getVersion } from "@tauri-apps/api/app";
+
+    let currentVersion: string;
+    (async () => {
+        currentVersion = await getVersion();
+    })()
 
     let windowState: WindowState;
     WindowManager.currentState.subscribe(newValue => {
@@ -12,7 +18,7 @@
     <div class="tb-drag" data-tauri-drag-region></div>
     <div class="brand">
         <p class="text" class:idle={windowState.injectionStatus == "Idle"} class:injecting={windowState.injectionStatus == "Injecting"} class:attached={windowState.injectionStatus == "Attached"}>KrampUI</p>
-        <p class="version">(2.0.0)</p>
+        <p class="version">{currentVersion}</p>
     </div>
     <div class="buttons">
         <button class="tb-button settings-toggle" on:click={WindowManager.toggleSettingsWindow}><i class="fa-solid fa-cog"></i></button>
