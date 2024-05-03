@@ -30,7 +30,6 @@
     .content-container {
         display: flex;
         height: calc(100vh - 24px - 35px - 20px);  /* Full viewport size - size of title bar - size of buttons - size of tabs */
-        width: auto;
         margin-top: 8px;
         margin-right: 8px;
         margin-left: 8px;
@@ -40,7 +39,6 @@
     .search-file-explorer-container {
         display: flex;
         flex-direction: column;
-        flex-grow: 1;
         gap: 0.26rem;
     }
 
@@ -48,19 +46,13 @@
         display: flex;
         flex-direction: column;
         gap: 0.2rem;
-        width: 90%;
-    }
-
-    @media only screen and (max-width: 600px) {
-        .tab-editor-container {
-            width: 70%;
-        }
+        flex: 1;
+        min-width: 50%;
     }
 
     .search-file-explorer-container :global(input) {
         padding: 0.7rem 0.3rem;
         height: 15px;
-        width: 100%;
         font-size: smaller;
     }
 </style>

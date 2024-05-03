@@ -34,11 +34,9 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.4rem;
-        width: 100%;
     }
 
     .list {
-        flex-basis: 100%;
         display: flex;
         gap: 0.3rem;
         align-items: center;
@@ -47,6 +45,7 @@
 
     :global(.tabs .button) {
         padding: 0.05rem 0.4rem;
+        flex-shrink: 0;
     }
 
     :global(.tabs .button > *) {

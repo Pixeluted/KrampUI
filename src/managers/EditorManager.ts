@@ -571,14 +571,10 @@ export default class EditorManager {
       stickyScroll: {
         enabled: false,
       },
+      automaticLayout: true,
     });
 
     this.setEditorScroll(TabsManager.getActiveTabScroll());
-
-    window.onresize = function () {
-      if (currentWindowState.currentWindow !== "Executor") return;
-      EditorManager.editor?.layout();
-    };
 
     setTimeout(() => {
       EditorManager.editor?.layout();

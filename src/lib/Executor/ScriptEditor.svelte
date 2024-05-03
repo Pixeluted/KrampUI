@@ -23,5 +23,9 @@
         box-sizing: border-box;
         overflow: hidden;
         text-align: left;
+
+        display: grid;
+        grid-template-columns: 0px minmax(0px, auto);
     }
+
 </style>
