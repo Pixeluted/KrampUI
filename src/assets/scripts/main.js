@@ -1627,7 +1627,7 @@ async function inject(autoInject) {
 
   if (autoInject)
     await new Promise(function (resolve) {
-      setTimeout(() => resolve(), settings.injectionDelay);
+      setTimeout(() => resolve(), settings.injectionDelay * 1000);
     });
 
   const command = new Command(
