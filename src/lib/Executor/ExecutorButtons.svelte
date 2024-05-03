@@ -6,6 +6,8 @@
     import Button from "../Button.svelte";
     import { TabsManager } from "../../managers/TabsManager";
     import LoaderManager from "../../managers/LoaderManager";
+  import { FileSystemService } from "../../services/FilesystemService";
+  import { dirPaths } from "../../dir-config";
     
     let injectButtonDisabled = false;
     let killButtonDisabled = false;
@@ -29,6 +31,12 @@
             injectButtonDisabled = true;
         }
     })
+
+    async function openScriptsFolder() {
+        const scriptsPath = `${await FileSystemService.getAppDataPath()}${dirPaths.scriptsDir}`
+
+        await invoke("open_file_explorer", { path: scriptsPath });
+    }
 </script>
 
 <div class="buttons">
@@ -63,7 +71,7 @@
         </Button>
     </div>
     <div class="section">
-        <Button buttonType="Secondary">
+        <Button buttonType="Secondary" buttonCallback={openScriptsFolder}>
             <i class="fa-solid fa-folder"></i>
             <span>Folder</span>
         </Button>

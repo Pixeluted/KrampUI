@@ -8,7 +8,7 @@ export type FilesystemCallResult = {
 type RawResult = [boolean, string | null];
 
 export class FileSystemService {
-  private static async getAppDataPath() {
+  public static async getAppDataPath() {
     return await path.appDataDir();
   }
 
