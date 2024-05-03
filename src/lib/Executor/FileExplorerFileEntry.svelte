@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+    import { onMount } from "svelte";
     import FileExplorerManager from "../../managers/FileExplorerManager";
     import Dropdown from "../Dropdown.svelte";
 

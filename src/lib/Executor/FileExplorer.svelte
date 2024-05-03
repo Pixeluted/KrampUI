@@ -13,27 +13,46 @@
   let currentFolders: FileFolder[];
   FileExplorerManager.currentFolders.subscribe((value) => {
     currentFolders = value;
- });
+  });
+
+  let areWeSearching: boolean;
+  FileExplorerManager.areWeSearching.subscribe((value) => {
+    areWeSearching = value;
+  });
+
+  let searchResults: FileData[];
+  FileExplorerManager.searchResults.subscribe((value) => {
+    searchResults = value;
+  });
 </script>
 
 <div class="file-explorer">
-    {#each currentFolders as folder}
-        <FileExplorerFolderEntry name={folder.folderName === "autoexec" ? "Auto Exec " : folder.folderName} icon={folder.folderIcon}>
-            {#if folder.isOpen === true} 
-                {#each currentFiles as file}
-                    {#if file.folderName === folder.folderName}
-                        <FileExplorerFileEntry fileName={file.title} fileId={file.id} />
-                    {/if}
-                {/each}
-            {/if}
-        </FileExplorerFolderEntry>
-    {/each}
-
-    {#each currentFiles as file}
-        {#if file.folderName === "scripts"}
-            <FileExplorerFileEntry fileName={file.title} fileId={file.id} />
+    {#if areWeSearching === true} 
+        {#if searchResults.length === 0}
+            <p>No files found</p>
         {/if}
-    {/each}
+        {#each searchResults as file}
+            <FileExplorerFileEntry fileName={file.title} fileId={file.id} />
+        {/each}
+    {:else} 
+        {#each currentFolders as folder}
+            <FileExplorerFolderEntry name={folder.folderName === "autoexec" ? "Auto Exec " : folder.folderName} icon={folder.folderIcon}>
+                {#if folder.isOpen === true} 
+                    {#each currentFiles as file}
+                        {#if file.folderName === folder.folderName}
+                            <FileExplorerFileEntry fileName={file.title} fileId={file.id} />
+                        {/if}
+                    {/each}
+                {/if}
+            </FileExplorerFolderEntry>
+        {/each}
+
+        {#each currentFiles as file}
+            {#if file.folderName === "scripts"}
+                <FileExplorerFileEntry fileName={file.title} fileId={file.id} />
+            {/if}
+        {/each}
+    {/if}
 
     <Dropdown>
         <button data-index="1">

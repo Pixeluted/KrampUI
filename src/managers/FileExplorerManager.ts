@@ -25,6 +25,9 @@ export default class FileExplorerManager {
   public static currentFiles = writable<FileData[]>([]);
   public static currentFolders = writable<FileFolder[]>([]);
 
+  public static areWeSearching = writable(false);
+  public static searchResults = writable<FileData[]>([]);
+
   private static getFileExtensionFromPath(path: string) {
     return path.split(".").pop() || "";
   }
@@ -206,6 +209,23 @@ export default class FileExplorerManager {
 
     this.currentFiles.set(allFilesFound);
     this.currentFolders.set(allFoldersFound);
+  }
+
+  public static updateSearchInput(searchInput: string) {
+    if (searchInput.trim() === "") {
+      this.areWeSearching.set(false);
+      this.searchResults.set([]);
+      return;
+    }
+
+    this.areWeSearching.set(true);
+
+    const currentFiles = get(this.currentFiles);
+    const searchResults = currentFiles.filter((file) =>
+      file.title.toLowerCase().includes(searchInput.toLowerCase())
+    );
+
+    this.searchResults.set(searchResults);
   }
 
   public static async initialize() {

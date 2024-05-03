@@ -4,7 +4,11 @@
   import Tabs from "../lib/Executor/Tabs.svelte";
   import ScriptEditor from "../lib/Executor/ScriptEditor.svelte";
   import FileExplorer from "../lib/Executor/FileExplorer.svelte";
+  import FileExplorerManager from "../managers/FileExplorerManager";
 
+  function handleSearchInput(_, newValue: string) {
+    FileExplorerManager.updateSearchInput(newValue);
+  }
 </script>
 
 <main>
@@ -15,7 +19,7 @@
             <ScriptEditor/>
         </div>
         <div class="search-file-explorer-container">
-            <Input placeholder="Search"/>
+            <Input placeholder="Search" valueChangeCallback={handleSearchInput} />
             <FileExplorer/>
         </div>
     </div>
