@@ -1,7 +1,6 @@
 <script lang="ts">
   import FileExplorerFolderEntry from "./FileExplorerFolderEntry.svelte";
   import FileExplorerFileEntry from "./FileExplorerFileEntry.svelte";
-  import Dropdown from "../Dropdown.svelte";
   import type { FileData, FileFolder } from "../../managers/FileExplorerManager";
   import FileExplorerManager from "../../managers/FileExplorerManager";
 
@@ -53,13 +52,6 @@
             {/if}
         {/each}
     {/if}
-
-    <Dropdown>
-        <button data-index="1">
-            <i class="fa-solid fa-file"></i>
-            <span>New File</span>
-        </button>
-    </Dropdown>
 </div>
 
 <style>
