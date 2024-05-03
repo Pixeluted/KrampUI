@@ -531,6 +531,8 @@ export default class EditorManager {
             ],
             [/"(?:\\.|[^\\"])*"|'(?:\\.|[^\\'])*'/gm, "string"],
             [/-?\b\d+(\.\d+)?(e[+-]?\d+)?\b/gi, "number"],
+            [/--\[\[.*?\]\]/s, "comment"],
+            [/--.*$/, "comment"],
           ],
         },
       });
