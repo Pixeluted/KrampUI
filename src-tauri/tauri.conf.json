@@ -19,7 +19,11 @@
       },
       "fs": {
         "all": true,
-        "scope": ["C:/Users/*/AppData/Roaming/*/*"]
+        "scope": [
+          "C:/Users/*/AppData/Roaming/*/*",
+          "C:/Users/*/AppData/Roaming/*/*/*",
+          "C:/Users/*/AppData/Roaming/*/*/*/*"
+        ]
       }
     },
     "windows": [

@@ -151,14 +151,14 @@ export class FileSystemService {
   }
 
   public static async readDir(
-    path: string,
+    dirPath: string,
     absolutePath: boolean = false
   ): Promise<fs.FileEntry[]> {
     let fullPath: string;
     if (absolutePath) {
-      fullPath = path;
+      fullPath = dirPath;
     } else {
-      fullPath = `${await this.getAppDataPath()}${path}`;
+      fullPath = await path.join(await this.getAppDataPath(), dirPath);
     }
 
     const dirFiles = await fs.readDir(fullPath);

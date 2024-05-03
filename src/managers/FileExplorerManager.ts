@@ -6,21 +6,31 @@ import { invoke, path } from "@tauri-apps/api";
 import WindowManager from "./WindowManager";
 import { TabsManager } from "./TabsManager";
 
-export type FileFolder = "Scripts" | "Auto Exec";
+export type FileFolder = {
+  folderName: string;
+  folderIcon: string;
+  isOpen: boolean;
+};
+
 export type FileData = {
   id: string;
-  folder: FileFolder;
+  folderName: string;
   title: string;
   filePath: string;
 };
 
 export default class FileExplorerManager {
   private static allowedExtensions = ["lua", "luau", "txt"];
-  private static rawFiles: FileEntry[] = [];
+  private static openFolders: string[] = [];
   public static currentFiles = writable<FileData[]>([]);
+  public static currentFolders = writable<FileFolder[]>([]);
 
   private static getFileExtensionFromPath(path: string) {
     return path.split(".").pop() || "";
+  }
+
+  private static isDirectory(path: FileEntry) {
+    return path.children !== undefined;
   }
 
   private static generateUniqueID(): string {
@@ -72,53 +82,130 @@ export default class FileExplorerManager {
     invoke("execute_script", { script: fileContent });
   }
 
+  private static async internalLoopOverFolders(): Promise<{
+    files: FileData[];
+    folders: FileFolder[];
+  }> {
+    const scriptsDirs = await FileSystemService.readDir(dirPaths.scriptsDir);
+    const allFilesFound: FileData[] = [];
+    const allFoldersFound: FileFolder[] = [];
+
+    for (const dir of scriptsDirs) {
+      if (!FileExplorerManager.isDirectory(dir)) continue;
+
+      const filesFound = await FileExplorerManager.internalAddFolder(
+        dir.path,
+        "folder",
+        false,
+        true
+      );
+      allFilesFound.push(...filesFound.folderChildren);
+      allFoldersFound.push(filesFound.folder as FileFolder);
+    }
+
+    return { files: allFilesFound, folders: allFoldersFound };
+  }
+
+  private static async internalAddFolder(
+    dirPath: string,
+    icon: string = "folder",
+    isMainFolder: boolean,
+    absolutePath: boolean = false
+  ): Promise<{ folderChildren: FileData[]; folder?: FileFolder }> {
+    const folderName = FileSystemService.getFileNameFromPath(dirPath);
+    const folderChildren = await FileSystemService.readDir(
+      dirPath,
+      absolutePath
+    );
+
+    const newFileFolder: FileFolder = {
+      folderName: folderName,
+      folderIcon: icon,
+      isOpen:
+        icon == "robot"
+          ? true
+          : FileExplorerManager.openFolders.includes(folderName),
+    };
+
+    const folderFiles: FileData[] = [];
+
+    for (const child of folderChildren) {
+      if (FileExplorerManager.isDirectory(child)) continue;
+
+      const extension = FileExplorerManager.getFileExtensionFromPath(
+        child.path
+      );
+      if (!FileExplorerManager.allowedExtensions.includes(extension)) continue;
+
+      folderFiles.push({
+        id: FileExplorerManager.generateUniqueID(),
+        folderName: folderName,
+        title: FileSystemService.getFileNameFromPath(child.path),
+        filePath: child.path,
+      });
+    }
+
+    if (isMainFolder) {
+      return { folderChildren: folderFiles };
+    } else {
+      return { folderChildren: folderFiles, folder: newFileFolder };
+    }
+  }
+
+  public static async toggleFolderIsOpen(folderName: string) {
+    const currentFolders = get(this.currentFolders);
+    const folder = currentFolders.find(
+      (folder) => folder.folderName === folderName
+    );
+    if (!folder) return;
+
+    FileExplorerManager.currentFolders.update((folders) => {
+      return folders.map((f) => {
+        if (f.folderName === folderName) {
+          f.isOpen = !f.isOpen;
+
+          if (f.isOpen) {
+            FileExplorerManager.openFolders.push(f.folderName);
+          } else {
+            FileExplorerManager.openFolders =
+              FileExplorerManager.openFolders.filter(
+                (folderName) => folderName !== f.folderName
+              );
+          }
+        }
+        return f;
+      });
+    });
+  }
+
   public static async updateFiles() {
-    const scriptsFiles = await FileSystemService.readDir(dirPaths.scriptsDir);
-    const autoExecFiles = await FileSystemService.readDir(dirPaths.autoExecDir);
-    const allFiles = [...scriptsFiles, ...autoExecFiles];
+    const allFilesFound: FileData[] = [];
+    const allFoldersFound: FileFolder[] = [];
 
-    if (allFiles === this.rawFiles) return;
-    this.rawFiles = allFiles;
+    const scriptsFilesFound = await this.internalAddFolder(
+      dirPaths.scriptsDir,
+      "folder",
+      true
+    );
+    allFilesFound.push(...scriptsFilesFound.folderChildren);
 
-    this.currentFiles.set([]);
+    const autoExecFilesFound = await this.internalAddFolder(
+      dirPaths.autoExecDir,
+      "robot",
+      false,
+      false
+    );
+    allFilesFound.push(...autoExecFilesFound.folderChildren);
+    allFoldersFound.push(autoExecFilesFound.folder as FileFolder);
 
-    for (const file of scriptsFiles) {
-      if (
-        !this.allowedExtensions.includes(
-          this.getFileExtensionFromPath(file.path)
-        )
-      )
-        continue;
+    const { files, folders } = await this.internalLoopOverFolders();
+    allFilesFound.push(...files);
+    allFoldersFound.push(...folders);
 
-      this.currentFiles.update((files) => {
-        files.push({
-          id: this.generateUniqueID(),
-          folder: "Scripts",
-          title: FileSystemService.getFileNameFromPath(file.path),
-          filePath: file.path,
-        });
-        return files;
-      });
-    }
+    if (allFilesFound === get(this.currentFiles)) return;
 
-    for (const file of autoExecFiles) {
-      if (
-        !this.allowedExtensions.includes(
-          this.getFileExtensionFromPath(file.path)
-        )
-      )
-        continue;
-
-      this.currentFiles.update((files) => {
-        files.push({
-          id: this.generateUniqueID(),
-          folder: "Auto Exec",
-          title: FileSystemService.getFileNameFromPath(file.path),
-          filePath: file.path,
-        });
-        return files;
-      });
-    }
+    this.currentFiles.set(allFilesFound);
+    this.currentFolders.set(allFoldersFound);
   }
 
   public static async initialize() {

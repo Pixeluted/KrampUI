@@ -2,26 +2,35 @@
   import FileExplorerFolderEntry from "./FileExplorerFolderEntry.svelte";
   import FileExplorerFileEntry from "./FileExplorerFileEntry.svelte";
   import Dropdown from "../Dropdown.svelte";
-  import type { FileData } from "../../managers/FileExplorerManager";
+  import type { FileData, FileFolder } from "../../managers/FileExplorerManager";
   import FileExplorerManager from "../../managers/FileExplorerManager";
 
   let currentFiles: FileData[];
   FileExplorerManager.currentFiles.subscribe((value) => {
     currentFiles = value;
   });
+
+  let currentFolders: FileFolder[];
+  FileExplorerManager.currentFolders.subscribe((value) => {
+    currentFolders = value;
+ });
 </script>
 
 <div class="file-explorer">
-    <FileExplorerFolderEntry name="Auto Exec" icon="fa-solid fa-robot">
-        {#each currentFiles as file}
-            {#if file.folder === "Auto Exec"}
-                <FileExplorerFileEntry fileName={file.title} fileId={file.id} />
+    {#each currentFolders as folder}
+        <FileExplorerFolderEntry name={folder.folderName === "autoexec" ? "Auto Exec " : folder.folderName} icon={folder.folderIcon}>
+            {#if folder.isOpen === true} 
+                {#each currentFiles as file}
+                    {#if file.folderName === folder.folderName}
+                        <FileExplorerFileEntry fileName={file.title} fileId={file.id} />
+                    {/if}
+                {/each}
             {/if}
-        {/each}
-    </FileExplorerFolderEntry>
+        </FileExplorerFolderEntry>
+    {/each}
 
     {#each currentFiles as file}
-        {#if file.folder === "Scripts"}
+        {#if file.folderName === "scripts"}
             <FileExplorerFileEntry fileName={file.title} fileId={file.id} />
         {/if}
     {/each}

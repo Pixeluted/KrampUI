@@ -1,14 +1,21 @@
 <script lang="ts">
+    import FileExplorerManager from "../../managers/FileExplorerManager";
     import Dropdown from "../Dropdown.svelte";
-import FileExplorerFileEntry from "./FileExplorerFileEntry.svelte";
 
-    export let icon;
-    export let name;
+    export let icon = "";
+    export let name = "";
+    export let isOpen = false;
+
+    function toggleOpenFolder() {
+        FileExplorerManager.toggleFolderIsOpen(name);
+    }
 </script>
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="folder-container">
-    <div class="info-container">
-        <i class={icon}></i>
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <div class="info-container" on:click={toggleOpenFolder} class:isOpen={isOpen}>
+        <i class="fa-solid fa-{icon}"></i>
         <span>{name}</span>
         <Dropdown>
             <button data-index="1">
