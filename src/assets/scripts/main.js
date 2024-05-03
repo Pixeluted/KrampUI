@@ -8,13 +8,30 @@ const event = window.__TAURI__.event;
 const path = window.__TAURI__.path;
 const fs = window.__TAURI__.fs;
 
-require.config({ paths: { "vs": "./assets/external/monaco" }});
+require.config({ paths: { vs: "./assets/external/monaco" } });
 
 let debug = false;
-let exploitIndicator, exploitTabs, exploitEditor, exploitScripts, exploitScriptsSearch, exploitScriptsFolder;
+let exploitIndicator,
+  exploitTabs,
+  exploitEditor,
+  exploitScripts,
+  exploitScriptsSearch,
+  exploitScriptsFolder;
 let editor, editorGetText, editorSetText, editorSetScroll;
-let exploitInject, exploitExecute, exploitImport, exploitExport, exploitClear, exploitKill, exploitFolder;
-let connected, prevActive, editorReady, tabs, unsavedTabData, injecting, dataDirectory;
+let exploitInject,
+  exploitExecute,
+  exploitImport,
+  exploitExport,
+  exploitClear,
+  exploitKill,
+  exploitFolder;
+let connected,
+  prevActive,
+  editorReady,
+  tabs,
+  unsavedTabData,
+  injecting,
+  dataDirectory;
 let settings, title, version, wsPort;
 
 function alert(message, title) {
@@ -67,21 +84,21 @@ async function hide(onlyAnimation) {
       await appWindow.hide();
       toggleLock = false;
     }, 100);
-  }
-  else toggleLock = false;
+  } else toggleLock = false;
 }
 
 async function toggle(ignoreKeyToggle) {
   let isWindowVisible = await isVisible();
   let isKeyToggleEnabled = settings.keyToggle;
-  let actionCanBeTaken = (ignoreKeyToggle === true || isKeyToggleEnabled === true)
+  let actionCanBeTaken =
+    ignoreKeyToggle === true || isKeyToggleEnabled === true;
 
   if (actionCanBeTaken === false) return;
 
   if (isWindowVisible) {
-    await hide()
+    await hide();
   } else {
-    await show()
+    await show();
   }
 }
 
@@ -89,10 +106,13 @@ async function exit() {
   const isToggleLock = toggleLock;
   if (!isToggleLock) hide(true);
 
-  setTimeout(async function () {
-    await setUnsavedTabData();
-    await process.exit();
-  }, isToggleLock ? 0 : 100);
+  setTimeout(
+    async function () {
+      await setUnsavedTabData();
+      await process.exit();
+    },
+    isToggleLock ? 0 : 100
+  );
 }
 
 async function appDirectory() {
@@ -100,13 +120,18 @@ async function appDirectory() {
 }
 
 async function createDirectory(directory, absolute) {
-  const _path = absolute ? directory : await path.join(await appDirectory(), directory);
+  const _path = absolute
+    ? directory
+    : await path.join(await appDirectory(), directory);
   return await invoke("create_directory", { path: _path });
 }
 
 async function readDirectory(directory, recursive) {
   try {
-    const entries = await fs.readDir(directory, { dir: fs.BaseDirectory.AppConfig, recursive });
+    const entries = await fs.readDir(directory, {
+      dir: fs.BaseDirectory.AppConfig,
+      recursive,
+    });
     return entries;
   } catch {
     return [];
@@ -150,7 +175,9 @@ async function readBinaryFile(file) {
 async function renameFile(file, newFile) {
   try {
     if (await exists(newFile)) return false;
-    return await fs.renameFile(file, newFile, { dir: fs.BaseDirectory.AppConfig });
+    return await fs.renameFile(file, newFile, {
+      dir: fs.BaseDirectory.AppConfig,
+    });
   } catch {
     return false;
   }
@@ -160,7 +187,10 @@ async function moveBinaryFile(file, newFile) {
   const contents = await readBinaryFile(file);
   if (!contents) return false;
 
-  const written = await writeBinaryFile(newFile, Array.from(new Uint8Array(contents)));
+  const written = await writeBinaryFile(
+    newFile,
+    Array.from(new Uint8Array(contents))
+  );
   if (!written) return false;
 
   await deleteFile(file, true); // Don't care about it failing
@@ -168,7 +198,9 @@ async function moveBinaryFile(file, newFile) {
 }
 
 async function deleteDirectory(directory, absolute) {
-  const _path = absolute ? directory : await path.join(await appDirectory(), directory);
+  const _path = absolute
+    ? directory
+    : await path.join(await appDirectory(), directory);
   return await invoke("delete_directory", { path: _path });
 }
 
@@ -196,19 +228,23 @@ async function getData() {
 
 async function getSettings() {
   const text = await readFile(`${dataDirectory}/settings`);
-  
-  let json;
-  try { json = JSON.parse(text); }
-  catch { json = null; };
 
-  if (json) return {
-    autoInject: json.autoInject,
-    topMost: json.topMost,
-    keyToggle: json.keyToggle,
-    editorFontSize: json.editorFontSize || 14,
-    injectionDelay: json.injectionDelay || 10,
-    autoUpdate: json.autoUpdate === undefined ? true : json.autoUpdate
-  };
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = null;
+  }
+
+  if (json)
+    return {
+      autoInject: json.autoInject,
+      topMost: json.topMost,
+      keyToggle: json.keyToggle,
+      editorFontSize: json.editorFontSize || 14,
+      injectionDelay: json.injectionDelay || 10,
+      autoUpdate: json.autoUpdate === undefined ? true : json.autoUpdate,
+    };
   else {
     const defaultSettings = {
       autoInject: false,
@@ -216,7 +252,7 @@ async function getSettings() {
       keyToggle: false,
       editorFontSize: 14,
       injectionDelay: 10,
-      autoUpdate: true
+      autoUpdate: true,
     };
 
     await saveSettings(defaultSettings);
@@ -225,26 +261,30 @@ async function getSettings() {
 }
 
 async function saveSettings(data) {
-  const dataToSave = data === undefined ? settings : data
+  const dataToSave = data === undefined ? settings : data;
 
   await writeFile(`${dataDirectory}/settings`, JSON.stringify(dataToSave));
 }
 
 async function getWindowDimensions() {
   const text = await readFile(`${dataDirectory}/window-dimensions`);
-  
-  let json;
-  try { json = JSON.parse(text); }
-  catch { json = null; };
 
-  if (json) return {
-    width: json.width,
-    height: json.height
-  };
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = null;
+  }
+
+  if (json)
+    return {
+      width: json.width,
+      height: json.height,
+    };
   else {
     const windowDimensions = {
       width: 700,
-      height: 400
+      height: 400,
     };
 
     await setWindowDimensions(windowDimensions);
@@ -271,7 +311,6 @@ async function setUnsavedTabData() {
   const text = JSON.stringify(array);
   await writeFile(`${dataDirectory}/unsaved-tab-data`, text);
 }
-
 
 async function injectAutoExec() {
   const text = `
@@ -313,11 +352,18 @@ async function injectAutoExec() {
     end
   `;
 
-  await writeFile(`autoexec/__${title?.toLowerCase()}`, text.replace(/(--.*$|\/\*[\s\S]*?\*\/)/gm, "").replace(/\s+/g, " ").trim());
+  await writeFile(
+    `autoexec/__${title?.toLowerCase()}`,
+    text
+      .replace(/(--.*$|\/\*[\s\S]*?\*\/)/gm, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 function randomString(length) {
-  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let values = new Uint32Array(length);
   window.crypto.getRandomValues(values);
   let text = "";
@@ -344,7 +390,9 @@ async function getExecutables() {
 
 async function clearExecutables() {
   const executables = await getExecutables();
-  await Promise.all(executables.map((f) => f.path).map((path) => deleteFile(path, true)));
+  await Promise.all(
+    executables.map((f) => f.path).map((path) => deleteFile(path, true))
+  );
 }
 
 async function findExecutable() {
@@ -370,13 +418,16 @@ async function askForExecutable(select) {
     filters: [
       {
         name: "Ro-Exec Loader",
-        extensions: ["exe"]
-      }
-    ]
+        extensions: ["exe"],
+      },
+    ],
   });
 
   if (selected) {
-    const [isKrampusLoader, errorMessage] = await invoke("validate_executable", { executablePath: selected });
+    const [isKrampusLoader, errorMessage] = await invoke(
+      "validate_executable",
+      { executablePath: selected }
+    );
 
     if (isKrampusLoader) {
       await clearExecutables();
@@ -392,28 +443,38 @@ async function askForExecutable(select) {
 }
 
 async function emptyScripts() {
-  const scripts = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container:not(.kr-auto-exec):has(> .script:not(.folder))"));
+  const scripts = Array.from(
+    exploitScripts.querySelectorAll(
+      ".scripts > .script-container:not(.kr-auto-exec):has(> .script:not(.folder))"
+    )
+  );
   await Promise.all(scripts.map((s) => s.remove()));
 }
 
 async function emptyAutoExec() {
-  const scripts = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container.kr-auto-exec"));
+  const scripts = Array.from(
+    exploitScripts.querySelectorAll(".scripts > .script-container.kr-auto-exec")
+  );
   await Promise.all(scripts.map((s) => s.remove()));
 }
 
 async function emptyFolders() {
-  const folders = Array.from(exploitScripts.querySelectorAll(".scripts > .script-container:not(.kr-auto-exec):has(> .script.folder)"));
+  const folders = Array.from(
+    exploitScripts.querySelectorAll(
+      ".scripts > .script-container:not(.kr-auto-exec):has(> .script.folder)"
+    )
+  );
   await Promise.all(folders.map((f) => f.remove()));
 }
 
 function onClick(element, cb) {
   let down = false;
 
-  element.addEventListener("mousedown", function() {
+  element.addEventListener("mousedown", function () {
     down = true;
   });
 
-  element.addEventListener("mouseup", function(e) {
+  element.addEventListener("mouseup", function (e) {
     if (down && !element?.classList?.contains("disabled")) {
       if (e.button === 0) cb("left", e);
       else if (e.button === 1) cb("middle", e);
@@ -437,7 +498,7 @@ function getSelection(elem) {
   if (range.commonAncestorContainer.parentNode == elem) {
     return {
       startOffset: range.startOffset,
-      endOffset: range.endOffset
+      endOffset: range.endOffset,
     };
   } else {
     return null;
@@ -447,7 +508,7 @@ function getSelection(elem) {
 function setSelection(elem, startOffset, endOffset) {
   const selection = window.getSelection();
   const range = document.createRange();
-  
+
   startOffset = Math.min(startOffset, elem.textContent.length);
   endOffset = Math.min(endOffset, elem.textContent.length);
   endOffset = Math.max(endOffset, startOffset);
@@ -461,15 +522,17 @@ function setSelection(elem, startOffset, endOffset) {
 function changeContentEditableText(elem, text) {
   const selection = getSelection(elem);
   elem.innerText = text;
-  if (selection !== null) setSelection(elem, selection.startOffset, selection.endOffset);
+  if (selection !== null)
+    setSelection(elem, selection.startOffset, selection.endOffset);
 }
 
 let expandedFolders = new Map();
 let searching = false;
 
 function isSearching() {
-  const newSearching = (exploitScriptsSearch.value && exploitScriptsSearch.value !== "");
-  
+  const newSearching =
+    exploitScriptsSearch.value && exploitScriptsSearch.value !== "";
+
   if (newSearching !== searching) {
     exploitScripts.classList.toggle("searching", newSearching);
   }
@@ -531,7 +594,9 @@ async function addFolder({ name, path, scripts }, autoExec) {
     dropdown.append(dropdownDelete);
   }
 
-  scripts.forEach(async (s) => await addScript(s, { name, element: folderScripts }, autoExec));
+  scripts.forEach(
+    async (s) => await addScript(s, { name, element: folderScripts }, autoExec)
+  );
 
   folder.addEventListener("click", function () {
     if (folder.contentEditable !== "true" && !isSearching()) {
@@ -542,7 +607,11 @@ async function addFolder({ name, path, scripts }, autoExec) {
   });
 
   folder.addEventListener("input", function () {
-    if (folder.contentEditable === "true") changeContentEditableText(folder, folder.innerText.replace(/[<>:"/\\|?*]/g, ""));
+    if (folder.contentEditable === "true")
+      changeContentEditableText(
+        folder,
+        folder.innerText.replace(/[<>:"/\\|?*]/g, "")
+      );
   });
 
   async function enter(e) {
@@ -595,7 +664,9 @@ async function addFolder({ name, path, scripts }, autoExec) {
   container.append(folderScripts);
   container.append(dropdown);
 
-  const script = exploitScripts.querySelector(".script-container:has(.script:not(.folder)");
+  const script = exploitScripts.querySelector(
+    ".script-container:has(.script:not(.folder)"
+  );
   if (script) exploitScripts.insertBefore(container, script);
   else exploitScripts.append(container);
 }
@@ -605,7 +676,11 @@ async function getFilePath(folder, autoExec) {
 
   async function get() {
     number = number + 1;
-    const path = autoExec ? `autoexec/Script ${number}.lua` : folder ? `scripts/${folder}/Script ${number}.lua` : `scripts/Script ${number}.lua`;
+    const path = autoExec
+      ? `autoexec/Script ${number}.lua`
+      : folder
+      ? `scripts/${folder}/Script ${number}.lua`
+      : `scripts/Script ${number}.lua`;
     return (await exists(path)) ? await get() : path;
   }
 
@@ -634,7 +709,8 @@ async function newFolder() {
   loadScripts();
 }
 
-async function addScript({ name, path: _path }, folder, autoExec) {  const container = document.createElement("div");
+async function addScript({ name, path: _path }, folder, autoExec) {
+  const container = document.createElement("div");
   const script = document.createElement("div");
   const icon = document.createElement("i");
 
@@ -703,8 +779,14 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
     const scriptWidth = scriptClone.clientWidth;
     const scriptHeight = scriptClone.clientHeight;
     const offset = 10;
-    const offsetX = (e.clientX + scriptWidth / 2 > window.innerWidth) ? window.innerWidth - (scriptWidth + offset) : e.clientX - scriptWidth / 2;
-    const offsetY = (e.clientY + scriptHeight / 2 > window.innerHeight) ? window.innerHeight - (scriptHeight + offset) : e.clientY - scriptHeight / 2;
+    const offsetX =
+      e.clientX + scriptWidth / 2 > window.innerWidth
+        ? window.innerWidth - (scriptWidth + offset)
+        : e.clientX - scriptWidth / 2;
+    const offsetY =
+      e.clientY + scriptHeight / 2 > window.innerHeight
+        ? window.innerHeight - (scriptHeight + offset)
+        : e.clientY - scriptHeight / 2;
 
     scriptClone.style.top = `${offsetY}px`;
     scriptClone.style.left = `${offsetX}px`;
@@ -730,22 +812,28 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
     isMouseDown = false;
 
     if (selectedFolder) {
-      const isAutoExec = selectedFolder.parentElement?.classList.contains("kr-auto-exec");
+      const isAutoExec =
+        selectedFolder.parentElement?.classList.contains("kr-auto-exec");
       const isScripts = selectedFolder.classList.contains("scripts");
 
-      let newPath = isAutoExec ? `autoexec/${name}` : isScripts ? `scripts/${name}` : `scripts/${selectedFolder.innerText}/${name}`;
+      let newPath = isAutoExec
+        ? `autoexec/${name}`
+        : isScripts
+        ? `scripts/${name}`
+        : `scripts/${selectedFolder.innerText}/${name}`;
       newPath = await path.join(await appDirectory(), newPath);
 
       const result = await renameFile(_path, newPath);
       if (!isScripts) setExpanded(selectedFolder.innerText, true);
-      if ((folder?.element?.children?.length || 1) - 1 == 0) setExpanded(folder.name, false);
+      if ((folder?.element?.children?.length || 1) - 1 == 0)
+        setExpanded(folder.name, false);
 
       if (result !== false) {
         tabs = tabs.map(function (t) {
           if (t.path === _path) t.path = newPath;
           return t;
         });
-        
+
         await setTabs();
       }
 
@@ -760,15 +848,22 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
       if (scriptClone) moveToCursor(e);
 
       if (selectedFolder) selectedFolder.classList.remove("highlight");
-      if ((e.target?.classList.contains("script") && e.target?.classList.contains("folder")) || e.target?.classList.contains("scripts")) {
+      if (
+        (e.target?.classList.contains("script") &&
+          e.target?.classList.contains("folder")) ||
+        e.target?.classList.contains("scripts")
+      ) {
         selectedFolder = e.target;
         selectedFolder.classList.add("highlight");
-      } else if ((e.target?.parentElement?.classList.contains("script") && e.target?.parentElement?.classList.contains("folder")) || e.target?.parentElement?.classList.contains("scripts")) {
+      } else if (
+        (e.target?.parentElement?.classList.contains("script") &&
+          e.target?.parentElement?.classList.contains("folder")) ||
+        e.target?.parentElement?.classList.contains("scripts")
+      ) {
         selectedFolder = e.target.parentElement;
         selectedFolder.classList.add("highlight");
       } else selectedFolder = null;
-    }
-    else if (selected) unselect();
+    } else if (selected) unselect();
   });
 
   dropdownExecute.addEventListener("click", async function () {
@@ -777,7 +872,11 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
   });
 
   script.addEventListener("input", function () {
-    if (script.contentEditable === "true") changeContentEditableText(script, script.innerText.replace(/[^\w\s.-]/g, ""));
+    if (script.contentEditable === "true")
+      changeContentEditableText(
+        script,
+        script.innerText.replace(/[^\w\s.-]/g, "")
+      );
   });
 
   async function enter(e) {
@@ -787,7 +886,11 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
       script.contentEditable = false;
       script.innerText = script.innerText.trim();
 
-      if (!script.innerText.toLowerCase().endsWith(".lua") && !script.innerText.toLowerCase().endsWith(".luau") && !script.innerText.toLowerCase().endsWith(".txt")) {
+      if (
+        !script.innerText.toLowerCase().endsWith(".lua") &&
+        !script.innerText.toLowerCase().endsWith(".luau") &&
+        !script.innerText.toLowerCase().endsWith(".txt")
+      ) {
         script.innerText = `${script.innerText}.${extension}`;
       }
 
@@ -798,8 +901,15 @@ async function addScript({ name, path: _path }, folder, autoExec) {  const conta
       if (defaultName.trim() === "") script.innerText = name;
 
       script.append(icon);
-      const result = await renameFile(_path, autoExec ? `autoexec/${script.innerText}` : folder ? `scripts/${folder.name}/${script.innerText}` : `scripts/${script.innerText}`);
-      
+      const result = await renameFile(
+        _path,
+        autoExec
+          ? `autoexec/${script.innerText}`
+          : folder
+          ? `scripts/${folder.name}/${script.innerText}`
+          : `scripts/${script.innerText}`
+      );
+
       if (result !== false) {
         const tab = tabs.find((t) => t.path === _path);
         if (tab) renameTab(tab.id, script.innerText, true);
@@ -848,7 +958,11 @@ function parseScripts(files) {
   return files
     .filter((s) => s.path && s.name)
     .filter((s) => [".lua", ".luau", ".txt"].some((e) => s.name.endsWith(e)))
-    .filter((s) => s.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()))
+    .filter((s) =>
+      s.name
+        .toLowerCase()
+        .includes((exploitScriptsSearch.value || "")?.toLowerCase())
+    )
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -857,16 +971,20 @@ function parseFolders(files, scriptsOnly) {
     .filter((f) => f.path && f.name && f.children)
     .filter((f) => {
       const scripts = parseScripts(f.children);
-      const namesCheck = f.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase());
-      const scriptsCheck = scripts.some((s) => s.name.toLowerCase().includes((exploitScriptsSearch.value || "")?.toLowerCase()));
+      const namesCheck = f.name
+        .toLowerCase()
+        .includes((exploitScriptsSearch.value || "")?.toLowerCase());
+      const scriptsCheck = scripts.some((s) =>
+        s.name
+          .toLowerCase()
+          .includes((exploitScriptsSearch.value || "")?.toLowerCase())
+      );
 
       if (scriptsOnly && scripts.length === 0) {
         return true;
       }
 
-      return scriptsOnly
-        ? scriptsCheck
-        : namesCheck || scriptsCheck;
+      return scriptsOnly ? scriptsCheck : namesCheck || scriptsCheck;
     })
     .sort((a, b) => b.name.localeCompare(a.name));
 }
@@ -882,10 +1000,14 @@ async function populateScripts(scripts, force) {
 let autoExecPath;
 
 async function addAutoExecFolder(force) {
-  if (!autoExecPath) autoExecPath = await path.join(await appDirectory(), "autoexec");
+  if (!autoExecPath)
+    autoExecPath = await path.join(await appDirectory(), "autoexec");
   const files = await readDirectory("autoexec");
-  const folder = parseFolders([{ path: autoExecPath, name: "Auto-Exec", children: files }], true).pop();
-  
+  const folder = parseFolders(
+    [{ path: autoExecPath, name: "Auto-Exec", children: files }],
+    true
+  ).pop();
+
   if (files && folder) {
     const { name, path, children } = folder;
     const names = children.map((c) => c.name).join(",");
@@ -906,11 +1028,16 @@ async function populateFolders(folders, force) {
   if (!force && finalNames === prevFolders) return;
   prevFolders = finalNames;
   emptyFolders();
-  folders.forEach(async ({ name, path, children }) => await addFolder({ name, path, scripts: parseScripts(children) }));
+  folders.forEach(
+    async ({ name, path, children }) =>
+      await addFolder({ name, path, scripts: parseScripts(children) })
+  );
 }
 
 function checkAutoExec() {
-  const autoExec = exploitScripts.querySelector(".script-container.kr-auto-exec");
+  const autoExec = exploitScripts.querySelector(
+    ".script-container.kr-auto-exec"
+  );
 
   if (autoExec && exploitScripts.firstChild !== autoExec) {
     exploitScripts.removeChild(autoExec);
@@ -919,7 +1046,7 @@ function checkAutoExec() {
 }
 
 async function loadScripts(force) {
-  if (!await exists("scripts")) await createDirectory("scripts", true);
+  if (!(await exists("scripts"))) await createDirectory("scripts", true);
   const files = await readDirectory("scripts", true);
   const scripts = parseScripts(files);
   const folders = parseFolders(files);
@@ -943,7 +1070,7 @@ async function getTabContent(tab, force) {
     const text = await readFile(tab.path);
     if (text) content = text;
   } else {
-    content = await readFile(`${dataDirectory}/tabs-data/${tab.id}`) || "";
+    content = (await readFile(`${dataDirectory}/tabs-data/${tab.id}`)) || "";
   }
 
   return content;
@@ -984,15 +1111,24 @@ function getActiveTabName() {
 
 async function setActiveTabContent(content) {
   const tab = tabs.find((t) => t.active === true);
-  
+
   if (tab) {
     const tabContent = await getTabContent(tab, true);
     const unsavedTab = unsavedTabData.get(tab.id);
 
     if (content !== tabContent) {
-      if (unsavedTab) unsavedTabData.set(tab.id, { content, scroll: roundToTen(unsavedTab.scroll || tab.scroll || 0) });
-      else unsavedTabData.set(tab.id, { content, scroll: roundToTen(tab.scroll || 0) });
-    } else if (unsavedTab && unsavedTab.scroll === roundToTen(tab.scroll)) unsavedTabData.delete(tab.id);
+      if (unsavedTab)
+        unsavedTabData.set(tab.id, {
+          content,
+          scroll: roundToTen(unsavedTab.scroll || tab.scroll || 0),
+        });
+      else
+        unsavedTabData.set(tab.id, {
+          content,
+          scroll: roundToTen(tab.scroll || 0),
+        });
+    } else if (unsavedTab && unsavedTab.scroll === roundToTen(tab.scroll))
+      unsavedTabData.delete(tab.id);
 
     populateTabs(true);
   }
@@ -1001,14 +1137,19 @@ async function setActiveTabContent(content) {
 async function setActiveTabScroll(_scroll) {
   const tab = tabs.find((t) => t.active === true);
   const scroll = roundToTen(_scroll);
-  
+
   if (tab) {
     const unsavedTab = unsavedTabData.get(tab.id);
 
     if (scroll !== roundToTen(tab.scroll)) {
-      if (unsavedTab) unsavedTabData.set(tab.id, { content: unsavedTab.content || null, scroll });
+      if (unsavedTab)
+        unsavedTabData.set(tab.id, {
+          content: unsavedTab.content || null,
+          scroll,
+        });
       else unsavedTabData.set(tab.id, { content: null, scroll });
-    } else if (unsavedTab && unsavedTab.content === null) unsavedTabData.delete(tab.id);
+    } else if (unsavedTab && unsavedTab.content === null)
+      unsavedTabData.delete(tab.id);
 
     populateTabs(true);
   }
@@ -1016,9 +1157,10 @@ async function setActiveTabScroll(_scroll) {
 
 async function saveTabContent(tab) {
   const unsavedTab = unsavedTabData.get(tab.id);
-  
+
   if (unsavedTab) {
-    if (unsavedTab.content !== null) await setTabContent(tab, unsavedTab.content);
+    if (unsavedTab.content !== null)
+      await setTabContent(tab, unsavedTab.content);
     await setTabScroll(tab, unsavedTab.scroll);
     unsavedTabData.delete(tab.id);
     populateTabs(true);
@@ -1042,8 +1184,11 @@ async function revertTabContent(tab) {
 async function getTabs() {
   const text = await readFile(`${dataDirectory}/tabs`);
   let json;
-  try { json = JSON.parse(text); }
-  catch { return false; };
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return false;
+  }
   return json || false;
 }
 
@@ -1070,13 +1215,13 @@ async function addTab(data, dontLoad) {
 async function deleteTab(id, onlyFiles) {
   if (tabs.length === 1) return;
   let order = 0;
-  
+
   const tab = tabs.find((t) => t.id === id);
   if (!tab) return;
 
   const unsavedTab = unsavedTabData.get(tab.id);
   if (unsavedTab) unsavedTabData.delete(tab.id);
-  
+
   const tabIndex = tabs.indexOf(tab);
   const newTab = tabs[tabIndex - 1] || tabs[tabIndex + 1];
 
@@ -1104,7 +1249,8 @@ async function deleteTab(id, onlyFiles) {
     const scroll = activeTab?.scroll;
     await setTabs();
     if (editorSetText) editorSetText(await getActiveTabContent());
-    if (editorSetScroll) editorSetScroll((unsavedTab ? unsavedTab.scroll : scroll) || 0);
+    if (editorSetScroll)
+      editorSetScroll((unsavedTab ? unsavedTab.scroll : scroll) || 0);
     populateTabs();
   }
 }
@@ -1139,7 +1285,7 @@ async function renameTab(id, newName, force) {
 async function changeTabOrder(id, newOrder) {
   const tabToChange = tabs.find((t) => t.id === id);
   const oldOrder = tabToChange.order;
-  
+
   tabs.forEach((t) => {
     if (t.id !== id) {
       if (t.order >= newOrder && t.order < oldOrder) {
@@ -1206,7 +1352,10 @@ function getNextOrder() {
 }
 
 async function addNewTab(dontLoad) {
-  await addTab({ name: "Script", order: getNextOrder(), active: true, scroll: 0 }, dontLoad);
+  await addTab(
+    { name: "Script", order: getNextOrder(), active: true, scroll: 0 },
+    dontLoad
+  );
 }
 
 async function addScriptTab(path) {
@@ -1215,13 +1364,12 @@ async function addScriptTab(path) {
   if (tab) {
     scrollIntoView = true;
     setTabActive(tab.id);
-  }
-  else await addTab({ path, order: getNextOrder(), active: true, scroll: 0 });
+  } else await addTab({ path, order: getNextOrder(), active: true, scroll: 0 });
 }
 
 async function setupTabs() {
   await createDirectory(`${dataDirectory}/tabs-data`);
-  tabs = await getTabs() || [];
+  tabs = (await getTabs()) || [];
   if (tabs.length === 0) await addNewTab(true);
 }
 
@@ -1293,8 +1441,14 @@ function addTabElem(info) {
     const tabWidth = tabClone.clientWidth;
     const tabHeight = tabClone.clientHeight;
     const offset = 10;
-    const offsetX = (e.clientX + tabWidth / 2 > window.innerWidth) ? window.innerWidth - (tabWidth + offset) : e.clientX - tabWidth / 2;
-    const offsetY = (e.clientY + tabHeight / 2 > window.innerHeight) ? window.innerHeight - (tabHeight + offset) : e.clientY - tabHeight / 2;
+    const offsetX =
+      e.clientX + tabWidth / 2 > window.innerWidth
+        ? window.innerWidth - (tabWidth + offset)
+        : e.clientX - tabWidth / 2;
+    const offsetY =
+      e.clientY + tabHeight / 2 > window.innerHeight
+        ? window.innerHeight - (tabHeight + offset)
+        : e.clientY - tabHeight / 2;
 
     tabClone.style.top = `${offsetY}px`;
     tabClone.style.left = `${offsetX}px`;
@@ -1335,8 +1489,7 @@ function addTabElem(info) {
         selectedTab = e.target.parentElement;
         selectedTab.classList.add("highlight");
       } else selectedTab = null;
-    }
-    else if (selected) unselect();
+    } else if (selected) unselect();
   });
 
   closeIcon.addEventListener("click", function () {
@@ -1344,18 +1497,27 @@ function addTabElem(info) {
   });
 
   tab.addEventListener("input", function () {
-    if (tab.contentEditable === "true") changeContentEditableText(tab, tab.innerText.replace(/[<>:"/\\|?*]/g, ""));
+    if (tab.contentEditable === "true")
+      changeContentEditableText(
+        tab,
+        tab.innerText.replace(/[<>:"/\\|?*]/g, "")
+      );
   });
 
   async function enter(e) {
     if (tab.contentEditable === "true") {
       if (e) e.preventDefault();
-      
+
       dropdown.classList.remove("disabled");
       tab.contentEditable = false;
       tab.innerText = tab.innerText.trim();
 
-      if (script && (!tab.innerText.toLowerCase().endsWith(".lua") && !tab.innerText.toLowerCase().endsWith(".luau") && !tab.innerText.toLowerCase().endsWith(".txt"))) {
+      if (
+        script &&
+        !tab.innerText.toLowerCase().endsWith(".lua") &&
+        !tab.innerText.toLowerCase().endsWith(".luau") &&
+        !tab.innerText.toLowerCase().endsWith(".txt")
+      ) {
         tab.innerText = `${tab.innerText}.${extension}`;
       }
 
@@ -1412,7 +1574,11 @@ function addTabElem(info) {
   if (unsavedTabData.get(info.id)) tab.append(editIcon);
   if (tabs.length > 1) tab.append(closeIcon);
   tab.addEventListener("click", function (e) {
-    if (tab.contentEditable !== "true" && !info.active && !e.target?.classList.contains("fa-times")) {
+    if (
+      tab.contentEditable !== "true" &&
+      !info.active &&
+      !e.target?.classList.contains("fa-times")
+    ) {
       setTabActive(info.id);
     }
   });
@@ -1432,7 +1598,9 @@ function populateTabs(force) {
   prevTabs = tabs;
 
   emptyTabElems();
-  tabs.sort((a, b) => a.order - b.order).forEach(async (t) => await addTabElem(t));
+  tabs
+    .sort((a, b) => a.order - b.order)
+    .forEach(async (t) => await addTabElem(t));
 }
 
 async function isRobloxRunning() {
@@ -1457,11 +1625,16 @@ async function inject(autoInject) {
   exploitInject.classList.add("disabled");
   exploitIndicator.style.color = "var(--yellow)";
 
-  if (autoInject) await new Promise(function (resolve) {
-    setTimeout(() => resolve(), settings.injectionDelay);
-  });
+  if (autoInject)
+    await new Promise(function (resolve) {
+      setTimeout(() => resolve(), settings.injectionDelay);
+    });
 
-  const command = new Command("cmd", ["/c", "start", "/b", "/wait", executable.name], { cwd: await appDirectory() });
+  const command = new Command(
+    "cmd",
+    ["/c", "start", "/b", "/wait", executable.name],
+    { cwd: await appDirectory() }
+  );
 
   let isDone;
   let child;
@@ -1483,9 +1656,22 @@ async function inject(autoInject) {
 
   function onData(line) {
     const text = line ? line.trim() : "";
-    const errors = ["error:", "redownload", "create a ticket", "make a ticket", "cannot find user", "mismatch", "out of date", "failed to", "no active subscription"];
+    const errors = [
+      "error:",
+      "redownload",
+      "create a ticket",
+      "make a ticket",
+      "cannot find user",
+      "mismatch",
+      "out of date",
+      "failed to",
+      "no active subscription",
+    ];
 
-    if (errors.some((s) => text.toLowerCase().includes(s)) && !text.toLowerCase().endsWith(":")) {
+    if (
+      errors.some((s) => text.toLowerCase().includes(s)) &&
+      !text.toLowerCase().endsWith(":")
+    ) {
       alert(text, "Ro-Exec Loader");
       done();
     } else {
@@ -1504,8 +1690,11 @@ async function inject(autoInject) {
   command.stdout.on("data", onData);
   command.stderr.on("data", onData);
 
-  try { child = await command.spawn(); }
-  catch { done(); };
+  try {
+    child = await command.spawn();
+  } catch {
+    done();
+  }
 
   setTimeout(done, 60 * 1000);
 }
@@ -1524,7 +1713,6 @@ async function execute(customText) {
   }
 }
 
-
 async function _import() {
   exploitImport.classList.add("disabled");
 
@@ -1534,9 +1722,9 @@ async function _import() {
     filters: [
       {
         name: "Script",
-        extensions: ["lua", "luau", "txt"]
-      }
-    ]
+        extensions: ["lua", "luau", "txt"],
+      },
+    ],
   });
 
   if (selected) {
@@ -1557,28 +1745,32 @@ async function _export() {
   const extension = tabNameSplit.length > 1 ? tabNameSplit.pop() : null;
 
   const filters = [
-    ...(extension ? [{
-      name: "Current File",
-      extensions: [extension]
-    }] : []),
+    ...(extension
+      ? [
+          {
+            name: "Current File",
+            extensions: [extension],
+          },
+        ]
+      : []),
     {
       name: "Lua File",
-      extensions: ["lua"]
+      extensions: ["lua"],
     },
     {
       name: "LuaU File",
-      extensions: ["luau"]
+      extensions: ["luau"],
     },
     {
       name: "Text File",
-      extensions: ["txt"]
-    }
+      extensions: ["txt"],
+    },
   ];
 
   const selected = await dialog.save({
     title: "Export Script",
     defaultPath: await path.join(await appDirectory(), "scripts", tabName),
-    filters
+    filters,
   });
 
   if (selected) {
@@ -1591,12 +1783,13 @@ async function _export() {
       unsavedTabData.delete(currentTab.id);
       await deleteTab(currentTab.id, true);
       tabs = tabs.map(function (t) {
-        if (t.active && !t.path) return {
-          path: selected,
-          order: currentTab.order,
-          active: true,
-          scroll: currentTab.scroll
-        }
+        if (t.active && !t.path)
+          return {
+            path: selected,
+            order: currentTab.order,
+            active: true,
+            scroll: currentTab.scroll,
+          };
         else return t;
       });
       await setTabs();
@@ -1633,7 +1826,7 @@ function setupEditor(editorFontSize) {
   if (editorReady) return;
   editorReady = true;
 
-  require(["vs/editor/editor.main"], async function() {
+  require(["vs/editor/editor.main"], async function () {
     let editorProposals = [];
     let dynamicEditorProposals = [];
 
@@ -1642,9 +1835,9 @@ function setupEditor(editorFontSize) {
     }
 
     monaco.languages.registerCompletionItemProvider("lua", {
-      provideCompletionItems: function() {
+      provideCompletionItems: function () {
         return getDependencyProposals();
-      }
+      },
     });
 
     monaco.editor.defineTheme("dark", {
@@ -1655,7 +1848,7 @@ function setupEditor(editorFontSize) {
         { token: "keyword", foreground: "f86d7c", fontStyle: "bold" },
         { token: "comment", foreground: "388234" },
         { token: "number", foreground: "ffc600" },
-        { token: "string", foreground: "adf195" }
+        { token: "string", foreground: "adf195" },
       ],
       colors: {
         "editor.background": "#191a1e",
@@ -1669,8 +1862,8 @@ function setupEditor(editorFontSize) {
         "editorOverviewRuler.border": "#2a2c32",
         "editor.lineHighlightBackground": "#1d1e23",
         "editorCursor.foreground": "#aaabad",
-        "editorGutter.background": "#17181c"
-      }
+        "editorGutter.background": "#17181c",
+      },
     });
 
     editor = monaco.editor.create(exploitEditor, {
@@ -1685,7 +1878,7 @@ function setupEditor(editorFontSize) {
       folding: true,
       autoIndent: true,
       scrollBeyondLastLine: false,
-      wordBasedSuggestions : true,
+      wordBasedSuggestions: true,
       scrollbar: {
         verticalHasArrows: true,
       },
@@ -1695,7 +1888,7 @@ function setupEditor(editorFontSize) {
       showFoldingControls: "always",
       smoothScrolling: true,
       contextmenu: true,
-      lineNumbersMinChars: 2
+      lineNumbersMinChars: 2,
     });
 
     function layout() {
@@ -1704,15 +1897,15 @@ function setupEditor(editorFontSize) {
       }
     }
 
-    window.onresize = function() {
+    window.onresize = function () {
       layout();
     };
 
-    editorGetText = function() {
+    editorGetText = function () {
       return editor.getValue();
-    }
-    
-    editorSetText = function(x, preserveUndo) {
+    };
+
+    editorSetText = function (x, preserveUndo) {
       const model = editor.getModel();
       const range = model.getFullModelRange();
 
@@ -1721,21 +1914,27 @@ function setupEditor(editorFontSize) {
         editor.executeEdits("", [{ range: range, text: x }]);
       } else editor.setValue(x);
 
-      editor.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 });
-    }
+      editor.setSelection({
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: 1,
+        endColumn: 1,
+      });
+    };
 
-    editorSetScroll = function(top) {
-      try { editor.setScrollTop(top); }
-      catch { };
-    }
+    editorSetScroll = function (top) {
+      try {
+        editor.setScrollTop(top);
+      } catch {}
+    };
 
     const tab = tabs.find((t) => t.active === true);
     if (tab) editorSetScroll(tab.scroll || 0);
 
     function editorAddIntellisense(l, k, d, i) {
       let t;
-        
-      switch(k) {
+
+      switch (k) {
         case "Class":
           t = monaco.languages.CompletionItemKind.Class;
           break;
@@ -1793,37 +1992,387 @@ function setupEditor(editorFontSize) {
         case "Variable":
           t = monaco.languages.CompletionItemKind.Variable;
           break;
-      };
-        
+      }
+
       editorProposals.push({
         label: l,
         kind: t,
         detail: d,
-        insertText: i
+        insertText: i,
       });
-    };
+    }
 
-    for (const key of ["_G", "_VERSION", "Enum", "game", "plugin", "shared", "script", "workspace", "DebuggerManager", "elapsedTime", "LoadLibrary", "PluginManager", "settings", "tick", "time", "typeof", "UserSettings"]) {
+    for (const key of [
+      "_G",
+      "_VERSION",
+      "Enum",
+      "game",
+      "plugin",
+      "shared",
+      "script",
+      "workspace",
+      "DebuggerManager",
+      "elapsedTime",
+      "LoadLibrary",
+      "PluginManager",
+      "settings",
+      "tick",
+      "time",
+      "typeof",
+      "UserSettings",
+    ]) {
       editorAddIntellisense(key, "Keyword", key, key);
     }
 
-    for (const key of ["and", "break", "do", "else", "elseif", "end", "false", "for", "function", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"]) {
+    for (const key of [
+      "and",
+      "break",
+      "do",
+      "else",
+      "elseif",
+      "end",
+      "false",
+      "for",
+      "function",
+      "if",
+      "in",
+      "local",
+      "nil",
+      "not",
+      "or",
+      "repeat",
+      "return",
+      "then",
+      "true",
+      "until",
+      "while",
+    ]) {
       editorAddIntellisense(key, "Variable", key, key);
     }
 
-    for (const key of ["math.abs", "math.acos", "math.asin", "math.atan", "math.atan2", "math.ceil", "math.cos", "math.cosh", "math.deg", "math.exp", "math.floor", "math.fmod", "math.frexp", "math.huge", "math.ldexp", "math.log", "math.max", "math.min", "math.modf", "math.pi", "math.pow", "math.rad", "math.random", "math.randomseed", "math.sin", "math.sinh", "math.sqrt", "math.tan", "math.tanh", "table.concat", "table.foreach", "table.foreachi", "table.sort", "table.insert", "table.remove", "Color3.new", "Instance.new", "BrickColor.new", "Vector3.new", "Vector2.new", "debug.gethook", "debug.getinfo", "debug.getlocal", "debug.getmetatable", "debug.getregistry", "debug.getupvalue", "debug.getuservalue", "debug.sethook", "debug.setlocal", "debug.setmetatable", "debug.setupvalue", "debug.setuservalue", "debug.traceback", "debug.upvalueid", "debug.upvaluejoin", "string.byte", "string.char", "string.dump", "string.find", "string.format", "string.gmatch", "string.gsub", "string.len", "string.lower", "string.match", "string.rep", "string.reverse", "string.sub", "string.upper", "coroutine.create", "coroutine.resume", "coroutine.running", "coroutine.status", "coroutine.wrap", "coroutine.yield", "crypt.base64encode", "crypt.base64decode", "crypt.encrypt", "crypt.decrypt", "crypt.generatebytes", "crypt.generatekey", "crypt.hash", "cache.replace", "cache.invalidate", "cache.iscached", "websocket.connect", "debug.getconstant", "debug.getconstants", "debug.getinfo", "debug.getproto", "debug.getprotos", "debug.getstack", "debug.getupvalue", "debug.getupvalues", "debug.setconstant", "debug.setstack", "debug.setupvalue", "debug.validlevel", "Drawing.new", "memorystats.cache", "memorystats.restore", "memorystats.getusagebyname", "task.spawn", "task.defer", "task.delay", "task.desynchronize", "task.synchronize", "task.wait", "task.cancel"]) {
+    for (const key of [
+      "math.abs",
+      "math.acos",
+      "math.asin",
+      "math.atan",
+      "math.atan2",
+      "math.ceil",
+      "math.cos",
+      "math.cosh",
+      "math.deg",
+      "math.exp",
+      "math.floor",
+      "math.fmod",
+      "math.frexp",
+      "math.huge",
+      "math.ldexp",
+      "math.log",
+      "math.max",
+      "math.min",
+      "math.modf",
+      "math.pi",
+      "math.pow",
+      "math.rad",
+      "math.random",
+      "math.randomseed",
+      "math.sin",
+      "math.sinh",
+      "math.sqrt",
+      "math.tan",
+      "math.tanh",
+      "table.concat",
+      "table.foreach",
+      "table.foreachi",
+      "table.sort",
+      "table.insert",
+      "table.remove",
+      "Color3.new",
+      "Instance.new",
+      "BrickColor.new",
+      "Vector3.new",
+      "Vector2.new",
+      "debug.gethook",
+      "debug.getinfo",
+      "debug.getlocal",
+      "debug.getmetatable",
+      "debug.getregistry",
+      "debug.getupvalue",
+      "debug.getuservalue",
+      "debug.sethook",
+      "debug.setlocal",
+      "debug.setmetatable",
+      "debug.setupvalue",
+      "debug.setuservalue",
+      "debug.traceback",
+      "debug.upvalueid",
+      "debug.upvaluejoin",
+      "string.byte",
+      "string.char",
+      "string.dump",
+      "string.find",
+      "string.format",
+      "string.gmatch",
+      "string.gsub",
+      "string.len",
+      "string.lower",
+      "string.match",
+      "string.rep",
+      "string.reverse",
+      "string.sub",
+      "string.upper",
+      "coroutine.create",
+      "coroutine.resume",
+      "coroutine.running",
+      "coroutine.status",
+      "coroutine.wrap",
+      "coroutine.yield",
+      "crypt.base64encode",
+      "crypt.base64decode",
+      "crypt.encrypt",
+      "crypt.decrypt",
+      "crypt.generatebytes",
+      "crypt.generatekey",
+      "crypt.hash",
+      "cache.replace",
+      "cache.invalidate",
+      "cache.iscached",
+      "websocket.connect",
+      "debug.getconstant",
+      "debug.getconstants",
+      "debug.getinfo",
+      "debug.getproto",
+      "debug.getprotos",
+      "debug.getstack",
+      "debug.getupvalue",
+      "debug.getupvalues",
+      "debug.setconstant",
+      "debug.setstack",
+      "debug.setupvalue",
+      "debug.validlevel",
+      "Drawing.new",
+      "memorystats.cache",
+      "memorystats.restore",
+      "memorystats.getusagebyname",
+      "task.spawn",
+      "task.defer",
+      "task.delay",
+      "task.desynchronize",
+      "task.synchronize",
+      "task.wait",
+      "task.cancel",
+    ]) {
       editorAddIntellisense(key, "Method", key, key);
     }
 
-    for (const key of ["Instance", "Color3", "Vector3", "Vector2", "BrickColor", "math", "table", "string", "coroutine", "Humanoid", "ClickDetector", "LocalScript", "Model", "ModuleScript", "Mouse", "Part", "Player", "Script", "Tool", "RunService", "UserInputService", "Workspace", "crypt", "cache", "websocket", "debug", "Drawing", "memorystats", "task"]) {
+    for (const key of [
+      "Instance",
+      "Color3",
+      "Vector3",
+      "Vector2",
+      "BrickColor",
+      "math",
+      "table",
+      "string",
+      "coroutine",
+      "Humanoid",
+      "ClickDetector",
+      "LocalScript",
+      "Model",
+      "ModuleScript",
+      "Mouse",
+      "Part",
+      "Player",
+      "Script",
+      "Tool",
+      "RunService",
+      "UserInputService",
+      "Workspace",
+      "crypt",
+      "cache",
+      "websocket",
+      "debug",
+      "Drawing",
+      "memorystats",
+      "task",
+    ]) {
       editorAddIntellisense(key, "Class", key, key);
     }
 
-    for (const key of ["print", "warn", "wait", "info", "printidentity", "assert", "collectgarbage", "error", "getfenv", "getmetatable", "setmetatable", "ipairs", "loadfile", "newproxy", "next", "pairs", "pcall", "spawn", "rawequal", "rawget", "rawset", "select", "tonumber", "tostring", "type", "unpack", "xpcall", "delay", "stats", ":Remove()", ":BreakJoints()", ":GetChildren()", ":FindFirstChild()", ":FireServer()", ":InvokeServer()", ":ClearAllChildren()", ":Clone()", ":Destroy()", ":FindFirstAncestor()", ":FindFirstAncestorOfClass()", ":FindFirstAncestorWhichIsA()", ":FindFirstChildOfClass()", ":FindFirstChildWhichIsA()", ":GetDebugId()", ":GetDescendants()", ":GetFullName()", ":IsA()", ":GetPropertyChangedSignal()", ":IsAncestorOf()", ":IsDescendantOf()", ":WaitForChild()", ":Connect()", ":AncestryChanged()", ":Changed()", ":ChildAdded()", ":ChildRemoved()", ":DescendantAdded()", ":DescendantRemoving()", ":GetService()", ":GetObjects()", ":HttpGet()", ":Wait()", "zstdcompress", "zstddecompress", "lz4compress", "lz4decompress", "setthreadcaps", "setclosurecaps", "getthreadcaps", "getclosurecaps", "cloneref", "compareinstances", ":Send()", ":Close()", "cleardrawcache", "getrenderproperty", "isrenderobj", "setrenderproperty", "getscriptbytecode", "getscripthash", "getcallingscript", "getscriptfromthread", "getscriptclosure", "isrbxactive", "setclipboard", "keypress", "keyrelease", "keyclick", "mouse1press", "mouse1release", "mouse1click", "mouse2press", "mouse2release", "mouse2click", "mousescroll", "mousemoverel", "mousemoveabs", "firesignal", "getconnections", "readfile", "writefile", "appendfile", "loadfile", "runfile", "listfiles", "isfile", "isfolder", "makefolder", "delfolder", "getcustomasset", "clonefunction", "newcclosure", "hookfunction", "isfunctionhooked", "restorefunction", "getfpscap", "setfpscap", "gethwid", "getnamecallmethod", "setnamecallmethod", "gettenv", "getgenv", "getrenv", "getreg", "getgc", "getcallbackvalue", "request", "saveinstance", "saveplace", "loadstring", "checkcaller", "islclosure", "iscclosure", "getinstances", "getnilinstances", "getscripts", "getmodules", "queue_on_teleport", "clear_teleport_queue", "fireclickdetector", "fireproximityprompt", "firetouchtransmitter", "getfflag", "setfflag", "isnetworkowner", "setscriptable", "isscriptable", "getproperties", "gethiddenproperties", "sethiddenproperty", "gethiddenproperty", "setsimulationradius", "identifyexecutor", "gethui", "setthreadidentity", "getthreadidentity", "isexecutorclosure"]) {
-      editorAddIntellisense(key, "Function", key, key.includes(":") ? key.substring(1, key.length) : key);
+    for (const key of [
+      "print",
+      "warn",
+      "wait",
+      "info",
+      "printidentity",
+      "assert",
+      "collectgarbage",
+      "error",
+      "getfenv",
+      "getmetatable",
+      "setmetatable",
+      "ipairs",
+      "loadfile",
+      "newproxy",
+      "next",
+      "pairs",
+      "pcall",
+      "spawn",
+      "rawequal",
+      "rawget",
+      "rawset",
+      "select",
+      "tonumber",
+      "tostring",
+      "type",
+      "unpack",
+      "xpcall",
+      "delay",
+      "stats",
+      ":Remove()",
+      ":BreakJoints()",
+      ":GetChildren()",
+      ":FindFirstChild()",
+      ":FireServer()",
+      ":InvokeServer()",
+      ":ClearAllChildren()",
+      ":Clone()",
+      ":Destroy()",
+      ":FindFirstAncestor()",
+      ":FindFirstAncestorOfClass()",
+      ":FindFirstAncestorWhichIsA()",
+      ":FindFirstChildOfClass()",
+      ":FindFirstChildWhichIsA()",
+      ":GetDebugId()",
+      ":GetDescendants()",
+      ":GetFullName()",
+      ":IsA()",
+      ":GetPropertyChangedSignal()",
+      ":IsAncestorOf()",
+      ":IsDescendantOf()",
+      ":WaitForChild()",
+      ":Connect()",
+      ":AncestryChanged()",
+      ":Changed()",
+      ":ChildAdded()",
+      ":ChildRemoved()",
+      ":DescendantAdded()",
+      ":DescendantRemoving()",
+      ":GetService()",
+      ":GetObjects()",
+      ":HttpGet()",
+      ":Wait()",
+      "zstdcompress",
+      "zstddecompress",
+      "lz4compress",
+      "lz4decompress",
+      "setthreadcaps",
+      "setclosurecaps",
+      "getthreadcaps",
+      "getclosurecaps",
+      "cloneref",
+      "compareinstances",
+      ":Send()",
+      ":Close()",
+      "cleardrawcache",
+      "getrenderproperty",
+      "isrenderobj",
+      "setrenderproperty",
+      "getscriptbytecode",
+      "getscripthash",
+      "getcallingscript",
+      "getscriptfromthread",
+      "getscriptclosure",
+      "isrbxactive",
+      "setclipboard",
+      "keypress",
+      "keyrelease",
+      "keyclick",
+      "mouse1press",
+      "mouse1release",
+      "mouse1click",
+      "mouse2press",
+      "mouse2release",
+      "mouse2click",
+      "mousescroll",
+      "mousemoverel",
+      "mousemoveabs",
+      "firesignal",
+      "getconnections",
+      "readfile",
+      "writefile",
+      "appendfile",
+      "loadfile",
+      "runfile",
+      "listfiles",
+      "isfile",
+      "isfolder",
+      "makefolder",
+      "delfolder",
+      "getcustomasset",
+      "clonefunction",
+      "newcclosure",
+      "hookfunction",
+      "isfunctionhooked",
+      "restorefunction",
+      "getfpscap",
+      "setfpscap",
+      "gethwid",
+      "getnamecallmethod",
+      "setnamecallmethod",
+      "gettenv",
+      "getgenv",
+      "getrenv",
+      "getreg",
+      "getgc",
+      "getcallbackvalue",
+      "request",
+      "saveinstance",
+      "saveplace",
+      "loadstring",
+      "checkcaller",
+      "islclosure",
+      "iscclosure",
+      "getinstances",
+      "getnilinstances",
+      "getscripts",
+      "getmodules",
+      "queue_on_teleport",
+      "clear_teleport_queue",
+      "fireclickdetector",
+      "fireproximityprompt",
+      "firetouchtransmitter",
+      "getfflag",
+      "setfflag",
+      "isnetworkowner",
+      "setscriptable",
+      "isscriptable",
+      "getproperties",
+      "gethiddenproperties",
+      "sethiddenproperty",
+      "gethiddenproperty",
+      "setsimulationradius",
+      "identifyexecutor",
+      "gethui",
+      "setthreadidentity",
+      "getthreadidentity",
+      "isexecutorclosure",
+    ]) {
+      editorAddIntellisense(
+        key,
+        "Function",
+        key,
+        key.includes(":") ? key.substring(1, key.length) : key
+      );
     }
 
-    for (const key of ["FileName", "IgnoreArchivable", "SavePlayers", "DisableCompression", "SaveNonCreatable", "CopyToClipboard"]) {
+    for (const key of [
+      "FileName",
+      "IgnoreArchivable",
+      "SavePlayers",
+      "DisableCompression",
+      "SaveNonCreatable",
+      "CopyToClipboard",
+    ]) {
       editorAddIntellisense(key, "Property", "Property for Save Instance", key);
     }
 
@@ -1836,11 +2385,45 @@ function setupEditor(editorFontSize) {
     }
 
     for (const key of ["OnMessage", "OnClose"]) {
-      editorAddIntellisense(key, "Property", "Property for WebSocket Library", key);
+      editorAddIntellisense(
+        key,
+        "Property",
+        "Property for WebSocket Library",
+        key
+      );
     }
 
-    for (const key of ["Visible", "Color", "Transparency", "Thickness", "From", "To", "Text", "Size", "Center", "Outline", "OutlineColor", "Position", "TextBounds", "Font", "Data", "Rounding", "NumSides", "Radius", "Filled", "PointA", "PointB", "PointC", "PointD"]) {
-      editorAddIntellisense(key, "Property", "Property for Drawing Library", key);
+    for (const key of [
+      "Visible",
+      "Color",
+      "Transparency",
+      "Thickness",
+      "From",
+      "To",
+      "Text",
+      "Size",
+      "Center",
+      "Outline",
+      "OutlineColor",
+      "Position",
+      "TextBounds",
+      "Font",
+      "Data",
+      "Rounding",
+      "NumSides",
+      "Radius",
+      "Filled",
+      "PointA",
+      "PointB",
+      "PointC",
+      "PointD",
+    ]) {
+      editorAddIntellisense(
+        key,
+        "Property",
+        "Property for Drawing Library",
+        key
+      );
     }
 
     function updateIntelliSense() {
@@ -1850,15 +2433,26 @@ function setupEditor(editorFontSize) {
       let functionMatch;
       let variableMatch;
 
-      const functionRegex = /(?:\blocal\s+)?function\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+      const functionRegex =
+        /(?:\blocal\s+)?function\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
       const variableRegex = /(?:\blocal\s+)([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g;
 
       while ((functionMatch = functionRegex.exec(editorContent)) !== null) {
-        dynamicEditorProposals.push({ label: functionMatch[1], kind: monaco.languages.CompletionItemKind.Function, detail: "Function", insertText: functionMatch[1] });
+        dynamicEditorProposals.push({
+          label: functionMatch[1],
+          kind: monaco.languages.CompletionItemKind.Function,
+          detail: "Function",
+          insertText: functionMatch[1],
+        });
       }
 
       while ((variableMatch = variableRegex.exec(editorContent)) !== null) {
-        dynamicEditorProposals.push({ label: variableMatch[1], kind: monaco.languages.CompletionItemKind.Variable, detail: "Variable", insertText: variableMatch[1] });
+        dynamicEditorProposals.push({
+          label: variableMatch[1],
+          kind: monaco.languages.CompletionItemKind.Variable,
+          detail: "Variable",
+          insertText: variableMatch[1],
+        });
       }
     }
 
@@ -1871,15 +2465,21 @@ function setupEditor(editorFontSize) {
       setActiveTabScroll(e.scrollTop);
     });
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, function () {
-      const activeTab = tabs.find((t) => t.active === true);
-      if (activeTab) saveTabContent(activeTab);
-    });
+    editor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S,
+      function () {
+        const activeTab = tabs.find((t) => t.active === true);
+        if (activeTab) saveTabContent(activeTab);
+      }
+    );
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, function () {
-      const activeTab = tabs.find((t) => t.active === true);
-      if (activeTab) revertTabContent(activeTab);
-    });
+    editor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R,
+      function () {
+        const activeTab = tabs.find((t) => t.active === true);
+        if (activeTab) revertTabContent(activeTab);
+      }
+    );
 
     editor.addCommand(monaco.KeyCode.Home, () => null);
 
@@ -1890,13 +2490,13 @@ function setupEditor(editorFontSize) {
 
 async function checkRobloxActive() {
   const newActive = await isRobloxRunning();
-  
+
   if (prevActive !== newActive) {
     prevActive = newActive;
-    
+
     if (newActive) {
       if (!connected && injecting !== true) {
-        if (settings.autoInject && await findExecutable()) inject(true);
+        if (settings.autoInject && (await findExecutable())) inject(true);
         else exploitInject.classList.remove("disabled");
       }
       exploitKill.classList.remove("disabled");
@@ -1912,7 +2512,7 @@ async function main() {
   function setupRippleEffect() {
     const allButtons = document.querySelectorAll(".kr-button");
     allButtons.forEach((button) => {
-      button.onclick = function(e) {
+      button.onclick = function (e) {
         const buttonRect = this.getBoundingClientRect();
         const x = e.clientX - buttonRect.left;
         const y = e.clientY - buttonRect.top;
@@ -1924,22 +2524,27 @@ async function main() {
         this.appendChild(ripple);
 
         setTimeout(() => {
-            ripple.remove();
+          ripple.remove();
         }, 600);
-      }
-    })
+      };
+    });
   }
 
   setupRippleEffect();
 
   // Prevent Events
   document.addEventListener("contextmenu", (e) => e.preventDefault());
-  document.addEventListener("keydown", function(e) {
+  document.addEventListener("keydown", function (e) {
     if (
-      e.key === "F5" || (e.ctrlKey && e.key === "r") || (e.metaKey && e.key === "r") ||
-      e.key === "F3" || (e.ctrlKey && e.key === "f") || (e.metaKey && e.key === "f") ||
+      e.key === "F5" ||
+      (e.ctrlKey && e.key === "r") ||
+      (e.metaKey && e.key === "r") ||
+      e.key === "F3" ||
+      (e.ctrlKey && e.key === "f") ||
+      (e.metaKey && e.key === "f") ||
       e.key === "F7" ||
-      (e.ctrlKey && e.key === "k") || (e.metaKey && e.key === "k")
+      (e.ctrlKey && e.key === "k") ||
+      (e.metaKey && e.key === "k")
     ) {
       e.preventDefault();
     }
@@ -1958,7 +2563,9 @@ async function main() {
 
   // Window Dimensions
   let windowDimensions = await getWindowDimensions();
-  appWindow.setSize(new LogicalSize(windowDimensions.width, windowDimensions.height));
+  appWindow.setSize(
+    new LogicalSize(windowDimensions.width, windowDimensions.height)
+  );
   appWindow.center();
 
   window.addEventListener("resize", async function () {
@@ -1968,7 +2575,11 @@ async function main() {
     if (width < 400) width = 400;
     if (height < 200) height = 200;
 
-    if ((width !== windowDimensions.width || height !== windowDimensions.height) && !await isMaximized()) {
+    if (
+      (width !== windowDimensions.width ||
+        height !== windowDimensions.height) &&
+      !(await isMaximized())
+    ) {
       windowDimensions = { width, height };
       await setWindowDimensions(windowDimensions);
     }
@@ -1977,13 +2588,14 @@ async function main() {
   // Version
   const titleElem = document.querySelector(".kr-titlebar .brand .text");
   const versionElem = document.querySelector(".kr-titlebar .brand .version");
-  if (version && versionElem) versionElem.textContent = `(${version})`; 
-  if (title && titleElem) titleElem.textContent = debug ? `${title} [DEV]` : title;
+  if (version && versionElem) versionElem.textContent = `(${version})`;
+  if (title && titleElem)
+    titleElem.textContent = debug ? `${title} [DEV]` : title;
 
   // Events
   event.listen("update", function (e) {
     const _connected = e.payload?.message || false;
-    
+
     if (connected === _connected) return;
     else connected = _connected;
 
@@ -2025,8 +2637,12 @@ async function main() {
   await invoke("init_websocket", { port: wsPort });
 
   // Titlebar
-  document.querySelector(".tb-button.minimize").addEventListener("click", minimize);
-  document.querySelector(".tb-button.maximize").addEventListener("click", maximize);
+  document
+    .querySelector(".tb-button.minimize")
+    .addEventListener("click", minimize);
+  document
+    .querySelector(".tb-button.maximize")
+    .addEventListener("click", maximize);
   document.querySelector(".tb-button.exit").addEventListener("click", exit);
 
   // Maximized
@@ -2042,12 +2658,16 @@ async function main() {
   exploitIndicator = document.querySelector(".kr-titlebar .brand .text");
   exploitTabs = document.querySelector(".exploit .main .container .tabs .list");
   exploitEditor = document.querySelector(".exploit .main .container .editor");
-  exploitScripts = document.querySelector(".exploit .main .container-2 .scripts");
-  exploitScriptsSearch = document.querySelector(".exploit .main .container-2 .kr-input.search");
+  exploitScripts = document.querySelector(
+    ".exploit .main .container-2 .scripts"
+  );
+  exploitScriptsSearch = document.querySelector(
+    ".exploit .main .container-2 .kr-input.search"
+  );
 
   exploitTabs.addEventListener("wheel", function (e) {
     e.preventDefault();
-    exploitTabs.scrollLeft += (e.deltaY / 2);
+    exploitTabs.scrollLeft += e.deltaY / 2;
   });
 
   // Scripts
@@ -2055,8 +2675,12 @@ async function main() {
   exploitScriptsSearch.addEventListener("input", loadScripts);
   setInterval(loadScripts, 1000);
 
-  document.querySelector(".kr-scripts-new-file").addEventListener("click", () => newFile());
-  document.querySelector(".kr-scripts-new-folder").addEventListener("click", () => newFolder());
+  document
+    .querySelector(".kr-scripts-new-file")
+    .addEventListener("click", () => newFile());
+  document
+    .querySelector(".kr-scripts-new-folder")
+    .addEventListener("click", () => newFolder());
 
   // Tabs
   await setupTabs();
@@ -2091,7 +2715,7 @@ async function main() {
   const settingsToggle = document.querySelector(".settings-toggle");
   const exploitWindow = document.querySelector(".exploit");
   const settingsWindow = document.querySelector(".settings");
-  
+
   let isSettingsOpen = false;
 
   settingsToggle.addEventListener("click", () => {
@@ -2108,11 +2732,11 @@ async function main() {
 
     setupRippleEffect();
     isSettingsOpen = !isSettingsOpen;
-  })
+  });
 
   // Settings
   const autoInjectButton = document.querySelector(".auto-inject");
-  const topMostButton = document.querySelector(".top-most")
+  const topMostButton = document.querySelector(".top-most");
   const homeToggleButton = document.querySelector(".home-toggle");
   const fontSizeValue = document.querySelector(".font-size");
   const autoInjectDelayValue = document.querySelector(".auto-inject-delay");
@@ -2127,11 +2751,15 @@ async function main() {
     autoUpdateButton.innerText = settings.autoUpdate ? "Enabled" : "Disabled";
     fontSizeValue.value = settings.editorFontSize;
     autoInjectDelayValue.value = settings.injectionDelay;
-    
-    const isExecutable = await findExecutable() ? true : false;
+
+    const isExecutable = (await findExecutable()) ? true : false;
     deleteLoaderButton.classList.toggle("disabled", !isExecutable);
-    selectLoaderButton.querySelector(".text").textContent = isExecutable ? "Update Loader" : "Select Loader";
-    selectLoaderButton.querySelector("i").className = isExecutable ? "fa-solid fa-sync" : "fa-solid fa-upload";
+    selectLoaderButton.querySelector(".text").textContent = isExecutable
+      ? "Update Loader"
+      : "Select Loader";
+    selectLoaderButton.querySelector("i").className = isExecutable
+      ? "fa-solid fa-sync"
+      : "fa-solid fa-upload";
   }
 
   updateSettingsUI();
@@ -2159,17 +2787,21 @@ async function main() {
     settings.autoUpdate = !settings.autoUpdate;
     saveSettings();
     updateSettingsUI();
-  })
+  });
 
   fontSizeValue.addEventListener("keydown", function (event) {
-    if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
-      event.preventDefault(); 
+    if (
+      !/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key)
+    ) {
+      event.preventDefault();
     }
   });
 
   autoInjectDelayValue.addEventListener("keydown", function (event) {
-    if (!(/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key))) {
-      event.preventDefault(); 
+    if (
+      !/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete|Enter/.test(event.key)
+    ) {
+      event.preventDefault();
     }
   });
 
@@ -2185,7 +2817,7 @@ async function main() {
   autoInjectDelayValue.addEventListener("input", function () {
     const val = autoInjectDelayValue?.value;
     if (isNaN(val) || val === "") return;
-    
+
     settings.injectionDelay = val;
     saveSettings();
   });
@@ -2209,32 +2841,52 @@ async function main() {
     return e.parentElement && findDropdown(e.parentElement);
   }
 
-  onClick(window, async function(button, e) {
+  onClick(window, async function (button, e) {
     const foundDropdown = findDropdown(e.target);
-    const foundDropdownContent = foundDropdown && Array.from(foundDropdown?.querySelectorAll(".kr-dropdown-content")).find((d) => d.parentElement === foundDropdown);
+    const foundDropdownContent =
+      foundDropdown &&
+      Array.from(foundDropdown?.querySelectorAll(".kr-dropdown-content")).find(
+        (d) => d.parentElement === foundDropdown
+      );
     const dropdowns = Array.from(document.querySelectorAll(".kr-dropdown"));
 
-    await Promise.all(dropdowns.map((d) => {
-      if (d !== foundDropdown) d.querySelector(".kr-dropdown-content.active")?.classList.remove("active");
-    }));
+    await Promise.all(
+      dropdowns.map((d) => {
+        if (d !== foundDropdown)
+          d.querySelector(".kr-dropdown-content.active")?.classList.remove(
+            "active"
+          );
+      })
+    );
 
-    if (foundDropdownContent && e.target.parentElement === foundDropdownContent) {
+    if (
+      foundDropdownContent &&
+      e.target.parentElement === foundDropdownContent
+    ) {
       foundDropdownContent.classList.remove("active");
     } else if (foundDropdownContent) {
       if (foundDropdown.classList.contains("left")) {
         if (button === "left") foundDropdownContent.classList.toggle("active");
-        else if (button === "right") foundDropdownContent.classList.remove("active");
+        else if (button === "right")
+          foundDropdownContent.classList.remove("active");
       } else {
         if (button === "right") foundDropdownContent.classList.toggle("active");
-        else if (button === "left") foundDropdownContent.classList.remove("active");
+        else if (button === "left")
+          foundDropdownContent.classList.remove("active");
       }
 
       if (foundDropdownContent.classList.contains("active")) {
         const dropdownWidth = foundDropdownContent.clientWidth;
         const dropdownHeight = foundDropdownContent.clientHeight;
         const offset = 15;
-        const offsetX = (e.clientX + dropdownWidth + offset > window.innerWidth) ? window.innerWidth - (dropdownWidth + offset) : e.clientX;
-        const offsetY = (e.clientY + dropdownHeight + offset > window.innerHeight) ? window.innerHeight - (dropdownHeight + offset) : e.clientY + offset;
+        const offsetX =
+          e.clientX + dropdownWidth + offset > window.innerWidth
+            ? window.innerWidth - (dropdownWidth + offset)
+            : e.clientX;
+        const offsetY =
+          e.clientY + dropdownHeight + offset > window.innerHeight
+            ? window.innerHeight - (dropdownHeight + offset)
+            : e.clientY + offset;
 
         foundDropdownContent.style.top = `${offsetY}px`;
         foundDropdownContent.style.left = `${offsetX}px`;
