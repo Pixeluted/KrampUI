@@ -39,6 +39,7 @@ export class DataManager {
       }
     }
 
+    await WindowManager.initialize();
     await SettingsManager.initialize();
     await TabsManager.initialize();
     await LoaderManager.initialize();

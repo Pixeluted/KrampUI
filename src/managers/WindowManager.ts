@@ -1,4 +1,4 @@
-import { appWindow } from "@tauri-apps/api/window";
+import { LogicalSize, appWindow } from "@tauri-apps/api/window";
 import { get, writable } from "svelte/store";
 import * as monaco from "monaco-editor";
 import SettingsManager from "./SettingsManager";
@@ -6,6 +6,13 @@ import { event } from "@tauri-apps/api";
 import { PopupManager } from "./PopupManager";
 import { TabsManager } from "./TabsManager";
 import LoaderManager from "./LoaderManager";
+import { FileSystemService } from "../services/FilesystemService";
+import { dirPaths, filePaths } from "../dir-config";
+
+type WindowDimensions = {
+  width: number;
+  height: number;
+};
 
 export type InjectionStatus = "Idle" | "Injecting" | "Attached";
 export type WindowOpen = "Executor" | "Settings";
@@ -18,6 +25,11 @@ export type WindowState = {
 };
 
 export default class WindowManager {
+  private static defaultWindowDimensions: WindowDimensions = {
+    width: 700,
+    height: 400,
+  };
+
   public static currentState = writable<WindowState>({
     currentWindow: "Executor",
     injectionStatus: "Idle",
@@ -62,6 +74,24 @@ export default class WindowManager {
     });
 
     appWindow.listen("quit", WindowManager.exit);
+  }
+
+  public static async initialize() {
+    if (!(await FileSystemService.exists(filePaths.dimensions))) {
+      await FileSystemService.writeFile(
+        filePaths.dimensions,
+        JSON.stringify(WindowManager.defaultWindowDimensions, null, 2)
+      );
+    } else {
+      const parsedDimensions = JSON.parse(
+        (await FileSystemService.readFile(filePaths.dimensions)) as string
+      ) as WindowDimensions;
+
+      await appWindow.setSize(
+        new LogicalSize(parsedDimensions.width, parsedDimensions.height)
+      );
+      await appWindow.center();
+    }
   }
 
   public static showGenericError(title: string, message: string) {
@@ -137,7 +167,24 @@ export default class WindowManager {
     });
   }
 
+  static async saveWindowDimensions() {
+    const currentDimensions = await appWindow.outerSize();
+
+    await FileSystemService.writeFile(
+      filePaths.dimensions,
+      JSON.stringify(
+        {
+          width: currentDimensions.width,
+          height: currentDimensions.height,
+        },
+        null,
+        2
+      )
+    );
+  }
+
   static async exit() {
+    await WindowManager.saveWindowDimensions();
     await TabsManager.saveTabs();
 
     appWindow.close();
