@@ -28,7 +28,7 @@
 <div class="file-explorer">
     {#if areWeSearching === true} 
         {#if searchResults.length === 0}
-            <p>No files found</p>
+            <p class="no-files-found">No files found</p>
         {/if}
         {#each searchResults as file}
             <FileExplorerFileEntry fileName={file.title} fileId={file.id} />
@@ -69,5 +69,10 @@
         gap: 1px;
         padding-top: 5px;
         padding-left: 5px;
+    }
+
+    :global(.no-files-found) {
+        text-align: center;
+        padding-right: 6px;
     }
 </style>
