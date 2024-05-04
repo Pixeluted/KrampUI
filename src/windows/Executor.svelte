@@ -44,6 +44,8 @@
         display: flex;
         flex-direction: column;
         gap: 0.26rem;
+        overflow: auto;
+        max-width: 12rem;
     }
 
     .tab-editor-container {

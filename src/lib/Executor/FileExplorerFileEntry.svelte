@@ -103,10 +103,12 @@
         padding-left: 3px;
         transition: background-color 0.02s linear;
         box-sizing: content-box;
+        width: fit-content;
     }
 
     .file-entry span {
         all: unset;
+        text-wrap: nowrap;
     }
 
     .file-entry:hover {
