@@ -93,7 +93,7 @@ export class TabsManager {
     }
 
     this.currentTabs.set(tabs);
-    this.saveTabs();
+
     FileExplorerManager.updateFiles();
   }
 
@@ -118,8 +118,6 @@ export class TabsManager {
       });
       return tabs;
     });
-
-    this.saveTabs();
   }
 
   public static setActiveTabScroll(scroll: number) {
@@ -133,8 +131,6 @@ export class TabsManager {
       });
       return tabs;
     });
-
-    this.saveTabs();
   }
 
   public static setActiveTab(tabId: string) {
@@ -153,7 +149,6 @@ export class TabsManager {
 
     EditorManager.setEditorScroll(this.getActiveTabScroll());
     EditorManager.setEditorText(this.getActiveTabContent());
-    this.saveTabs();
   }
 
   public static async promptImportTab() {
@@ -257,7 +252,6 @@ export class TabsManager {
     });
 
     this.setActiveTab(newTabId);
-    this.saveTabs();
   }
 
   public static toggleLockTab(tabId: string) {
@@ -269,8 +263,6 @@ export class TabsManager {
       });
       return tabs;
     });
-
-    this.saveTabs();
   }
 
   public static deleteTab(tabId: string) {
@@ -290,8 +282,6 @@ export class TabsManager {
       tabs.splice(index, 1);
       return tabs;
     });
-
-    this.saveTabs();
   }
 
   public static getTabContent(tabId: string): string {
@@ -321,8 +311,6 @@ export class TabsManager {
 
       return tabs;
     });
-
-    this.saveTabs();
   }
 
   private static findActiveTab(): string {
