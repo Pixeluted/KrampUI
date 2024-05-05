@@ -120,7 +120,6 @@ export default class LoaderManager {
       try {
         loaderChild = await loaderCommand.spawn();
       } catch (error) {
-        console.log(error);
         resolve({
           success: false,
           error:
