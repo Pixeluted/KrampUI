@@ -582,18 +582,9 @@ export default class EditorManager {
       EditorManager.editor?.layout();
     }, 50);
 
-    let contentChangeDebaunce = false;
     this.editor.onDidChangeModelContent(async function () {
       EditorManager.updateIntelliSense();
-
-      if (contentChangeDebaunce) return;
-      contentChangeDebaunce = true;
-
       TabsManager.contentChangedOnActiveTab(EditorManager.getEditorText());
-
-      setTimeout(() => {
-        contentChangeDebaunce = false;
-      }, 100);
     });
 
     let scrollChangeDebaunce = false;
