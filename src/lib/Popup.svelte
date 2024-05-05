@@ -68,6 +68,9 @@
         border-radius: 5px;
         opacity: 100%;
         padding: 1rem;
+
+        display: flex;
+        flex-direction: column;
     }
 
     .popup-content h1 {
