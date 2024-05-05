@@ -30,6 +30,8 @@ export default class WindowManager {
     height: 400,
   };
 
+  private static homeToggleLock = false;
+
   public static currentState = writable<WindowState>({
     currentWindow: "Executor",
     injectionStatus: "Idle",
@@ -46,6 +48,12 @@ export default class WindowManager {
 
     appWindow.listen("toggle", () => {
       //TODO: Implement toggle
+    });
+
+    document.addEventListener("keydown", (keydownEvent) => {
+      if (keydownEvent.key === "Home") {
+        WindowManager.toggleWindow();
+      }
     });
 
     appWindow.listen("key-press", (event: any) => {
@@ -135,9 +143,12 @@ export default class WindowManager {
   }
 
   static toggleWindow() {
+    if (WindowManager.homeToggleLock === true) return;
+
     if (get(SettingsManager.currentSettings).homeToggleEnabled === false)
       return;
 
+    WindowManager.homeToggleLock = true;
     let isHidden = get(WindowManager.currentState).windowHidden;
 
     if (isHidden === true) {
@@ -149,6 +160,10 @@ export default class WindowManager {
     WindowManager.currentState.update((state) => {
       return { ...state, windowHidden: !isHidden };
     });
+
+    setTimeout(() => {
+      WindowManager.homeToggleLock = false;
+    }, 100);
   }
 
   static updateInjectionStatus(newInjectionStatus: InjectionStatus) {

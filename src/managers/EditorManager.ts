@@ -612,7 +612,7 @@ export default class EditorManager {
       TabsManager.saveActiveTab()
     );
 
-    this.editor.addCommand(monaco.KeyCode.Home, () => null);
+    this.editor.addCommand(monaco.KeyCode.Home, WindowManager.toggleWindow);
     this.updateIntelliSense();
   }
 
