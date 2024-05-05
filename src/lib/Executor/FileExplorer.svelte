@@ -3,6 +3,7 @@
   import FileExplorerFileEntry from "./FileExplorerFileEntry.svelte";
   import type { FileData, FileFolder } from "../../managers/FileExplorerManager";
   import FileExplorerManager from "../../managers/FileExplorerManager";
+  import Dropdown from "../Dropdown.svelte";
 
   let currentFiles: FileData[];
   FileExplorerManager.currentFiles.subscribe((value) => {
@@ -35,7 +36,7 @@
         {/each}
     {:else} 
         {#each currentFolders as folder}
-            <FileExplorerFolderEntry name={folder.folderName === "autoexec" ? "Auto Exec " : folder.folderName} icon={folder.folderIcon}>
+            <FileExplorerFolderEntry name={folder.folderName === "autoexec" ? "Auto Exec " : folder.folderName} realName={folder.folderName} icon={folder.folderIcon}>
                 {#if folder.isOpen === true} 
                     {#each currentFiles as file}
                         {#if file.folderName === folder.folderName}
@@ -52,6 +53,15 @@
             {/if}
         {/each}
     {/if}
+
+    <Dropdown buttonCallbacks={[
+        () => { FileExplorerManager.newFile("scripts") }
+    ]}>
+        <button data-index="1">
+            <i class="fa-solid fa-file"></i>
+            <span>New File</span>
+        </button>
+    </Dropdown>
 </div>
 
 <style>

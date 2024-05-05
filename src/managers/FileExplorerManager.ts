@@ -181,6 +181,45 @@ export default class FileExplorerManager {
     });
   }
 
+  public static async newFile(folderName: string) {
+    const fileName = "New File.lua";
+    const filePath = await path.join(
+      await FileSystemService.getAppDataPath(),
+      folderName,
+      fileName
+    );
+
+    const newFileWrittenResults = await FileSystemService.writeFile(
+      filePath,
+      "",
+      true
+    );
+    if (newFileWrittenResults.success) {
+      FileExplorerManager.updateFiles();
+    } else {
+      WindowManager.showGenericError(
+        "Error while creating new file!",
+        `Failed to create new file! Error: ${newFileWrittenResults.error}`
+      );
+    }
+  }
+
+  public static async deleteFile(fileId: string) {
+    const currentFiles = get(this.currentFiles);
+    const file = currentFiles.find((file) => file.id === fileId);
+    if (!file) return;
+
+    const results = await FileSystemService.deleteFile(file.filePath, true);
+    if (!results.success) {
+      WindowManager.showGenericError(
+        "Error while deleting file!",
+        `Failed to delete the file! Error: ${results.error}`
+      );
+    } else {
+      FileExplorerManager.updateFiles();
+    }
+  }
+
   public static async updateFiles() {
     const allFilesFound: FileData[] = [];
     const allFoldersFound: FileFolder[] = [];

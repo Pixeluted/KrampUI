@@ -1,8 +1,10 @@
 <script lang="ts">
     import FileExplorerManager from "../../managers/FileExplorerManager";
+    import Dropdown from "../Dropdown.svelte";
 
     export let icon = "";
     export let name = "";
+    export let realName = "";
     export let isOpen = false;
 
     function toggleOpenFolder() {
@@ -16,6 +18,15 @@
     <div class="info-container" on:click={toggleOpenFolder} class:isOpen={isOpen}>
         <i class="fa-solid fa-{icon}"></i>
         <span>{name}</span>
+
+        <Dropdown buttonCallbacks={[
+            () => { FileExplorerManager.newFile(realName) }
+        ]}>
+            <button data-index="1">
+                <i class="fa-solid fa-file"></i>
+                <span>New File</span>
+            </button>
+        </Dropdown>
     </div>
     <div class="folder-content-container">
         <slot></slot>

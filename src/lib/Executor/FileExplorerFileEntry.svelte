@@ -79,7 +79,8 @@
     <span on:input={renameInput}>{fileName}</span>
     <Dropdown buttonCallbacks={[
         () => { FileExplorerManager.executeFile(fileId) },
-        () => { startRenaming() } 
+        () => { startRenaming() },
+        () => { FileExplorerManager.deleteFile(fileId) }
     ]}>
         <button data-index="1">
             <i class="fa-solid fa-scroll"></i>
@@ -88,6 +89,10 @@
         <button data-index="2">
             <i class="fa-solid fa-pencil"></i>
             <span>Rename</span>
+        </button>
+        <button data-index="3">
+            <i class="fa-solid fa-trash"></i>
+            <span>Delete</span>
         </button>
     </Dropdown>
 </div>
