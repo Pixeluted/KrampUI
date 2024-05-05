@@ -17,9 +17,16 @@ export class FileSystemService {
   }
 
   public static async createDirectory(
-    path: string
+    path: string,
+    absolutePath: boolean = false
   ): Promise<FilesystemCallResult> {
-    const fullPath = `${await this.getAppDataPath()}\\${path}`;
+    let fullPath: string;
+    if (absolutePath) {
+      fullPath = path;
+    } else {
+      fullPath = `${await this.getAppDataPath()}\\${path}`;
+    }
+
     const [success, error]: RawResult = await invoke("create_directory", {
       path: fullPath,
     });
