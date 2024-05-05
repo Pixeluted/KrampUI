@@ -2,12 +2,11 @@ import { LogicalSize, appWindow } from "@tauri-apps/api/window";
 import { get, writable } from "svelte/store";
 import * as monaco from "monaco-editor";
 import SettingsManager from "./SettingsManager";
-import { event } from "@tauri-apps/api";
 import { PopupManager } from "./PopupManager";
 import { TabsManager } from "./TabsManager";
 import LoaderManager from "./LoaderManager";
 import { FileSystemService } from "../services/FilesystemService";
-import { dirPaths, filePaths } from "../dir-config";
+import { filePaths } from "../dir-config";
 
 type WindowDimensions = {
   width: number;
