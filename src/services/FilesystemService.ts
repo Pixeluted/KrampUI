@@ -171,4 +171,12 @@ export class FileSystemService {
     const success: boolean = await invoke("exists", { path: fullPath });
     return success;
   }
+
+  public static async parseJSON<T>(jsonString: string): Promise<T | null> {
+    try {
+      return JSON.parse(jsonString) as T;
+    } catch (e: any) {
+      return null;
+    }
+  }
 }

@@ -106,9 +106,25 @@ export default class WindowManager {
         JSON.stringify(WindowManager.defaultWindowDimensions, null, 2)
       );
     } else {
-      const parsedDimensions = JSON.parse(
-        (await FileSystemService.readFile(filePaths.dimensions)) as string
-      ) as WindowDimensions;
+      const dimensionsContent = await FileSystemService.readFile(
+        filePaths.dimensions
+      );
+      if (dimensionsContent === null) {
+        WindowManager.showWarningPopup(
+          "Failed to read window dimensions file. Using default dimensions."
+        );
+
+        return;
+      }
+
+      const parsedDimensions =
+        await FileSystemService.parseJSON<WindowDimensions>(dimensionsContent);
+      if (parsedDimensions === null) {
+        WindowManager.showWarningPopup(
+          "Failed to parse window dimensions file. Using default dimensions."
+        );
+        return;
+      }
 
       await appWindow.setSize(
         new LogicalSize(parsedDimensions.width, parsedDimensions.height)

@@ -99,7 +99,17 @@ export default class SettingsManager {
     } else {
       const settings = await FileSystemService.readFile(filePaths.settings);
       if (settings) {
-        this.currentSettings.set(JSON.parse(settings) as Settings);
+        const parsedSettings = await FileSystemService.parseJSON<Settings>(
+          settings
+        );
+        if (parsedSettings === null) {
+          WindowManager.showWarningPopup(
+            "Failed to parse settings file. Using default settings."
+          );
+          return;
+        }
+
+        this.currentSettings.set(parsedSettings);
       } else {
         WindowManager.showWarningPopup(
           "Failed to read settings file. Using default settings."

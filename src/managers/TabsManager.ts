@@ -386,7 +386,17 @@ export class TabsManager {
     } else {
       const content = await FileSystemService.readFile(filePaths.tabs);
       if (content) {
-        this.currentTabs.set(JSON.parse(content));
+        const parsedTabs = await FileSystemService.parseJSON<TabData[]>(
+          content
+        );
+        if (parsedTabs === null) {
+          WindowManager.showWarningPopup(
+            "Failed to parse tabs file. Using default tabs."
+          );
+          return;
+        }
+
+        this.currentTabs.set(parsedTabs);
       } else {
         WindowManager.showWarningPopup(
           "Failed to read tabs file. Using default tabs."
