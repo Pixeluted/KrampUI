@@ -47,12 +47,12 @@ export default class WindowManager {
     });
 
     appWindow.listen("toggle", () => {
-      //TODO: Implement toggle
+      WindowManager.toggleWindow();
     });
 
     document.addEventListener("keydown", (keydownEvent) => {
       if (keydownEvent.key === "Home") {
-        WindowManager.toggleWindow();
+        WindowManager.toggleWindow(true);
       }
     });
 
@@ -158,10 +158,13 @@ export default class WindowManager {
     });
   }
 
-  static toggleWindow() {
+  static toggleWindow(force: boolean = false) {
     if (WindowManager.homeToggleLock === true) return;
 
-    if (get(SettingsManager.currentSettings).homeToggleEnabled === false)
+    if (
+      get(SettingsManager.currentSettings).homeToggleEnabled === false &&
+      !force
+    )
       return;
 
     WindowManager.homeToggleLock = true;
