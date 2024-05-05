@@ -124,10 +124,7 @@ export default class FileExplorerManager {
     const newFileFolder: FileFolder = {
       folderName: folderName,
       folderIcon: icon,
-      isOpen:
-        icon == "robot"
-          ? true
-          : FileExplorerManager.openFolders.includes(folderName),
+      isOpen: FileExplorerManager.openFolders.includes(folderName),
     };
 
     const folderFiles: FileData[] = [];
