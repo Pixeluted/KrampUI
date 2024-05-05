@@ -1,6 +1,6 @@
 [package]
 name = "krampui-rewrite"
-version = "2.0.1"
+version = "2.0.2"
 authors = ["Pixeluted"]
 license = "MIT"
 edition = "2021"
