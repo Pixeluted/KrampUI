@@ -8,7 +8,7 @@
     export let isOpen = false;
 
     function toggleOpenFolder() {
-        FileExplorerManager.toggleFolderIsOpen(name);
+        FileExplorerManager.toggleFolderIsOpen(realName);
     }
 </script>
 
