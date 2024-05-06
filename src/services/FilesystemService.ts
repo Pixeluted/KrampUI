@@ -13,6 +13,11 @@ export class FileSystemService {
     return await path.dirname(executablePath);
   }
 
+  public static async getAppName() {
+    const executablePath = (await invoke("get_exe_path")) as string;
+    return await path.basename(executablePath);
+  }
+
   public static getFileNameFromPath(path: string): string {
     return path.split("\\").pop() || "";
   }

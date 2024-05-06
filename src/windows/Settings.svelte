@@ -26,11 +26,6 @@
     finalValue = Number.isNaN(finalValue) ? 0 : finalValue;
     SettingsManager.setSetting(key, finalValue);
   }
-
-  // Doing this so that the status is refreshed everytime they reopen settings window
-  onMount(() => {
-    LoaderManager.checkForLoader();
-  })
 </script>
 
 <main>
@@ -56,11 +51,11 @@
         <div class="loader-section">
             <h1>Loader</h1>
             <span>Loader Status: <b style="color: var(--{isLoaderPresent ? "green" : "red"});">{isLoaderPresent ? "Present" : "Not Present"}</b></span>
-            <span>Only update the loader if you get error saying your loader is out of version, or your loader is not present!</span>
+            <span>Only check for loader if you just added the loader to the directory that has KrampUI!</span>
             <div class="loader-content">
                 <div class="buttons">
-                    <Button buttonType="Secondary" buttonCallback={LoaderManager.updateLoader}>
-                        <span>Update loader</span>
+                    <Button buttonType="Secondary" buttonCallback={LoaderManager.checkForLoader}>
+                        <span>Check for loader</span>
                     </Button>
                 </div>
             </div>

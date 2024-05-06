@@ -10,60 +10,7 @@ import { Child, Command } from "@tauri-apps/api/shell";
 export default class LoaderManager {
   public static isLoaderPresent = writable(false);
   public static wsPort = Math.floor(Math.random() * 48128) + 1024;
-
-  public static async updateLoader() {
-    const loaderPath = (await dialog.open({
-      title: "Select loader",
-      filters: [{ name: "Executable", extensions: ["exe"] }],
-      multiple: false,
-    })) as string;
-
-    if (!loaderPath) return;
-
-    const [isValidLoader, errorMessage]: [boolean, string] = await invoke(
-      "validate_loader",
-      { executablePath: loaderPath }
-    );
-
-    if (isValidLoader) {
-      const loaderData = await FileSystemService.readBinaryFile(
-        loaderPath,
-        true
-      );
-      if (loaderData === null) {
-        return WindowManager.showGenericError(
-          "Error while updating loader!",
-          "Failed to read the loader data!"
-        );
-      }
-
-      const writeResults = await FileSystemService.writeBinaryFile(
-        filePaths.loader,
-        loaderData
-      );
-      if (!writeResults.success) {
-        return WindowManager.showGenericError(
-          "Error while updating loader!",
-          `Failed to write the loader data! Error: ${writeResults.error}`
-        );
-      }
-
-      const deleteFileResults = await FileSystemService.deleteFile(
-        loaderPath,
-        true
-      );
-      if (!deleteFileResults.success) {
-        return WindowManager.showGenericError(
-          "Error while updating loader!",
-          `Failed to delete the orignal loader file! Error: ${deleteFileResults.error}`
-        );
-      }
-
-      LoaderManager.isLoaderPresent.set(true);
-    } else {
-      WindowManager.showGenericError("Invalid file", errorMessage);
-    }
-  }
+  public static loaderPath: string = "";
 
   public static async inject(autoInject: boolean = false): Promise<{
     success: boolean;
@@ -81,7 +28,13 @@ export default class LoaderManager {
     return new Promise(async function (resolve) {
       const loaderCommand = new Command(
         "cmd",
-        ["/c", "start", "/b", "/wait", "krampus-loader.exe"],
+        [
+          "/c",
+          "start",
+          "/b",
+          "/wait",
+          await path.basename(LoaderManager.loaderPath),
+        ],
         { cwd: await FileSystemService.getAppPath() }
       );
       let loaderChild: Child;
@@ -246,8 +199,35 @@ export default class LoaderManager {
   }
 
   public static async checkForLoader() {
-    const isLoaderPresent = await FileSystemService.exists(filePaths.loader);
-    this.isLoaderPresent.set(isLoaderPresent);
+    const allFilesInDir = await FileSystemService.readDir(
+      await FileSystemService.getAppPath(),
+      true
+    );
+    const ourExeName = FileSystemService.getFileNameFromPath(
+      await FileSystemService.getAppName()
+    );
+
+    let loaderPresent = false;
+
+    for (const file of allFilesInDir) {
+      if (file.children !== undefined) continue;
+      if (!file.name?.endsWith(".exe")) continue;
+      if (file.name === ourExeName) continue;
+
+      const [isValidLoader, error]: [boolean, string] = await invoke(
+        "validate_loader",
+        { executablePath: file.path }
+      );
+
+      if (isValidLoader) {
+        loaderPresent = true;
+        LoaderManager.loaderPath = file.path;
+        console.log("Found loader: " + file.path);
+        break;
+      }
+    }
+
+    LoaderManager.isLoaderPresent.set(loaderPresent);
   }
 
   public static async initialize() {
