@@ -30,7 +30,7 @@ export class DataManager {
       await PopupManager.showPopup({
         title: "Welcome to KrampUI!",
         message:
-          "It seems like you're a new user. We will now setup few directors in order to get started. Please click okay to continue.",
+          "It seems like you're a new user. We will now setup few directors in your current directory in order to get started. Please click okay to continue.",
         buttons: [
           {
             text: "Okay",
