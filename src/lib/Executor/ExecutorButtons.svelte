@@ -33,7 +33,7 @@
     })
 
     async function openScriptsFolder() {
-        const scriptsPath = `${await FileSystemService.getAppDataPath()}${dirPaths.scriptsDir}`
+        const scriptsPath = `${await FileSystemService.getAppPath()}\\${dirPaths.scriptsDir}`
 
         await invoke("open_file_explorer", { path: scriptsPath });
     }
