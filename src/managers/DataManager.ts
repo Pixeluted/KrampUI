@@ -23,8 +23,6 @@ export class DataManager {
     return !doesSettingsExist && !doesScriptsExist && !doesAutoExecExist;
   }
 
-  private static async setupNewUser() {}
-
   public static async initialize() {
     if (await DataManager.checkForNewUser()) {
       await PopupManager.showPopup({
