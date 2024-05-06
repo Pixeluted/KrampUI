@@ -222,7 +222,6 @@ export default class LoaderManager {
       if (isValidLoader) {
         loaderPresent = true;
         LoaderManager.loaderPath = file.path;
-        console.log("Found loader: " + file.path);
         break;
       }
     }
