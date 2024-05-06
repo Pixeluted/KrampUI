@@ -17,12 +17,7 @@
         "scope": [{ "name": "cmd", "cmd": "cmd", "args": true }]
       },
       "fs": {
-        "all": true,
-        "scope": [
-          "C:/Users/*/AppData/Roaming/*/*",
-          "C:/Users/*/AppData/Roaming/*/*/*",
-          "C:/Users/*/AppData/Roaming/*/*/*/*"
-        ]
+        "all": true
       }
     },
     "windows": [

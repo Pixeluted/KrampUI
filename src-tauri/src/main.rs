@@ -2,6 +2,7 @@
 
 use serde::Serialize;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayMenu, WindowEvent};
+use std::path::PathBuf;
 use std::{thread::sleep, time::Duration};
 
 mod key_events;
@@ -47,6 +48,14 @@ async fn main() {
     let tray = SystemTrayMenu::new().add_item(toggle).add_item(quit);
 
     tauri::Builder::default()
+        .setup(|app| {
+            let exe_path_buf = PathBuf::from(get_exe_path());
+            let parent_dir = exe_path_buf.parent().unwrap();
+
+            let _ = app.fs_scope().allow_directory(&parent_dir, true);
+
+            Ok(())
+        })
         .on_window_event(|e| {
             if let WindowEvent::Resized(_) = e.event() {
                 sleep(Duration::from_millis(5));
