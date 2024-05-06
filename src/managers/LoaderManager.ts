@@ -82,7 +82,7 @@ export default class LoaderManager {
       const loaderCommand = new Command(
         "cmd",
         ["/c", "start", "/b", "/wait", "krampus-loader.exe"],
-        { cwd: await path.appConfigDir() }
+        { cwd: await FileSystemService.getAppPath() }
       );
       let loaderChild: Child;
       let robloxKillCheck: number;
@@ -197,7 +197,8 @@ export default class LoaderManager {
         end
 
         pcall(function()
-            getgenv().KR_WEBSOCKET = websocket.connect("ws://127.0.0.1:${this.wsPort}")
+            local wsAddress = "ws://127.0.0.1:${this.wsPort}"
+            getgenv().KR_WEBSOCKET = websocket.connect(wsAddress)
             getgenv().KR_WEBSOCKET:Send("connect")
             getgenv().KR_READY = true
             local lastAlive = nil
