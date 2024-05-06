@@ -23,9 +23,18 @@ export class PopupManager {
     popupVisible: false,
   });
 
-  public static showPopup(popup: PopupData) {
+  public static showPopup(popup: PopupData): Promise<void> {
     PopupManager.currentPopupState.update((state) => {
       return { currentPopup: popup, popupVisible: true };
+    });
+
+    return new Promise<void>((resolve) => {
+      const unsubscribe = PopupManager.currentPopupState.subscribe((state) => {
+        if (!state.popupVisible) {
+          resolve();
+          unsubscribe();
+        }
+      });
     });
   }
 

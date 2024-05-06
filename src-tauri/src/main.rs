@@ -29,6 +29,7 @@ use crate::fs_handler::read_binary_file;
 use crate::fs_handler::rename_file;
 use crate::fs_handler::exists;
 use crate::fs_handler::open_file_explorer;
+use crate::fs_handler::get_exe_path;
 
 mod updates;
 use crate::updates::check_for_updates;
@@ -82,6 +83,7 @@ async fn main() {
             read_file,
             read_binary_file,
             open_file_explorer,
+            get_exe_path,
             exists,
             kill_roblox,
             start_roblox_check_loop,

@@ -80,6 +80,14 @@ pub async fn open_file_explorer(path: String) {
 }
 
 #[tauri::command]
+pub fn get_exe_path() -> String {
+    std::env::current_exe()
+        .expect("Failed to get current exe path")
+        .display()
+        .to_string()
+}
+
+#[tauri::command]
 pub async fn exists(path: String) -> bool {
     fs::metadata(&path).await.is_ok()
 }

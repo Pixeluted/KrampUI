@@ -181,7 +181,7 @@ export default class FileExplorerManager {
   public static async newFile(folderName: string) {
     const fileName = "New File.lua";
     const filePath = await path.join(
-      await FileSystemService.getAppDataPath(),
+      await FileSystemService.getAppPath(),
       folderName === "autoexec" ? "" : "scripts",
       folderName,
       fileName

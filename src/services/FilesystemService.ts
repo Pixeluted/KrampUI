@@ -8,8 +8,9 @@ export type FilesystemCallResult = {
 type RawResult = [boolean, string | null];
 
 export class FileSystemService {
-  public static async getAppDataPath() {
-    return await path.appDataDir();
+  public static async getAppPath() {
+    const executablePath = (await invoke("get_exe_path")) as string;
+    return await path.dirname(executablePath);
   }
 
   public static getFileNameFromPath(path: string): string {
@@ -24,7 +25,7 @@ export class FileSystemService {
     if (absolutePath) {
       fullPath = path;
     } else {
-      fullPath = `${await this.getAppDataPath()}\\${path}`;
+      fullPath = `${await this.getAppPath()}\\${path}`;
     }
 
     const [success, error]: RawResult = await invoke("create_directory", {
@@ -42,7 +43,7 @@ export class FileSystemService {
     if (absolutePath) {
       fullPath = path;
     } else {
-      fullPath = `${await this.getAppDataPath()}\\${path}`;
+      fullPath = `${await this.getAppPath()}\\${path}`;
     }
 
     const [success, error]: RawResult = await invoke("write_file", {
@@ -56,7 +57,7 @@ export class FileSystemService {
     path: string,
     data: Uint8Array
   ): Promise<FilesystemCallResult> {
-    const fullPath = `${await this.getAppDataPath()}\\${path}`;
+    const fullPath = `${await this.getAppPath()}\\${path}`;
     const [success, error]: RawResult = await invoke("write_binary_file", {
       path: fullPath,
       data,
@@ -67,7 +68,7 @@ export class FileSystemService {
   public static async deleteDirectory(
     path: string
   ): Promise<FilesystemCallResult> {
-    const fullPath = `${await this.getAppDataPath()}\\${path}`;
+    const fullPath = `${await this.getAppPath()}\\${path}`;
     const [success, error]: RawResult = await invoke("delete_directory", {
       path: fullPath,
     });
@@ -82,7 +83,7 @@ export class FileSystemService {
     if (absolutePath) {
       fullPath = path;
     } else {
-      fullPath = `${await this.getAppDataPath()}\\${path}`;
+      fullPath = `${await this.getAppPath()}\\${path}`;
     }
 
     const [success, error]: RawResult = await invoke("delete_file", {
@@ -99,7 +100,7 @@ export class FileSystemService {
     if (absolutePath) {
       fullPath = path;
     } else {
-      fullPath = `${await this.getAppDataPath()}\\${path}`;
+      fullPath = `${await this.getAppPath()}\\${path}`;
     }
 
     const [success, error]: RawResult = await invoke("read_file", {
@@ -120,7 +121,7 @@ export class FileSystemService {
     if (absolutePath) {
       fullPath = path;
     } else {
-      fullPath = `${await this.getAppDataPath()}\\${path}`;
+      fullPath = `${await this.getAppPath()}\\${path}`;
     }
 
     const results: any = await invoke("read_binary_file", {
@@ -146,8 +147,8 @@ export class FileSystemService {
       finalOldPath = oldPath;
       finalNewPath = newPath;
     } else {
-      finalOldPath = `${await this.getAppDataPath()}\\${oldPath}`;
-      finalNewPath = `${await this.getAppDataPath()}\\${newPath}`;
+      finalOldPath = `${await this.getAppPath()}\\${oldPath}`;
+      finalNewPath = `${await this.getAppPath()}\\${newPath}`;
     }
 
     const [success, error]: RawResult = await invoke("rename_file", {
@@ -165,7 +166,7 @@ export class FileSystemService {
     if (absolutePath) {
       fullPath = dirPath;
     } else {
-      fullPath = await path.join(await this.getAppDataPath(), dirPath);
+      fullPath = await path.join(await this.getAppPath(), dirPath);
     }
 
     const dirFiles = await fs.readDir(fullPath);
@@ -174,7 +175,7 @@ export class FileSystemService {
   }
 
   public static async exists(path: string): Promise<boolean> {
-    const fullPath = `${await this.getAppDataPath()}\\${path}`;
+    const fullPath = `${await this.getAppPath()}\\${path}`;
     const success: boolean = await invoke("exists", { path: fullPath });
     return success;
   }

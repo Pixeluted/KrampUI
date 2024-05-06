@@ -71,6 +71,8 @@
 
         display: flex;
         flex-direction: column;
+
+        max-width: 30rem;
     }
 
     .popup-content h1 {
