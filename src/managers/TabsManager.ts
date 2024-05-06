@@ -3,7 +3,7 @@ import { FileSystemService } from "../services/FilesystemService";
 import EditorManager from "./EditorManager";
 import WindowManager from "./WindowManager";
 import { dialog, invoke, path } from "@tauri-apps/api";
-import { filePaths } from "../dir-config";
+import { dirPaths, filePaths } from "../dir-config";
 import FileExplorerManager from "./FileExplorerManager";
 
 export type TabType = "File" | "Ephemeral";
@@ -172,8 +172,13 @@ export class TabsManager {
   }
 
   public static async promptExportTab() {
+    const scriptsPath = `${await FileSystemService.getAppPath()}\\${
+      dirPaths.scriptsDir
+    }`;
+
     const dialogResults = await dialog.save({
       title: "Export Script",
+      defaultPath: scriptsPath,
       filters: [
         {
           name: "Lua Script",

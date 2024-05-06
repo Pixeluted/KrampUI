@@ -6,8 +6,8 @@
     import Button from "../Button.svelte";
     import { TabsManager } from "../../managers/TabsManager";
     import LoaderManager from "../../managers/LoaderManager";
-  import { FileSystemService } from "../../services/FilesystemService";
-  import { dirPaths } from "../../dir-config";
+    import { FileSystemService } from "../../services/FilesystemService";
+    import { dirPaths } from "../../dir-config";
     
     let injectButtonDisabled = false;
     let killButtonDisabled = false;
