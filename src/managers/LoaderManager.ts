@@ -121,14 +121,18 @@ export default class LoaderManager {
       });
     }
 
+    LogManager.log("Started injection processs...");
+
     WindowManager.updateInjectionStatus("Injecting");
     const { success, error } = await LoaderManager.inject(autoInject);
 
     if (success) {
       WindowManager.updateInjectionStatus("Attached");
+      LogManager.log("Injection successfull");
     } else {
       WindowManager.updateInjectionStatus("Idle");
       WindowManager.showGenericError("Injection has failed", error);
+      LogManager.log(`Injection failed: ${error}`, "error");
     }
   }
 
@@ -234,6 +238,7 @@ export default class LoaderManager {
       if (isValidLoader) {
         loaderPresent = true;
         LoaderManager.loaderPath = file.path;
+        LogManager.log(`Loader found: ${file.path}`);
         break;
       }
     }
@@ -245,5 +250,6 @@ export default class LoaderManager {
     await this.checkForLoader();
     await this.setupWebsocket();
     invoke("initialize_websocket", { port: this.wsPort });
+    LogManager.log(`Websocket server started on port: ${this.wsPort}`);
   }
 }

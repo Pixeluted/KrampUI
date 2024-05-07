@@ -68,6 +68,11 @@ export default class WindowManager {
       const updatePayload = event.payload;
 
       if (updatePayload.websocket_count_update === true) {
+        LogManager.log(
+          "Websocket count update received! New Count: " +
+            updatePayload.new_count,
+          "info"
+        );
         if (updatePayload.new_count > 0) {
           // Override injection status, since when websockets are present, the client is always attached
           WindowManager.updateInjectionStatus("Attached");
