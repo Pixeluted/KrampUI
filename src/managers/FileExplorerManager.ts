@@ -5,6 +5,7 @@ import type { FileEntry } from "@tauri-apps/api/fs";
 import { invoke, path } from "@tauri-apps/api";
 import WindowManager from "./WindowManager";
 import { TabsManager } from "./TabsManager";
+import LogManager from "./LogManager";
 
 export type FileFolder = {
   folderName: string;
@@ -60,6 +61,11 @@ export default class FileExplorerManager {
       WindowManager.showGenericError(
         "Error while renaming file!",
         `Failed to rename the file! Error: ${results.error}`
+      );
+
+      LogManager.log(
+        `Failed to rename file: ${file.filePath} Error: ${results.error}`,
+        "error"
       );
     } else {
       FileExplorerManager.updateFiles();
@@ -198,6 +204,11 @@ export default class FileExplorerManager {
         "Error while creating new file!",
         `Failed to create new file! Error: ${newFileWrittenResults.error}`
       );
+
+      LogManager.log(
+        `Failed to create new file: ${filePath} Error: ${newFileWrittenResults.error}`,
+        "error"
+      );
     }
   }
 
@@ -211,6 +222,11 @@ export default class FileExplorerManager {
       WindowManager.showGenericError(
         "Error while deleting file!",
         `Failed to delete the file! Error: ${results.error}`
+      );
+
+      LogManager.log(
+        `Failed to delete file: ${file.filePath} Error: ${results.error}`,
+        "error"
       );
     } else {
       FileExplorerManager.updateFiles();

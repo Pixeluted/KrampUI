@@ -7,6 +7,7 @@ import { PopupManager } from "./PopupManager";
 import SettingsManager from "./SettingsManager";
 import { TabsManager } from "./TabsManager";
 import WindowManager from "./WindowManager";
+import LogManager from "./LogManager";
 
 export class DataManager {
   private static async checkForNewUser() {
@@ -25,6 +26,7 @@ export class DataManager {
 
   public static async initialize() {
     if (await DataManager.checkForNewUser()) {
+      LogManager.log("User is new, showing welcome popup");
       await PopupManager.showPopup({
         title: "Welcome to KrampUI!",
         message:
@@ -51,6 +53,11 @@ export class DataManager {
         WindowManager.showFatalErrorPopup(
           `Failed to create settings directory. Error: ${results.error}`
         );
+
+        LogManager.log(
+          `Failed to create settings directory. Error: ${results.error}`,
+          "error"
+        );
       }
     }
 
@@ -61,6 +68,11 @@ export class DataManager {
       if (!results.success) {
         WindowManager.showFatalErrorPopup(
           `Failed to create scripts directory. Error: ${results.error}`
+        );
+
+        LogManager.log(
+          `Failed to create scripts directory. Error: ${results.error}`,
+          "error"
         );
       }
     }

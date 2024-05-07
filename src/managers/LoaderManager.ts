@@ -6,6 +6,7 @@ import { PopupManager } from "./PopupManager";
 import WindowManager from "./WindowManager";
 import SettingsManager from "./SettingsManager";
 import { Child, Command } from "@tauri-apps/api/shell";
+import LogManager from "./LogManager";
 
 export default class LoaderManager {
   public static isLoaderPresent = writable(false);
@@ -137,9 +138,15 @@ export default class LoaderManager {
         dirPaths.autoExecDir
       );
       if (!dirResults.success) {
-        return WindowManager.showFatalErrorPopup(
+        WindowManager.showFatalErrorPopup(
           `Failed to create autoexec directory. Error: ${dirResults.error}`
         );
+
+        LogManager.log(
+          `Failed to create autoexec directory. Error: ${dirResults.error}`,
+          "error"
+        );
+        return;
       }
     }
 
@@ -192,8 +199,13 @@ export default class LoaderManager {
     );
 
     if (!results.success) {
-      return WindowManager.showFatalErrorPopup(
+      WindowManager.showFatalErrorPopup(
         `Failed to create websocket code file. Error: ${results.error}`
+      );
+
+      LogManager.log(
+        `Failed to create websocket code file. Error: ${results.error}`,
+        "error"
       );
     }
   }

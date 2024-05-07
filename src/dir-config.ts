@@ -5,10 +5,10 @@ const dirPaths = {
 };
 
 const filePaths = {
-  loader: "krampus-loader.exe",
   tabs: `${dirPaths.settingsDir}/tabs.json`,
   settings: `${dirPaths.settingsDir}/settings.json`,
   dimensions: `${dirPaths.settingsDir}/dimensions.json`,
+  logFile: `${dirPaths.settingsDir}/log.txt`,
   krampuiWebsocketCode: `${dirPaths.autoExecDir}/__KrampUI`,
 };
 

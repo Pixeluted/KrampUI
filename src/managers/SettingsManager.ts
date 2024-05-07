@@ -3,6 +3,7 @@ import { FileSystemService } from "../services/FilesystemService";
 import WindowManager from "./WindowManager";
 import { filePaths } from "../dir-config";
 import { appWindow } from "@tauri-apps/api/window";
+import LogManager from "./LogManager";
 
 export type Settings = {
   autoInject: boolean;
@@ -95,6 +96,11 @@ export default class SettingsManager {
         WindowManager.showFatalErrorPopup(
           `Failed to create default settings file. Error: ${results.error}`
         );
+
+        LogManager.log(
+          `Failed to create default settings file. Error: ${results.error}`,
+          "error"
+        );
       }
     } else {
       const settings = await FileSystemService.readFile(filePaths.settings);
@@ -106,6 +112,11 @@ export default class SettingsManager {
           WindowManager.showWarningPopup(
             "Failed to parse settings file. Using default settings."
           );
+
+          LogManager.log(
+            "Failed to parse settings file. Using default settings.",
+            "warn"
+          );
           return;
         }
 
@@ -113,6 +124,11 @@ export default class SettingsManager {
       } else {
         WindowManager.showWarningPopup(
           "Failed to read settings file. Using default settings."
+        );
+
+        LogManager.log(
+          "Failed to read settings file. Using default settings.",
+          "warn"
         );
       }
     }

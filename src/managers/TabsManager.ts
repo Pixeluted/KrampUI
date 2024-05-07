@@ -5,6 +5,7 @@ import WindowManager from "./WindowManager";
 import { dialog, invoke, path } from "@tauri-apps/api";
 import { dirPaths, filePaths } from "../dir-config";
 import FileExplorerManager from "./FileExplorerManager";
+import LogManager from "./LogManager";
 
 export type TabType = "File" | "Ephemeral";
 export type TabData = {
@@ -340,6 +341,11 @@ export class TabsManager {
         WindowManager.showWarningPopup(
           `Failed to save script. Error: ${saveResults.error}`
         );
+
+        LogManager.log(
+          `Failed to save script: ${currentTab.filePath}. Error: ${saveResults.error}`,
+          "warn"
+        );
       } else {
         this.currentTabs.update((tabs) => {
           tabs.forEach((tab) => {
@@ -387,6 +393,11 @@ export class TabsManager {
         WindowManager.showFatalErrorPopup(
           `Failed to create default tabs settings file. Error: ${results.error}`
         );
+
+        LogManager.log(
+          `Failed to create default tabs settings file. Error: ${results.error}`,
+          "error"
+        );
       }
     } else {
       const content = await FileSystemService.readFile(filePaths.tabs);
@@ -398,6 +409,11 @@ export class TabsManager {
           WindowManager.showWarningPopup(
             "Failed to parse tabs file. Using default tabs."
           );
+
+          LogManager.log(
+            "Failed to parse tabs file. Using default tabs.",
+            "warn"
+          );
           return;
         }
 
@@ -406,6 +422,8 @@ export class TabsManager {
         WindowManager.showWarningPopup(
           "Failed to read tabs file. Using default tabs."
         );
+
+        LogManager.log("Failed to read tabs file. Using default tabs.", "warn");
       }
     }
 

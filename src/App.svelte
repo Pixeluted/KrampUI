@@ -6,6 +6,7 @@
   import Settings from "./windows/Settings.svelte";
   import Popup from "./lib/Popup.svelte";
   import { invoke } from "@tauri-apps/api";
+  import LogManager from "./managers/LogManager";
   
   let currentWindowState: WindowState;
   WindowManager.currentState.subscribe(newValue => {

@@ -7,6 +7,7 @@ import { TabsManager } from "./TabsManager";
 import LoaderManager from "./LoaderManager";
 import { FileSystemService } from "../services/FilesystemService";
 import { filePaths } from "../dir-config";
+import LogManager from "./LogManager";
 
 type WindowDimensions = {
   width: number;
@@ -114,6 +115,10 @@ export default class WindowManager {
           "Failed to read window dimensions file. Using default dimensions."
         );
 
+        LogManager.log(
+          "Failed to read window dimensions file. Using default dimensions.",
+          "warn"
+        );
         return;
       }
 
@@ -122,6 +127,11 @@ export default class WindowManager {
       if (parsedDimensions === null) {
         WindowManager.showWarningPopup(
           "Failed to parse window dimensions file. Using default dimensions."
+        );
+
+        LogManager.log(
+          "Failed to parse window dimensions file. Using default dimensions.",
+          "warn"
         );
         return;
       }
@@ -176,11 +186,13 @@ export default class WindowManager {
   static toggleWindow(force: boolean = false) {
     if (WindowManager.homeToggleLock === true) return;
 
-    if (
-      get(SettingsManager.currentSettings).homeToggleEnabled === false &&
-      !force
-    )
+    const isHomeToggleEnabled = get(
+      SettingsManager.currentSettings
+    ).homeToggleEnabled;
+
+    if (isHomeToggleEnabled === false && force === false) {
       return;
+    }
 
     WindowManager.homeToggleLock = true;
     let isHidden = get(WindowManager.currentState).windowHidden;
@@ -197,7 +209,7 @@ export default class WindowManager {
 
     setTimeout(() => {
       WindowManager.homeToggleLock = false;
-    }, 100);
+    }, 300);
   }
 
   static updateInjectionStatus(newInjectionStatus: InjectionStatus) {
@@ -233,6 +245,7 @@ export default class WindowManager {
   }
 
   static async exit() {
+    LogManager.log("Exiting application!");
     await WindowManager.saveWindowDimensions();
     await TabsManager.saveTabs();
 
