@@ -74,6 +74,11 @@ export default class SettingsManager {
       WindowManager.showFatalErrorPopup(
         `Failed to save settings. Error: ${results.error}`
       );
+
+      LogManager.log(
+        `Failed to save settings. Error: ${results.error}`,
+        "error"
+      );
     }
   }
 
