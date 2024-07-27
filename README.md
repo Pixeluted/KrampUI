@@ -1,7 +1,7 @@
 <div align="center">
     <h3>KrampUI</h3>
     <p>Simple and lightweight frontend for Synapse Z.</p>
-    <img src="./assets/showcase.png" alt="An image which showcases KrampUI application." width="600"/>
+    <img src="https://mentally-insane.pixeluted.com/Yoha8/CaXAlOjI60.png/raw" alt="An image which showcases KrampUI application." width="600"/>
 </div>
 <br />
 
