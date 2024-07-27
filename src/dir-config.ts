@@ -9,7 +9,6 @@ const filePaths = {
   settings: `${dirPaths.settingsDir}/settings.json`,
   dimensions: `${dirPaths.settingsDir}/dimensions.json`,
   logFile: `${dirPaths.settingsDir}/log.txt`,
-  krampuiWebsocketCode: `${dirPaths.autoExecDir}/__KrampUI`,
 };
 
 export { dirPaths, filePaths };

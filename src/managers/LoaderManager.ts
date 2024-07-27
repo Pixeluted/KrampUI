@@ -10,7 +10,6 @@ import LogManager from "./LogManager";
 
 export default class LoaderManager {
   public static isLoaderPresent = writable(false);
-  public static wsPort = Math.floor(Math.random() * 48128) + 1024;
   public static loaderPath: string = "";
 
   public static async inject(autoInject: boolean = false): Promise<{
@@ -38,66 +37,11 @@ export default class LoaderManager {
         ],
         { cwd: await FileSystemService.getAppPath() }
       );
-      let loaderChild: Child;
-      let robloxKillCheck: number;
-      let killTimeout: number;
+      await loaderCommand.spawn();
 
-      function onOutput(line: string) {
-        line = line.trim();
-        const errors = [
-          "error:",
-          "redownload",
-          "create a ticket",
-          "make a ticket",
-          "cannot find user",
-          "mismatch",
-          "out of date",
-          "failed to",
-          "no active subscription",
-        ];
-
-        if (line.toLowerCase().includes("already attached")) {
-          resolve({ success: true, error: "" });
-        } else if (
-          errors.some((s) => line.toLowerCase().includes(s)) &&
-          !line.endsWith(":")
-        ) {
-          resolve({ success: false, error: line });
-        } else if (line.toLowerCase().includes("success")) {
-          resolve({ success: true, error: "" });
-        }
-      }
-
-      loaderCommand.stdout.on("data", onOutput);
-      loaderCommand.stderr.on("data", onOutput);
-
-      try {
-        loaderChild = await loaderCommand.spawn();
-      } catch (error) {
-        resolve({
-          success: false,
-          error:
-            "Failed to start injector! Check whether the loader is present!",
-        });
-      }
-
-      robloxKillCheck = setInterval(async function () {
-        if (get(WindowManager.currentState).isRobloxPresent === false) {
-          WindowManager.updateInjectionStatus("Idle");
-          await loaderChild.kill();
-          clearTimeout(killTimeout);
-          clearInterval(robloxKillCheck);
-          resolve({
-            success: false,
-            error: "Roblox was closed while injecting",
-          });
-        }
-      }, 500);
-
-      killTimeout = setTimeout(async function () {
-        await loaderChild.kill();
-        clearInterval(robloxKillCheck);
-      }, 15000);
+      setTimeout(async () => {
+        WindowManager.updateInjectionStatus("Attached");
+      }, 5000);
     });
   }
 
@@ -136,84 +80,6 @@ export default class LoaderManager {
     }
   }
 
-  public static async setupWebsocket() {
-    if (!(await FileSystemService.exists(dirPaths.autoExecDir))) {
-      const dirResults = await FileSystemService.createDirectory(
-        dirPaths.autoExecDir
-      );
-      if (!dirResults.success) {
-        WindowManager.showFatalErrorPopup(
-          `Failed to create autoexec directory. Error: ${dirResults.error}`
-        );
-
-        LogManager.log(
-          `Failed to create autoexec directory. Error: ${dirResults.error}`,
-          "error"
-        );
-        return;
-      }
-    }
-
-    const code = `
-    while task.wait(0.25) do
-        if getgenv().KR_READY then
-            return
-        end
-
-        pcall(function()
-            local wsAddress = "ws://127.0.0.1:${this.wsPort}"
-            getgenv().KR_WEBSOCKET = websocket.connect(wsAddress)
-            getgenv().KR_WEBSOCKET:Send("connect")
-            getgenv().KR_READY = true
-            local lastAlive = nil
-
-            getgenv().KR_WEBSOCKET.OnMessage:Connect(function(message)
-                if message == "kr-ping" then
-                    lastAlive = os.time()
-                else
-                    local func, err = loadstring(message)
-
-                    if not func then
-                        error(err)
-                    else
-                        task.spawn(func)
-                    end
-                end
-            end)
-
-            while getgenv().KR_READY and task.wait(0.1) do
-                if lastAlive and os.time() - lastAlive > 1 then
-                    pcall(function ()
-                        getgenv().KR_WEBSOCKET:Close()
-                    end)
-
-                    getgenv().KR_READY = false
-                end
-            end
-        end)
-    end
-        `
-      .replace(/(--.*$|\/\*[\s\S]*?\*\/)/gm, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    const results = await FileSystemService.writeFile(
-      filePaths.krampuiWebsocketCode,
-      code
-    );
-
-    if (!results.success) {
-      WindowManager.showFatalErrorPopup(
-        `Failed to create websocket code file. Error: ${results.error}`
-      );
-
-      LogManager.log(
-        `Failed to create websocket code file. Error: ${results.error}`,
-        "error"
-      );
-    }
-  }
-
   public static async checkForLoader() {
     const allFilesInDir = await FileSystemService.readDir(
       await FileSystemService.getAppPath(),
@@ -248,8 +114,5 @@ export default class LoaderManager {
 
   public static async initialize() {
     await this.checkForLoader();
-    await this.setupWebsocket();
-    invoke("initialize_websocket", { port: this.wsPort });
-    LogManager.log(`Websocket server started on port: ${this.wsPort}`);
   }
 }

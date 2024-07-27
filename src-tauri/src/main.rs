@@ -15,10 +15,6 @@ mod processes;
 use crate::processes::kill_roblox;
 use crate::processes::start_roblox_check_loop;
 
-mod websocket_handler;
-use crate::websocket_handler::initialize_websocket;
-use crate::websocket_handler::execute_script;
-
 mod fs_handler;
 use crate::fs_handler::create_directory;
 use crate::fs_handler::delete_directory;
@@ -31,6 +27,9 @@ use crate::fs_handler::rename_file;
 use crate::fs_handler::exists;
 use crate::fs_handler::open_file_explorer;
 use crate::fs_handler::get_exe_path;
+
+mod execution_handler;
+use crate::execution_handler::execute_script;
 
 mod updates;
 use crate::updates::check_for_updates;
@@ -98,9 +97,8 @@ async fn main() {
             start_roblox_check_loop,
             init_key_events,
             validate_loader,
-            initialize_websocket,
-            execute_script,
-            check_for_updates
+            check_for_updates,
+            execute_script
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

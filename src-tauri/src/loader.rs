@@ -26,10 +26,10 @@ pub async fn validate_loader(executable_path: String) -> (bool, String) {
             current_string.clear();
         }
     }
-    let string_to_check_for = "Authentication failed: %d".to_string();
+    let string_to_check_for = ">dWIa".to_string();
     if strings_found.contains(&string_to_check_for) {
         (true, "".to_string())
     } else {
-        (false, "This isn't the Ro-Exec Loader, download it from acedia.".to_string())
+        (false, "This isn't the Synapse Z Loader, download it from ?download.".to_string())
     }
 }

@@ -64,27 +64,6 @@ export default class WindowManager {
       }
     });
 
-    appWindow.listen("websocket-update", (event: any) => {
-      const updatePayload = event.payload;
-
-      if (updatePayload.websocket_count_update === true) {
-        LogManager.log(
-          "Websocket count update received! New Count: " +
-            updatePayload.new_count,
-          "info"
-        );
-        if (updatePayload.new_count > 0) {
-          // Override injection status, since when websockets are present, the client is always attached
-          WindowManager.updateInjectionStatus("Attached");
-        } else if (
-          updatePayload.new_count === 0 &&
-          get(WindowManager.currentState).isRobloxPresent === false
-        ) {
-          WindowManager.updateInjectionStatus("Idle");
-        }
-      }
-    });
-
     appWindow.listen("instances-update", (event: any) => {
       const currentInstances = event.payload.instances;
       let isRobloxPresentNew = currentInstances.length > 0;

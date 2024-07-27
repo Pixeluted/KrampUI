@@ -2298,7 +2298,7 @@ dependencies = [
 
 [[package]]
 name = "krampui-rewrite"
-version = "2.0.3"
+version = "2.0.4"
 dependencies = [
  "lazy_static",
  "open 5.1.2",
