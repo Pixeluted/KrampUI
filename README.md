@@ -1,8 +1,6 @@
-# DISCOUNTINED DUE TO KRAMPUS BEING GONE, GG
-
 <div align="center">
     <h3>KrampUI</h3>
-    <p>Simple and lightweight frontend for Ro-Exec.</p>
+    <p>Simple and lightweight frontend for Synapse Z.</p>
     <img src="./assets/showcase.png" alt="An image which showcases KrampUI application." width="600"/>
 </div>
 <br />
