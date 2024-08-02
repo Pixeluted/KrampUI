@@ -1,3 +1,5 @@
+# KrampUI has been discountinued.
+
 <div align="center">
     <h3>KrampUI</h3>
     <p>Simple and lightweight frontend for Synapse Z.</p>
