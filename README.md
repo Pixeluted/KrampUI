@@ -1,4 +1,4 @@
-# KrampUI has been discountinued.
+# KrampUI has been discountinued. No updates or fixes will be provided.
 
 <div align="center">
     <h3>KrampUI</h3>
